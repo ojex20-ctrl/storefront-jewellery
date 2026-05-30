@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" fill="none">
+  <defs>
+    <linearGradient id="goldE" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F5E6B8"/>
+      <stop offset="40%" stop-color="#D4A84B"/>
+      <stop offset="70%" stop-color="#C49A3C"/>
+      <stop offset="100%" stop-color="#A07828"/>
+    </linearGradient>
+    <radialGradient id="pearlG" cx="45%" cy="35%" r="55%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="25%" stop-color="#F5F0E8"/>
+      <stop offset="60%" stop-color="#E8DDD0"/>
+      <stop offset="100%" stop-color="#D0C4B0"/>
+    </radialGradient>
+    <filter id="earGlow">
+      <feGaussianBlur stdDeviation="6" result="glow"/>
+      <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- Left earring -->
+  <g transform="translate(-60, 0)">
+    <!-- Hook -->
+    <path d="M200,80 Q200,60 210,55 Q225,50 230,65 Q235,80 225,95" stroke="url(#goldE)" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <!-- Chain links -->
+    <line x1="225" y1="95" x2="225" y2="140" stroke="url(#goldE)" stroke-width="3"/>
+    <ellipse cx="225" cy="120" rx="6" ry="10" stroke="url(#goldE)" stroke-width="2" fill="none"/>
+    <!-- Teardrop frame -->
+    <path d="M225,140 Q190,180 200,230 Q210,280 225,290 Q240,280 250,230 Q260,180 225,140Z" fill="none" stroke="url(#goldE)" stroke-width="5" filter="url(#earGlow)"/>
+    <!-- Inner highlight -->
+    <path d="M225,155 Q205,185 210,225 Q218,260 225,270" stroke="#FFF8E0" stroke-width="1.5" fill="none" opacity="0.5"/>
+    <!-- Pearl -->
+    <circle cx="225" cy="220" r="28" fill="url(#pearlG)" filter="url(#earGlow)"/>
+    <ellipse cx="218" cy="210" rx="10" ry="8" fill="white" opacity="0.4"/>
+  </g>
+  <!-- Right earring -->
+  <g transform="translate(60, 20)">
+    <path d="M290,80 Q290,60 300,55 Q315,50 320,65 Q325,80 315,95" stroke="url(#goldE)" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <line x1="315" y1="95" x2="315" y2="140" stroke="url(#goldE)" stroke-width="3"/>
+    <ellipse cx="315" cy="120" rx="6" ry="10" stroke="url(#goldE)" stroke-width="2" fill="none"/>
+    <path d="M315,140 Q280,180 290,230 Q300,280 315,290 Q330,280 340,230 Q350,180 315,140Z" fill="none" stroke="url(#goldE)" stroke-width="5" filter="url(#earGlow)"/>
+    <path d="M315,155 Q295,185 300,225 Q308,260 315,270" stroke="#FFF8E0" stroke-width="1.5" fill="none" opacity="0.5"/>
+    <circle cx="315" cy="220" r="28" fill="url(#pearlG)" filter="url(#earGlow)"/>
+    <ellipse cx="308" cy="210" rx="10" ry="8" fill="white" opacity="0.4"/>
+  </g>
+  <!-- Shadow -->
+  <ellipse cx="260" cy="430" rx="100" ry="12" fill="#000" opacity="0.1"/>
+</svg>

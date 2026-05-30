@@ -1,0 +1,160 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * SYRA theme — Black, White & Sand
+ *
+ * Minimal luxury palette: deep black backgrounds, crisp white text,
+ * and warm sand accents for a refined jewellery storefront.
+ */
+:root {
+  --bg: #0A0A0A;             /* Near Black */
+  --bg-2: #141414;           /* Slightly lighter black */
+  --bg-soft: #1A1A1A;        /* Soft dark */
+  --ink: #FFFFFF;            /* Pure White text */
+  --ink-2: #F5F5F0;          /* Off-white text */
+  --muted: #C2B9A7;          /* Sand muted */
+  --muted-2: #8A8070;        /* Darker sand */
+  --line: #2A2A2A;           /* Subtle borders */
+  --line-2: #3A3A3A;         /* Hover borders */
+  --accent: #C2B9A7;         /* Sand - Primary accent */
+  --accent-2: #D4C9B5;      /* Lighter sand for hover */
+  --accent-3: #E8DFD0;      /* Lightest sand */
+  --accent-soft: rgba(194, 185, 167, 0.08); /* Sand wash */
+  --paper: #111111;          /* Card surface */
+
+  --font-display: "Instrument Serif", serif;
+  --font-body: "Inter", -apple-system, "Helvetica Neue", sans-serif;
+  --font-mono: "JetBrains Mono", "Inter", monospace;
+
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* Light mode */
+[data-theme="light"] {
+  --bg: #FAFAF8;
+  --bg-2: #F0EDE8;
+  --ink: #0A0A0A;
+  --ink-2: #1A1A1A;
+  --muted: #8A8070;
+  --muted-2: #C2B9A7;
+  --line: #E8E4DE;
+  --line-2: #D4CFC6;
+  --accent: #8A8070;
+  --accent-soft: rgba(138, 128, 112, 0.05);
+  --paper: #FFFFFF;
+}
+
+@layer base {
+  html { overflow-x: hidden; }
+  html, body {
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.005em;
+  }
+
+  body {
+    background-color: var(--bg);
+  }
+
+  html.lenis, html.lenis body { height: auto; }
+  .lenis.lenis-smooth { scroll-behavior: auto; }
+  .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+  .lenis.lenis-stopped { overflow: hidden; }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 0; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  ::selection { background: var(--accent); color: var(--bg); }
+}
+
+@layer components {
+  .serif { font-family: var(--font-display); font-weight: 400; letter-spacing: -0.015em; }
+  .mono { font-family: var(--font-mono); font-weight: 400; letter-spacing: 0; }
+
+  .ulink { position: relative; display: inline-block; }
+  .ulink::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: -2px;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.4s var(--ease-out);
+  }
+  .ulink:hover::after { transform: scaleX(1); transform-origin: left; }
+
+  .rule-gold {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--accent), transparent);
+  }
+
+  .stone-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border: 1px solid var(--line-2);
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    background: var(--bg-2);
+    transition: border-color 0.3s ease, color 0.3s ease;
+  }
+  .stone-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .stone-chip .dot {
+    width: 8px; height: 8px; border-radius: 999px;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
+  }
+
+  .cap-card {
+    border: 1px solid var(--line);
+    background: var(--paper);
+    padding: 32px 28px;
+    transition: border-color 0.4s var(--ease-out), transform 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out);
+  }
+  .cap-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-4px);
+    box-shadow: 0 18px 48px -16px rgba(194, 185, 167, 0.2);
+  }
+
+  @keyframes slow-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .gold-disc {
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--bg);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 96px;
+    height: 96px;
+    animation: slow-spin 24s linear infinite;
+  }
+
+  .card { background: transparent; }
+}
+
+/* Marquee keyframes - must be outside @layer for inline style animation to work */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
