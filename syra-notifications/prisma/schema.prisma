@@ -1,0 +1,84 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  mobile          String   @unique
+  passwordHash    String
+  firstName       String
+  lastName        String
+  emailVerified   Boolean  @default(false)
+  verifyToken     String?
+  verifyExpires   DateTime?
+  resetToken      String?
+  resetExpires    DateTime?
+  whatsappConsent Boolean  @default(false)
+  consentIp       String?
+  consentAt       DateTime?
+  active          Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  orders          Order[]
+  auditLogs       AuditLog[]
+}
+
+model Order {
+  id          String   @id @default(uuid())
+  orderNumber String   @unique
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  status      String   @default("placed")
+  items       String   @default("[]")
+  total       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  notifications NotificationLog[]
+}
+
+model NotificationLog {
+  id        String   @id @default(uuid())
+  orderId   String?
+  order     Order?   @relation(fields: [orderId], references: [id])
+  type      String   // email_verification, password_reset, order_update
+  channel   String   @default("email")
+  recipient String
+  subject   String?
+  status    String   @default("pending") // pending, sent, failed, retried
+  attempts  Int      @default(0)
+  error     String?
+  sentAt    DateTime?
+  createdAt DateTime @default(now())
+}
+
+model EmailTemplate {
+  id        String   @id @default(uuid())
+  slug      String   @unique
+  name      String
+  subject   String
+  body      String
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String
+  details   String?
+  ip        String?
+  createdAt DateTime @default(now())
+}
+
+model AdminUser {
+  id           String @id @default(uuid())
+  email        String @unique
+  passwordHash String
+  name         String
+}
