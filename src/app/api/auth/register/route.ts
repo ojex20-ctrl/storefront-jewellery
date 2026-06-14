@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { hashPassword, createOtp } from "@/lib/customer-auth"
+import { sendEmail, verificationEmail } from "@/lib/email"
 
 export async function POST(req: Request) {
   const { firstName, lastName, email, phone, password, confirmPassword } = await req.json()
@@ -25,13 +26,14 @@ export async function POST(req: Request) {
     data: { email, passwordHash, firstName, lastName, phone: phone ?? "" }
   })
 
-  // Generate OTP for verification
+  // Generate OTP and send email
   const { code } = await createOtp(email, "register")
+  const { subject, html } = verificationEmail(firstName, code)
+  await sendEmail({ to: email, subject, html }).catch(() => {})
 
-  // In production, send this via email service (Resend/Brevo)
-  // For dev/testing, we return it in the response
   return NextResponse.json({
-    message: "Account created. Please verify with OTP.",
-    otp: process.env.NODE_ENV === "production" ? undefined : code,
+    message: "Account created. Check your email for verification code.",
+    // Return OTP in dev mode for testing
+    ...(process.env.NODE_ENV !== "production" && { otp: code }),
   })
 }

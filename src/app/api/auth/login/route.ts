@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { prisma } from "@/lib/db"
 import { verifyPassword, createCustomerToken, createOtp } from "@/lib/customer-auth"
+import { sendEmail, loginOtpEmail } from "@/lib/email"
 
 export async function POST(req: Request) {
   const { email, password, method } = await req.json()
@@ -18,9 +19,11 @@ export async function POST(req: Request) {
   // OTP-based login
   if (method === "otp") {
     const { code } = await createOtp(email, "login")
+    const { subject, html } = loginOtpEmail(customer.firstName, code)
+    await sendEmail({ to: email, subject, html }).catch(() => {})
     return NextResponse.json({
       message: "OTP sent to your email",
-      otp: process.env.NODE_ENV === "production" ? undefined : code,
+      ...(process.env.NODE_ENV !== "production" && { otp: code }),
     })
   }
 
