@@ -1,0 +1,188 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+
+// ─── PRODUCTS ───────────────────────────────────────────────────────────────
+
+model Product {
+  id             String   @id @default(cuid())
+  name           String
+  slug           String   @unique
+  kind           String   // Ring, Necklace, Earrings, Bracelet, Nose Ring, Anklet
+  caption        String   @default("")
+  description    String   @default("")
+  price          Int      // in paise (₹120 = 12000)
+  compareAtPrice Int?     // strikethrough price
+  metals         String   @default("[]") // JSON array
+  stones         String   @default("[]") // JSON array
+  sizes          String   @default("[]") // JSON array
+  tag            String?  // BESTSELLER, NEW, ONE OF ONE, LOW STOCK, SALE
+  image          String   @default("")
+  gallery        String   @default("[]") // JSON array of URLs
+  modelImages    String   @default("[]") // JSON array - "see on model"
+  bundleIds      String   @default("[]") // JSON array of product IDs
+  weight         Float?
+  material       String?
+  warranty       String?
+  seoTitle       String?
+  seoDescription String?
+  published      Boolean  @default(true)
+  featured       Boolean  @default(false)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// ─── CATEGORIES ─────────────────────────────────────────────────────────────
+
+model Category {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  image       String?
+  description String?
+  sortOrder   Int     @default(0)
+}
+
+// ─── ORDERS ─────────────────────────────────────────────────────────────────
+
+model Order {
+  id             String   @id @default(cuid())
+  orderNumber    Int      @unique
+  status         String   @default("pending") // pending, confirmed, shipped, delivered, cancelled
+  paymentStatus  String   @default("pending") // pending, paid, failed, refunded
+  paymentMethod  String   @default("")        // razorpay, stripe
+  paymentId      String?                      // gateway transaction ID
+  email          String
+  phone          String
+  firstName      String
+  lastName       String
+  address        String
+  city           String
+  state          String   @default("")
+  pincode        String
+  country        String   @default("India")
+  subtotal       Int      // paise
+  shippingCost   Int      @default(0)
+  discount       Int      @default(0)
+  total          Int
+  items          String   @default("[]") // JSON snapshot of cart items
+  notes          String?
+  trackingNumber String?
+  trackingUrl    String?
+  giftWrap       Boolean  @default(false)
+  giftMessage    String?
+  couponCode     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// ─── CMS CONTENT ────────────────────────────────────────────────────────────
+
+model SiteContent {
+  id        String   @id @default(cuid())
+  section   String   // unique key: "hero", "why_anti_tarnish", etc.
+  title     String?
+  subtitle  String?
+  body      String?
+  image     String?
+  image2    String?
+  link      String?
+  linkText  String?
+  metadata  String?  // JSON for extra data
+  published Boolean  @default(true)
+  sortOrder Int      @default(0)
+  page      String   @default("home") // which page
+  updatedAt DateTime @updatedAt
+
+  @@unique([page, section])
+}
+
+// ─── BANNERS ────────────────────────────────────────────────────────────────
+
+model Banner {
+  id          String    @id @default(cuid())
+  title       String
+  subtitle    String?
+  image       String
+  mobileImage String?
+  link        String?
+  position    String    @default("hero") // hero, mid_page, footer_banner
+  page        String    @default("home")
+  published   Boolean   @default(true)
+  sortOrder   Int       @default(0)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ─── COUPONS ────────────────────────────────────────────────────────────────
+
+model Coupon {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  type      String    // percentage, fixed
+  value     Int       // discount value (% or paise)
+  minOrder  Int?      // minimum order value in paise
+  maxUses   Int?
+  usedCount Int       @default(0)
+  active    Boolean   @default(true)
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+}
+
+// ─── BLOG ───────────────────────────────────────────────────────────────────
+
+model BlogPost {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  excerpt     String?
+  content     String    @default("")
+  coverImage  String?
+  author      String    @default("SYRA")
+  tags        String    @default("[]") // JSON array
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ─── ADMIN USERS ────────────────────────────────────────────────────────────
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         String   @default("editor") // superadmin, editor
+  createdAt    DateTime @default(now())
+}
+
+// ─── CUSTOMERS ──────────────────────────────────────────────────────────────
+
+model Customer {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  firstName    String   @default("")
+  lastName     String   @default("")
+  phone        String   @default("")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ─── STORE SETTINGS ─────────────────────────────────────────────────────────
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String @default("")
+}

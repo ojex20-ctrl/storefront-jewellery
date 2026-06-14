@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" fill="none">
+  <defs>
+    <linearGradient id="goldN" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F5E6B8"/>
+      <stop offset="30%" stop-color="#D4A84B"/>
+      <stop offset="60%" stop-color="#C49A3C"/>
+      <stop offset="100%" stop-color="#A07828"/>
+    </linearGradient>
+    <radialGradient id="emeraldG" cx="45%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#6AE89A"/>
+      <stop offset="30%" stop-color="#2FAF60"/>
+      <stop offset="70%" stop-color="#1A7A3E"/>
+      <stop offset="100%" stop-color="#0D4A24"/>
+    </radialGradient>
+    <filter id="neckGlow">
+      <feGaussianBlur stdDeviation="6" result="glow"/>
+      <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="gemGlow">
+      <feGaussianBlur stdDeviation="4" result="glow"/>
+      <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <!-- Shadow -->
+  <ellipse cx="250" cy="440" rx="80" ry="12" fill="#000" opacity="0.1"/>
+  <!-- Main chain arc -->
+  <path d="M60,120 Q80,80 140,60 Q200,42 250,40 Q300,42 360,60 Q420,80 440,120" stroke="url(#goldN)" stroke-width="4" fill="none" filter="url(#neckGlow)" stroke-linecap="round"/>
+  <!-- V-shape dropper -->
+  <path d="M180,72 L250,260 L320,72" stroke="url(#goldN)" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Inner V highlight -->
+  <path d="M195,90 L250,240 L305,90" stroke="#FFF8E0" stroke-width="1.5" fill="none" opacity="0.35"/>
+  <!-- Cross bars on chain -->
+  <g stroke="url(#goldN)" stroke-width="2.5" opacity="0.7">
+    <line x1="100" y1="80" x2="108" y2="90"/>
+    <line x1="140" y1="62" x2="148" y2="72"/>
+    <line x1="180" y1="52" x2="188" y2="62"/>
+    <line x1="220" y1="44" x2="228" y2="54"/>
+    <line x1="272" y1="44" x2="280" y2="54"/>
+    <line x1="312" y1="52" x2="320" y2="62"/>
+    <line x1="352" y1="62" x2="360" y2="72"/>
+    <line x1="392" y1="80" x2="400" y2="90"/>
+  </g>
+  <!-- Central pendant setting -->
+  <polygon points="250,245 270,275 250,305 230,275" fill="url(#goldN)" stroke="#C49A3C" stroke-width="1.5"/>
+  <!-- Emerald gemstone -->
+  <g filter="url(#gemGlow)">
+    <polygon points="250,250 268,272 250,298 232,272" fill="url(#emeraldG)"/>
+    <!-- Facet lines -->
+    <line x1="250" y1="250" x2="250" y2="298" stroke="#6AE89A" stroke-width="0.8" opacity="0.5"/>
+    <line x1="232" y1="272" x2="268" y2="272" stroke="#6AE89A" stroke-width="0.8" opacity="0.4"/>
+    <!-- Highlight -->
+    <polygon points="250,255 258,268 250,275 242,268" fill="white" opacity="0.2"/>
+  </g>
+  <!-- Sparkle accents -->
+  <circle cx="250" cy="258" r="2" fill="white" opacity="0.8"/>
+  <circle cx="260" cy="270" r="1.2" fill="white" opacity="0.5"/>
+  <circle cx="242" cy="280" r="1" fill="white" opacity="0.4"/>
+  <!-- Small diamonds on the V arms -->
+  <circle cx="205" cy="140" r="5" fill="#E8F0FF" stroke="#D4A84B" stroke-width="1.5" filter="url(#gemGlow)"/>
+  <circle cx="295" cy="140" r="5" fill="#E8F0FF" stroke="#D4A84B" stroke-width="1.5" filter="url(#gemGlow)"/>
+</svg>

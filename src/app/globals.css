@@ -1,0 +1,167 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * ZIORA theme — deep walnut + warm cream + hand-set gold.
+ *
+ * Dark by default so the gold accent and bridal-set imagery sit in a
+ * jewellery-shop-window mood. Light mode is wired but the storefront
+ * doesn't expose a toggle yet.
+ *
+ * Every var below is tuned for AA contrast against `--bg`. If you
+ * change the brand's bg_hex via /app/brand-config, the BrandStyles
+ * component overrides --bg/--ink/--accent at runtime — but secondary
+ * vars (muted, line, bg-2) stay on these defaults, so keep them
+ * legible against any reasonable dark bg.
+ */
+:root {
+  --bg: #2B2019;             /* Deep Walnut / Dark Brown */
+  --bg-2: #3C2A21;           /* Lighter Brown */
+  --bg-soft: #4A3B32;        /* Soft Brown */
+  --ink: #F9F6F0;            /* Soft Ivory text */
+  --ink-2: #E8E2D8;           /* Warm Beige text */
+  --muted: #C6A96B;           /* Muted Gold */
+  --muted-2: #A58F5E;         /* Darker Muted Gold */
+  --line: #1A1A1C;            /* Subtle borders */
+  --line-2: #2A2A2C;          /* Hover borders */
+  --accent: #C6A96B;          /* Muted Gold - Primary CTA */
+  --accent-2: #D4BA82;         /* Lighter Gold for hover */
+  --accent-3: #FF7A4A;         /* Status accent */
+  --accent-soft: rgba(198, 169, 107, 0.1); /* Gold wash */
+  --paper: #1A1A1C;            /* Card surface */
+
+  --font-display: "Playfair Display", serif;
+  --font-body: "Inter", -apple-system, "Helvetica Neue", sans-serif;
+  --font-mono: "Inter", monospace;
+
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* Optional reading mode */
+[data-theme="light"] {
+  --bg: #F5F3EF;
+  --bg-2: #E8E2D8;
+  --ink: #0B0B0C;
+  --ink-2: #1A1A1C;
+  --muted: #A58F5E;
+  --muted-2: #C6A96B;
+  --line: #D4D1CA;
+  --line-2: #C6A96B;
+  --accent-soft: rgba(198, 169, 107, 0.05);
+  --paper: #FFFFFF;
+}
+
+@layer base {
+  html { overflow-x: hidden; }
+  html, body {
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.005em;
+  }
+
+  /* Atelier ambient — soft hand-set gold glow top and warm orange
+     reflection at the bottom-right, sitting on deep walnut. Mimics
+     the colour temperature of a jewellery studio at dusk. */
+  body {
+    background-color: var(--bg);
+  }
+
+  html.lenis, html.lenis body { height: auto; }
+  .lenis.lenis-smooth { scroll-behavior: auto; }
+  .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
+  .lenis.lenis-stopped { overflow: hidden; }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 0; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  ::selection { background: var(--accent); color: var(--bg); }
+}
+
+@layer components {
+  .serif { font-family: var(--font-display); font-weight: 400; letter-spacing: -0.015em; }
+  .mono { font-family: var(--font-mono); font-weight: 400; letter-spacing: 0; }
+
+  .ulink { position: relative; display: inline-block; }
+  .ulink::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: -2px;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.4s var(--ease-out);
+  }
+  .ulink:hover::after { transform: scaleX(1); transform-origin: left; }
+
+  /* Editorial rule with hairline gold flourish */
+  .rule-gold {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--accent), transparent);
+  }
+
+  /* Stone chip — small disc + label, used on product specs */
+  .stone-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border: 1px solid var(--line-2);
+    border-radius: 999px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-2);
+    background: var(--bg-2);
+    transition: border-color 0.3s ease, color 0.3s ease;
+  }
+  .stone-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .stone-chip .dot {
+    width: 8px; height: 8px; border-radius: 999px;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
+  }
+
+  /* Cap card — used for the home page kind cells */
+  .cap-card {
+    border: 1px solid var(--line);
+    background: var(--paper);
+    padding: 32px 28px;
+    transition: border-color 0.4s var(--ease-out), transform 0.4s var(--ease-out), box-shadow 0.4s var(--ease-out);
+  }
+  .cap-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-4px);
+    box-shadow: 0 18px 48px -16px rgba(201, 163, 107, 0.4);
+  }
+
+  @keyframes slow-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .gold-disc {
+    border-radius: 999px;
+    background: var(--accent);
+    color: var(--bg);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 96px;
+    height: 96px;
+    animation: slow-spin 24s linear infinite;
+  }
+
+  /* Card backgrounds shouldn't read as black-on-black — bump to bg-2 */
+  .card { background: transparent; }
+}
