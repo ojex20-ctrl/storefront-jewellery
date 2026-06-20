@@ -43,8 +43,39 @@ export async function POST(req: Request) {
       if (!data.slug) {
         data.slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
       }
+
+      // 1. Images
+      const imagesArr = Array.isArray(data.images) ? data.images : (data.image ? [data.image] : [])
+      data.images = JSON.stringify(imagesArr)
+      data.image = imagesArr[0] || ""
+      data.gallery = JSON.stringify(imagesArr)
+
+      // 2. Kinds
+      const kindsArr = Array.isArray(data.kinds) ? data.kinds : (data.kind ? [data.kind] : [])
+      data.kinds = JSON.stringify(kindsArr)
+      data.kind = kindsArr[0] || "Ring"
+
+      // 3. Main Hierarchies
+      const mainArr = Array.isArray(data.mainHierarchies) ? data.mainHierarchies : (data.mainHierarchy ? [data.mainHierarchy] : [])
+      data.mainHierarchies = JSON.stringify(mainArr)
+      data.mainHierarchy = mainArr[0] || null
+
+      // 4. Sub Hierarchies
+      const subArr = Array.isArray(data.subHierarchies) ? data.subHierarchies : (data.subHierarchy ? [data.subHierarchy] : [])
+      data.subHierarchies = JSON.stringify(subArr)
+      data.subHierarchy = subArr[0] || null
+
+      // 5. Ring Type
+      const ringTypeArr = Array.isArray(data.ringType) ? data.ringType : []
+      data.ringType = JSON.stringify(ringTypeArr)
+
+      // 6. Tags
+      const tagsArr = Array.isArray(data.tags) ? data.tags : (data.tag ? [data.tag] : [])
+      data.tags = JSON.stringify(tagsArr)
+      data.tag = tagsArr[0] || null
+
       // Ensure JSON fields are strings
-      for (const field of ["metals", "stones", "sizes", "gallery", "modelImages", "bundleIds"]) {
+      for (const field of ["metals", "stones", "sizes", "modelImages", "bundleIds"]) {
         if (Array.isArray(data[field])) {
           data[field] = JSON.stringify(data[field])
         } else if (data[field] === undefined) {

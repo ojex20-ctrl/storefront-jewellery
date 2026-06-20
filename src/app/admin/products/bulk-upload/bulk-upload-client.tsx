@@ -72,10 +72,14 @@ export function BulkUploadClient() {
           <h3 className="text-xs uppercase tracking-widest text-[#1A1A1C]/50 mb-3">Step 1: Download Template</h3>
           <div className="text-sm text-[#1A1A1C]/60 mb-4 space-y-2">
             <p>Download the CSV template, fill in your products, then upload below.</p>
-            <div className="text-xs border-l-2 border-[#c9a36b] pl-3 py-1 space-y-1">
-              <span className="font-semibold uppercase tracking-wider text-[10px] text-[#1A1A1C]/75">Hierarchy Tagging Columns:</span>
-              <p>• <strong>Main Hierarchy</strong> (or Category, Product Category): <code>Best Sellers</code>, <code>Earrings</code>, <code>Necklace</code>, <code>Bracelets</code>, <code>Rings</code>, <code>Pendants</code></p>
-              <p>• <strong>Sub Hierarchy</strong> (or Collection, Product Collection, Sub Category): <code>Boss Babe Basic</code>, <code>Glam Girl Hours</code>, <code>Everyday Slay</code>, <code>Main Character Campus</code>, <code>Bold Babe Edit</code></p>
+            <div className="text-xs border-l-2 border-[#c9a36b] pl-3 py-1.5 space-y-1 bg-[#F5F3EF]/30">
+              <span className="font-semibold uppercase tracking-wider text-[10px] text-[#1A1A1C]/75">Bulk Upload Options:</span>
+              <p>• <strong>Images (Max 6)</strong>: Use column <code>images</code> (comma-separated links) or separate columns <code>image1</code> to <code>image6</code>.</p>
+              <p>• <strong>Main Hierarchy (Multi-Select)</strong>: Column <code>mainHierarchy</code> (or Category). Allowed values: <code>Best Sellers</code>, <code>Earrings</code>, <code>Necklace</code>, <code>Bracelets</code>, <code>Rings</code>, <code>Pendants</code>.</p>
+              <p>• <strong>Sub Hierarchy (Multi-Select)</strong>: Column <code>subHierarchy</code> (or Collection). Allowed: <code>Boss Babe Basic</code>, <code>Glam Girl Hours</code>, <code>Everyday Slay</code>, <code>Main Character Campus</code>, <code>Bold Babe Edit</code>.</p>
+              <p>• <strong>Kind (Multi-Select)</strong>: Column <code>kind</code>. Allowed options include: <code>Stud</code>, <code>Hoop</code>, <code>Pendant</code>, <code>Chain</code>, <code>Bracelet</code>, <code>Minimal</code>, <code>Statement</code>, etc.</p>
+              <p>• <strong>Ring Type (Multi-Select)</strong>: Column <code>ringType</code>. Allowed options: <code>Adjustable</code>, <code>Stackable</code>, <code>Band</code>, <code>Statement Ring</code>, <code>Minimal Ring</code>, <code>Solitaire Look</code>, <code>Cocktail Ring</code>, <code>Open Ring</code>, <code>Couple Ring</code>.</p>
+              <p>• <strong>Tags (Multi-Select)</strong>: Column <code>tags</code>. E.g. <code>Anti Tarnish, Waterproof, Daily Wear</code>.</p>
             </div>
           </div>
           <a href="/api/admin/products/bulk" className="inline-flex items-center gap-2 border border-[#1A1A1C]/20 px-4 py-2 text-xs uppercase tracking-widest hover:border-[#c9a36b]">

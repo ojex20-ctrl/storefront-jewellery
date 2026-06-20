@@ -11,23 +11,38 @@ import { MOCK_PRODUCTS } from "./mock-data"
 import { Product as DbProduct } from "@prisma/client"
 
 function dbToProduct(p: DbProduct): Product {
+  const images = p.images ? JSON.parse(p.images) : (p.image ? [p.image] : [])
+  const mainHierarchies = p.mainHierarchies ? JSON.parse(p.mainHierarchies) : (p.mainHierarchy ? [p.mainHierarchy] : [])
+  const subHierarchies = p.subHierarchies ? JSON.parse(p.subHierarchies) : (p.subHierarchy ? [p.subHierarchy] : [])
+  const kinds = p.kinds ? JSON.parse(p.kinds) : (p.kind ? [p.kind] : [])
+  const ringTypes = p.ringType ? JSON.parse(p.ringType) : []
+  const tags = p.tags ? JSON.parse(p.tags) : (p.tag ? [p.tag] : [])
+
   return {
     id: p.slug,
     name: p.name,
-    kind: p.kind as Product["kind"],
+    kind: (kinds[0] as Product["kind"]) || (p.kind as Product["kind"]) || "Ring",
     subcategory: p.subcategory ?? undefined,
     caption: p.caption,
     price: p.price,
     metals: JSON.parse(p.metals),
     stones: JSON.parse(p.stones),
     sizes: JSON.parse(p.sizes),
-    tag: (p.tag as Product["tag"]) ?? undefined,
-    image: p.image,
-    gallery: JSON.parse(p.gallery).length > 0 ? JSON.parse(p.gallery) : [p.image],
+    tag: (tags[0] as Product["tag"]) || (p.tag as Product["tag"]) || undefined,
+    image: images[0] || p.image || "",
+    gallery: JSON.parse(p.gallery).length > 0 ? JSON.parse(p.gallery) : (images.length > 0 ? images : [p.image]),
     desc: p.description,
-    mainHierarchy: p.mainHierarchy ?? undefined,
-    subHierarchy: p.subHierarchy ?? undefined,
+    mainHierarchy: mainHierarchies[0] || p.mainHierarchy || undefined,
+    subHierarchy: subHierarchies[0] || p.subHierarchy || undefined,
     rental: { enabled: false, daily_rate: 0, security_deposit: 0, durations: [] },
+
+    // Multi-select arrays:
+    images,
+    mainHierarchies,
+    subHierarchies,
+    kinds,
+    ringTypes,
+    tags,
   }
 }
 

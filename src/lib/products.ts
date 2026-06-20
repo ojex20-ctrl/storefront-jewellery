@@ -46,6 +46,12 @@ export type Product = {
   modelPath?: string
   mainHierarchy?: string
   subHierarchy?: string
+  images?: string[]
+  mainHierarchies?: string[]
+  subHierarchies?: string[]
+  kinds?: string[]
+  ringTypes?: string[]
+  tags?: string[]
   /** Rental availability + pricing. Falls back to disabled when admin hasn't configured it. */
   rental: RentalConfig
 }

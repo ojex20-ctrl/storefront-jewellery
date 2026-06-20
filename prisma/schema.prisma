@@ -36,6 +36,12 @@ model Product {
   seoDescription String?
   mainHierarchy  String?
   subHierarchy   String?
+  images         String   @default("[]")
+  mainHierarchies String   @default("[]")
+  subHierarchies  String   @default("[]")
+  kinds          String   @default("[]")
+  ringType       String   @default("[]")
+  tags           String   @default("[]")
   published      Boolean  @default(true)
   featured       Boolean  @default(false)
   sortOrder      Int      @default(0)

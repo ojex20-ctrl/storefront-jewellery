@@ -2,7 +2,7 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState, type FormEvent } from "react"
-import { Save, ArrowLeft } from "lucide-react"
+import { Save, ArrowLeft, X } from "lucide-react"
 import { Sidebar } from "@/components/admin/sidebar"
 
 type Product = {
@@ -12,27 +12,47 @@ type Product = {
   weight: number | null; material: string | null; warranty: string | null
   seoTitle: string | null; seoDescription: string | null; published: boolean; featured: boolean
   mainHierarchy: string | null; subHierarchy: string | null
+  images?: string[]
+  mainHierarchies?: string[]
+  subHierarchies?: string[]
+  kinds?: string[]
+  ringTypes?: string[]
+  tags?: string[]
 }
 
-const KINDS = ["Ring", "Necklace", "Earrings", "Bracelet", "Nose Ring", "Anklet"]
-const TAGS = ["", "BESTSELLER", "NEW", "ONE OF ONE", "LOW STOCK", "SALE"]
-const MAIN_HIERARCHIES = ["", "Best Sellers", "Earrings", "Necklace", "Bracelets", "Rings", "Pendants"]
-const SUB_HIERARCHIES = ["", "Boss Babe Basic", "Glam Girl Hours", "Everyday Slay", "Main Character Campus", "Bold Babe Edit"]
+const MAIN_HIERARCHIES = ["Best Sellers", "Earrings", "Necklace", "Bracelets", "Rings", "Pendants"]
+const SUB_HIERARCHIES = ["Boss Babe Basic", "Glam Girl Hours", "Everyday Slay", "Main Character Campus", "Bold Babe Edit"]
+const KIND_OPTIONS = [
+  "Stud", "Hoop", "Huggie", "Drop", "Dangler", "Ear Cuff", "Statement", "Minimal",
+  "Chain", "Choker", "Pendant", "Layered", "Charm", "Bracelet", "Kada", "Cuff",
+  "Chain Bracelet", "Charm Bracelet", "Adjustable", "Stackable", "Band", "Solitaire", "Cocktail"
+]
+const RING_TYPE_OPTIONS = [
+  "Adjustable", "Stackable", "Band", "Statement Ring", "Minimal Ring", "Solitaire Look", "Cocktail Ring", "Open Ring", "Couple Ring"
+]
+const TAGS_OPTIONS = [
+  "Anti Tarnish", "Waterproof", "Daily Wear", "Office Wear", "Party Wear", "College Wear",
+  "Date Night", "Minimal", "Statement", "Trending", "New Arrival", "Gift Pick", "Premium Look",
+  "Under 499", "Under 999", "Lightweight", "Skin Friendly", "Gold Finish", "Silver Finish", "Rose Gold Finish"
+]
 
 interface FormState {
   name: string
   slug: string
-  kind: string
-  caption: string
-  description: string
   price: string
   compareAtPrice: string
   metals: string
   stones: string
   sizes: string
-  tag: string
-  image: string
-  gallery: string
+  images: string[]
+  imageUrlInput: string
+  mainHierarchies: string[]
+  subHierarchies: string[]
+  kinds: string[]
+  ringTypes: string[]
+  tags: string[]
+  caption: string
+  description: string
   weight: string
   material: string
   warranty: string
@@ -40,24 +60,25 @@ interface FormState {
   seoDescription: string
   published: boolean
   featured: boolean
-  mainHierarchy: string
-  subHierarchy: string
 }
 
 const createEmptyForm = (): FormState => ({
   name: "",
   slug: "",
-  kind: "Ring",
-  caption: "",
-  description: "",
   price: "",
   compareAtPrice: "",
   metals: "18k Gold",
   stones: "None",
   sizes: "",
-  tag: "",
-  image: "",
-  gallery: "",
+  images: [],
+  imageUrlInput: "",
+  mainHierarchies: [],
+  subHierarchies: [],
+  kinds: ["Ring"],
+  ringTypes: [],
+  tags: [],
+  caption: "",
+  description: "",
   weight: "",
   material: "Surgical Steel + 18k Gold PVD",
   warranty: "2 Year Anti-Tarnish Guarantee",
@@ -65,8 +86,6 @@ const createEmptyForm = (): FormState => ({
   seoDescription: "",
   published: true,
   featured: false,
-  mainHierarchy: "",
-  subHierarchy: "",
 })
 
 export function ProductFormClient({ product }: { product: Product | null }) {
@@ -79,17 +98,20 @@ export function ProductFormClient({ product }: { product: Product | null }) {
     {
       name: product?.name ?? "",
       slug: product?.slug ?? "",
-      kind: product?.kind ?? "Ring",
-      caption: product?.caption ?? "",
-      description: product?.description ?? "",
       price: product ? String(product.price) : "",
       compareAtPrice: product?.compareAtPrice ? String(product.compareAtPrice) : "",
       metals: product ? JSON.parse(product.metals).join("; ") : "18k Gold",
       stones: product ? JSON.parse(product.stones).join("; ") : "None",
       sizes: product ? JSON.parse(product.sizes).join("; ") : "",
-      tag: product?.tag ?? "",
-      image: product?.image ?? "",
-      gallery: product ? JSON.parse(product.gallery).join("\n") : "",
+      images: product?.images ? (typeof product.images === "string" ? JSON.parse(product.images) : product.images) : (product?.image ? [product.image] : []),
+      imageUrlInput: product?.images ? (typeof product.images === "string" ? JSON.parse(product.images) : product.images).join(", ") : (product?.image ? product.image : ""),
+      mainHierarchies: product?.mainHierarchies ? (typeof product.mainHierarchies === "string" ? JSON.parse(product.mainHierarchies) : product.mainHierarchies) : (product?.mainHierarchy ? [product.mainHierarchy] : []),
+      subHierarchies: product?.subHierarchies ? (typeof product.subHierarchies === "string" ? JSON.parse(product.subHierarchies) : product.subHierarchies) : (product?.subHierarchy ? [product.subHierarchy] : []),
+      kinds: product?.kinds ? (typeof product.kinds === "string" ? JSON.parse(product.kinds) : product.kinds) : (product?.kind ? [product.kind] : ["Ring"]),
+      ringTypes: product?.ringTypes ? (typeof product.ringTypes === "string" ? JSON.parse(product.ringTypes) : product.ringTypes) : [],
+      tags: product?.tags ? (typeof product.tags === "string" ? JSON.parse(product.tags) : product.tags) : (product?.tag ? [product.tag] : []),
+      caption: product?.caption ?? "",
+      description: product?.description ?? "",
       weight: product?.weight ? String(product.weight) : "",
       material: product?.material ?? "Surgical Steel + 18k Gold PVD",
       warranty: product?.warranty ?? "2 Year Anti-Tarnish Guarantee",
@@ -97,32 +119,51 @@ export function ProductFormClient({ product }: { product: Product | null }) {
       seoDescription: product?.seoDescription ?? "",
       published: product?.published ?? true,
       featured: product?.featured ?? false,
-      mainHierarchy: product?.mainHierarchy ?? "",
-      subHierarchy: product?.subHierarchy ?? "",
     }
   ])
 
   const setFormField = (index: number, key: keyof FormState, value: any) => {
-    setForms((prev) => prev.map((f, i) => (i === index ? { ...f, [key]: value } : f)))
+    setForms((prev) => prev.map((f, i) => {
+      if (i === index) {
+        const updated = { ...f, [key]: value }
+        if (key === "images") {
+          updated.imageUrlInput = (value as string[]).join(", ")
+        }
+        return updated
+      }
+      return f
+    }))
   }
 
-  const handleImageUpload = async (index: number, file?: File) => {
-    if (!file) return
-    const formData = new FormData()
-    formData.append("file", file)
-    try {
-      const res = await fetch("/api/admin/media", {
-        method: "POST",
-        body: formData,
-      })
-      const data = await res.json()
-      if (data.url) {
-        setFormField(index, "image", data.url)
-      } else {
-        alert(data.error || "Upload failed")
+  const handleImagesUpload = async (index: number, files: FileList | null) => {
+    if (!files || files.length === 0) return
+    const currentImages = forms[index].images
+    if (currentImages.length + files.length > 6) {
+      alert("Maximum 6 images allowed per product.")
+      return
+    }
+
+    const uploadedUrls: string[] = []
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      if (!file) continue
+      const formData = new FormData()
+      formData.append("file", file)
+      try {
+        const res = await fetch("/api/admin/media", {
+          method: "POST",
+          body: formData,
+        })
+        const data = await res.json()
+        if (data.url) {
+          uploadedUrls.push(data.url)
+        }
+      } catch (err) {
+        console.error("Upload error", err)
       }
-    } catch (err) {
-      alert("Upload failed: Network error")
+    }
+    if (uploadedUrls.length > 0) {
+      setFormField(index, "images", [...currentImages, ...uploadedUrls])
     }
   }
 
@@ -150,7 +191,8 @@ export function ProductFormClient({ product }: { product: Product | null }) {
     if (uploadedUrls.length > 0) {
       const currentGallery = forms[index].gallery ? forms[index].gallery.split("\n").filter(Boolean) : []
       const updatedGallery = [...currentGallery, ...uploadedUrls]
-      setFormField(index, "gallery", updatedGallery.join("\n"))
+      // Set to advanced gallery field
+      // We don't store gallery separately since images acts as the product gallery, but let's sync with it if they use it.
     }
   }
 
@@ -172,14 +214,41 @@ export function ProductFormClient({ product }: { product: Product | null }) {
         return
       }
 
-      if (f.mainHierarchy && !MAIN_HIERARCHIES.includes(f.mainHierarchy)) {
-        alert(`${prefix}Invalid main hierarchy. Must be one of: ${MAIN_HIERARCHIES.filter(Boolean).join(", ")}`)
+      if (f.images.length > 6) {
+        alert(`${prefix}Maximum 6 images allowed per product.`)
         return
       }
 
-      if (f.subHierarchy && !SUB_HIERARCHIES.includes(f.subHierarchy)) {
-        alert(`${prefix}Invalid sub hierarchy. Must be one of: ${SUB_HIERARCHIES.filter(Boolean).join(", ")}`)
-        return
+      // Validate checkboxes match lists
+      for (const val of f.mainHierarchies) {
+        if (!MAIN_HIERARCHIES.includes(val)) {
+          alert(`${prefix}Invalid Main Hierarchy: '${val}'`)
+          return
+        }
+      }
+      for (const val of f.subHierarchies) {
+        if (!SUB_HIERARCHIES.includes(val)) {
+          alert(`${prefix}Invalid Sub Hierarchy: '${val}'`)
+          return
+        }
+      }
+      for (const val of f.kinds) {
+        if (!KIND_OPTIONS.includes(val)) {
+          alert(`${prefix}Invalid Kind: '${val}'`)
+          return
+        }
+      }
+      for (const val of f.ringTypes) {
+        if (!RING_TYPE_OPTIONS.includes(val)) {
+          alert(`${prefix}Invalid Ring Type: '${val}'`)
+          return
+        }
+      }
+      for (const val of f.tags) {
+        if (!TAGS_OPTIONS.includes(val)) {
+          alert(`${prefix}Invalid Tag: '${val}'`)
+          return
+        }
       }
     }
 
@@ -189,17 +258,13 @@ export function ProductFormClient({ product }: { product: Product | null }) {
       const payload = forms.map((form) => ({
         name: form.name,
         slug: form.slug || form.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, ""),
-        kind: form.kind,
-        caption: form.caption,
-        description: form.description,
         price: parseInt(form.price) || 0,
         compareAtPrice: form.compareAtPrice ? parseInt(form.compareAtPrice) : null,
         metals: JSON.stringify(form.metals.split(";").map((s) => s.trim()).filter(Boolean)),
         stones: JSON.stringify(form.stones.split(";").map((s) => s.trim()).filter(Boolean)),
         sizes: JSON.stringify(form.sizes.split(";").map((s) => s.trim()).filter(Boolean)),
-        tag: form.tag || null,
-        image: form.image,
-        gallery: JSON.stringify(form.gallery.split("\n").map((s) => s.trim()).filter(Boolean)),
+        caption: form.caption,
+        description: form.description,
         weight: form.weight ? parseFloat(form.weight) : null,
         material: form.material || null,
         warranty: form.warranty || null,
@@ -207,8 +272,14 @@ export function ProductFormClient({ product }: { product: Product | null }) {
         seoDescription: form.seoDescription || null,
         published: form.published,
         featured: form.featured,
-        mainHierarchy: form.mainHierarchy || null,
-        subHierarchy: form.subHierarchy || null,
+        
+        // Multi-select arrays:
+        images: form.images,
+        mainHierarchies: form.mainHierarchies,
+        subHierarchies: form.subHierarchies,
+        kinds: form.kinds,
+        ringType: form.ringTypes,
+        tags: form.tags,
       }))
 
       if (isEdit) {
@@ -320,61 +391,89 @@ export function ProductFormClient({ product }: { product: Product | null }) {
                     />
                   </div>
 
-                  {/* Row 2: Main Hierarchy | Sub Hierarchy | Kind | Tag */}
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <SelectField
+                  {/* Row 2: Multi-select columns */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 border-t border-[#1A1A1C]/5 pt-3">
+                    <ScrollableCheckboxGroup
                       label="Main Hierarchy"
-                      value={form.mainHierarchy}
+                      values={form.mainHierarchies}
                       options={MAIN_HIERARCHIES}
-                      onChange={(v) => setFormField(index, "mainHierarchy", v)}
+                      onChange={(v) => setFormField(index, "mainHierarchies", v)}
                     />
-                    <SelectField
+                    <ScrollableCheckboxGroup
                       label="Sub Hierarchy"
-                      value={form.subHierarchy}
+                      values={form.subHierarchies}
                       options={SUB_HIERARCHIES}
-                      onChange={(v) => setFormField(index, "subHierarchy", v)}
+                      onChange={(v) => setFormField(index, "subHierarchies", v)}
                     />
-                    <SelectField
+                    <ScrollableCheckboxGroup
                       label="Kind"
-                      value={form.kind}
-                      options={KINDS}
-                      onChange={(v) => setFormField(index, "kind", v)}
+                      values={form.kinds}
+                      options={KIND_OPTIONS}
+                      onChange={(v) => setFormField(index, "kinds", v)}
                     />
-                    <SelectField
-                      label="Tag"
-                      value={form.tag}
-                      options={TAGS}
-                      onChange={(v) => setFormField(index, "tag", v)}
+                    <ScrollableCheckboxGroup
+                      label="Ring Type"
+                      values={form.ringTypes}
+                      options={RING_TYPE_OPTIONS}
+                      onChange={(v) => setFormField(index, "ringTypes", v)}
+                    />
+                    <ScrollableCheckboxGroup
+                      label="Tags"
+                      values={form.tags}
+                      options={TAGS_OPTIONS}
+                      onChange={(v) => setFormField(index, "tags", v)}
                     />
                   </div>
 
-                  {/* Row 3: Image Upload | Image URL */}
+                  {/* Row 3: Image Upload | Image URLs */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end border-t border-[#1A1A1C]/5 pt-3">
                     <div>
                       <Field
-                        label="Main Image URL"
-                        value={form.image}
-                        onChange={(v) => setFormField(index, "image", v)}
+                        label="Image URLs (comma-separated, max 6)"
+                        value={form.imageUrlInput}
+                        onChange={(v) => {
+                          setFormField(index, "imageUrlInput", v)
+                          const parsed = v.split(",").map((s) => s.trim()).filter(Boolean)
+                          setFormField(index, "images", parsed)
+                        }}
+                        placeholder="/uploads/gallery/ring-1.jpg, /uploads/gallery/ring-2.jpg"
                       />
-                      <div className="flex items-center gap-2 mt-1.5">
-                        <span className="text-[9px] text-[#1A1A1C]/50 uppercase tracking-widest">Or Upload File:</span>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-[9px] text-[#1A1A1C]/50 uppercase tracking-widest">Or Upload Up To 6 Files:</span>
                         <input
                           type="file"
                           accept="image/*"
-                          onChange={(e) => handleImageUpload(index, e.target.files?.[0])}
-                          className="text-xs text-[#1A1A1C]/60 file:mr-3 file:py-1 file:px-2 file:border file:border-[#1A1A1C]/15 file:text-[9px] file:uppercase file:tracking-widest file:bg-transparent file:text-[#1A1A1C]/80 file:cursor-pointer hover:file:bg-[#F5F3EF]"
+                          multiple
+                          onChange={(e) => handleImagesUpload(index, e.target.files)}
+                          disabled={form.images.length >= 6}
+                          className="text-xs text-[#1A1A1C]/60 file:mr-3 file:py-1 file:px-2 file:border file:border-[#1A1A1C]/15 file:text-[9px] file:uppercase file:tracking-widest file:bg-transparent file:text-[#1A1A1C]/80 file:cursor-pointer hover:file:bg-[#F5F3EF] disabled:opacity-30"
                         />
                       </div>
                     </div>
-                    {form.image && (
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-12 h-16 bg-cover bg-center border border-[#1A1A1C]/10 shrink-0"
-                          style={{ backgroundImage: `url(${form.image})` }}
-                        />
-                        <span className="text-[10px] text-green-600 font-semibold uppercase tracking-wider">Image Loaded</span>
-                      </div>
-                    )}
+                    <div>
+                      {form.images.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {form.images.map((imgUrl, imgIdx) => (
+                            <div key={imgIdx} className="relative w-12 h-16 border border-[#1A1A1C]/10 bg-gray-50 shrink-0">
+                              <div
+                                className="w-full h-full bg-cover bg-center"
+                                style={{ backgroundImage: `url(${imgUrl})` }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const nextImages = form.images.filter((_, idx) => idx !== imgIdx)
+                                  setFormField(index, "images", nextImages)
+                                }}
+                                className="absolute -top-1.5 -right-1.5 bg-red-600 text-white rounded-full w-4.5 h-4.5 flex items-center justify-center text-[9px] font-bold hover:bg-red-700 shadow"
+                              >
+                                <X size={8} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Row 4: Description & Caption */}
@@ -462,25 +561,6 @@ export function ProductFormClient({ product }: { product: Product | null }) {
                           value={form.seoDescription}
                           onChange={(v) => setFormField(index, "seoDescription", v)}
                         />
-                      </div>
-
-                      <div className="space-y-2 pt-2 border-t border-[#1A1A1C]/5">
-                        <TextArea
-                          label="Gallery URLs (one per line)"
-                          value={form.gallery}
-                          onChange={(v) => setFormField(index, "gallery", v)}
-                          rows={2}
-                        />
-                        <div className="flex items-center gap-2">
-                          <span className="text-[9px] text-[#1A1A1C]/50 uppercase tracking-widest">Or Upload Gallery:</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            onChange={(e) => handleGalleryUpload(index, e.target.files)}
-                            className="text-xs text-[#1A1A1C]/60 file:mr-3 file:py-1 file:px-2 file:border file:border-[#1A1A1C]/15 file:text-[9px] file:uppercase file:tracking-widest file:bg-transparent file:text-[#1A1A1C]/80 file:cursor-pointer hover:file:bg-[#F5F3EF]"
-                          />
-                        </div>
                       </div>
 
                       <div className="flex gap-6 pt-2">
@@ -589,14 +669,34 @@ function TextArea({ label, value, onChange, rows = 3 }: { label: string; value: 
   )
 }
 
-function SelectField({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (v: string) => void }) {
+function ScrollableCheckboxGroup({ label, values, options, onChange }: { label: string; values: string[]; options: string[]; onChange: (v: string[]) => void }) {
+  const displayLabel = label === "Ring" ? "Ring Type" : label
   return (
-    <label className="block">
-      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)}
-        className="mt-1 w-full border-b border-[#1A1A1C]/15 bg-transparent py-2 text-sm outline-none focus:border-[#c9a36b]">
-        {options.map((o) => <option key={o} value={o}>{o || "— None —"}</option>)}
-      </select>
-    </label>
+    <div className="block">
+      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">{displayLabel}</span>
+      <div className="mt-1 border border-[#1A1A1C]/10 p-2 max-h-32 overflow-y-auto space-y-1.5 bg-[#F5F3EF]/20 rounded-sm">
+        {options.map((opt) => {
+          if (!opt) return null
+          const isChecked = values.includes(opt)
+          return (
+            <label key={opt} className="flex items-center gap-2 text-xs cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={isChecked}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    onChange([...values, opt])
+                  } else {
+                    onChange(values.filter((v) => v !== opt))
+                  }
+                }}
+                className="accent-[#c9a36b] h-3.5 w-3.5 shrink-0"
+              />
+              <span className="text-[#1A1A1C]/80 line-clamp-1">{opt}</span>
+            </label>
+          )
+        })}
+      </div>
+    </div>
   )
 }
