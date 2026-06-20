@@ -34,6 +34,8 @@ model Product {
   warranty       String?
   seoTitle       String?
   seoDescription String?
+  mainHierarchy  String?
+  subHierarchy   String?
   published      Boolean  @default(true)
   featured       Boolean  @default(false)
   sortOrder      Int      @default(0)

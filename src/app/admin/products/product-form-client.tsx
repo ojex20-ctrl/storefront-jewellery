@@ -3,6 +3,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState, type FormEvent } from "react"
 import { Save, ArrowLeft } from "lucide-react"
+import { Sidebar } from "@/components/admin/sidebar"
 
 type Product = {
   id: string; name: string; slug: string; kind: string; caption: string; description: string
@@ -10,10 +11,13 @@ type Product = {
   tag: string | null; image: string; gallery: string; modelImages: string; bundleIds: string
   weight: number | null; material: string | null; warranty: string | null
   seoTitle: string | null; seoDescription: string | null; published: boolean; featured: boolean
+  mainHierarchy: string | null; subHierarchy: string | null
 }
 
 const KINDS = ["Ring", "Necklace", "Earrings", "Bracelet", "Nose Ring", "Anklet"]
 const TAGS = ["", "BESTSELLER", "NEW", "ONE OF ONE", "LOW STOCK", "SALE"]
+const MAIN_HIERARCHIES = ["", "Best Sellers", "Earrings", "Necklace", "Bracelets", "Rings", "Pendants"]
+const SUB_HIERARCHIES = ["", "Boss Babe Basic", "Glam Girl Hours", "Everyday Slay", "Main Character Campus", "Bold Babe Edit"]
 
 export function ProductFormClient({ product }: { product: Product | null }) {
   const router = useRouter()
@@ -40,6 +44,8 @@ export function ProductFormClient({ product }: { product: Product | null }) {
     seoDescription: product?.seoDescription ?? "",
     published: product?.published ?? true,
     featured: product?.featured ?? false,
+    mainHierarchy: product?.mainHierarchy ?? "",
+    subHierarchy: product?.subHierarchy ?? "",
   })
 
   const set = (key: string, value: string | boolean) => setForm((f) => ({ ...f, [key]: value }))
@@ -68,6 +74,8 @@ export function ProductFormClient({ product }: { product: Product | null }) {
       seoDescription: form.seoDescription || null,
       published: form.published,
       featured: form.featured,
+      mainHierarchy: form.mainHierarchy || null,
+      subHierarchy: form.subHierarchy || null,
     }
 
     const url = isEdit ? `/api/admin/products/${product.id}` : "/api/admin/products"
@@ -79,16 +87,7 @@ export function ProductFormClient({ product }: { product: Product | null }) {
 
   return (
     <div className="flex min-h-screen bg-[#F5F3EF] text-[#1A1A1C]">
-      <aside className="hidden md:flex w-56 flex-col bg-[#0B0B0C] text-white p-6">
-        <Link href="/admin" className="font-display text-xl tracking-tight mb-10">SYRA</Link>
-        <nav className="flex-1 space-y-1">
-          <Link href="/admin" className="block px-3 py-2.5 text-xs uppercase tracking-widest text-white/60 hover:text-white">Dashboard</Link>
-          <Link href="/admin/products" className="block px-3 py-2.5 text-xs uppercase tracking-widest text-white bg-white/10 rounded">Products</Link>
-          <Link href="/admin/orders" className="block px-3 py-2.5 text-xs uppercase tracking-widest text-white/60 hover:text-white">Orders</Link>
-          <Link href="/admin/content" className="block px-3 py-2.5 text-xs uppercase tracking-widest text-white/60 hover:text-white">Content</Link>
-          <Link href="/admin/settings" className="block px-3 py-2.5 text-xs uppercase tracking-widest text-white/60 hover:text-white">Settings</Link>
-        </nav>
-      </aside>
+      <Sidebar />
 
       <main className="flex-1 p-8 md:p-12 overflow-y-auto">
         <Link href="/admin/products" className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-[#1A1A1C]/50 hover:text-[#1A1A1C] mb-6">
@@ -104,6 +103,10 @@ export function ProductFormClient({ product }: { product: Product | null }) {
               <div className="grid grid-cols-2 gap-4">
                 <SelectField label="Kind" value={form.kind} options={KINDS} onChange={(v) => set("kind", v)} />
                 <SelectField label="Tag" value={form.tag} options={TAGS} onChange={(v) => set("tag", v)} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <SelectField label="Main Hierarchy" value={form.mainHierarchy} options={MAIN_HIERARCHIES} onChange={(v) => set("mainHierarchy", v)} />
+                <SelectField label="Sub Hierarchy" value={form.subHierarchy} options={SUB_HIERARCHIES} onChange={(v) => set("subHierarchy", v)} />
               </div>
               <Field label="Caption" value={form.caption} onChange={(v) => set("caption", v)} />
               <TextArea label="Description" value={form.description} onChange={(v) => set("description", v)} rows={4} />
@@ -123,8 +126,76 @@ export function ProductFormClient({ product }: { product: Product | null }) {
             </Card>
 
             <Card title="Images">
-              <Field label="Main Image URL" value={form.image} onChange={(v) => set("image", v)} />
-              <TextArea label="Gallery URLs (one per line)" value={form.gallery} onChange={(v) => set("gallery", v)} rows={4} />
+              <div className="space-y-2">
+                <Field label="Main Image URL" value={form.image} onChange={(v) => set("image", v)} />
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-[#1A1A1C]/50 uppercase tracking-widest">Or Upload File:</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      const formData = new FormData()
+                      formData.append("file", file)
+                      try {
+                        const res = await fetch("/api/admin/media", {
+                          method: "POST",
+                          body: formData,
+                        })
+                        const data = await res.json()
+                        if (data.url) {
+                          set("image", data.url)
+                        } else {
+                          alert(data.error || "Upload failed")
+                        }
+                      } catch (err) {
+                        alert("Upload failed: Network error")
+                      }
+                    }}
+                    className="text-xs text-[#1A1A1C]/60 file:mr-3 file:py-1 file:px-2.5 file:border file:border-[#1A1A1C]/15 file:text-[10px] file:uppercase file:tracking-widest file:bg-transparent file:text-[#1A1A1C]/80 file:cursor-pointer hover:file:bg-[#F5F3EF]"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2 pt-2 border-t border-[#1A1A1C]/5">
+                <TextArea label="Gallery URLs (one per line)" value={form.gallery} onChange={(v) => set("gallery", v)} rows={4} />
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-[#1A1A1C]/50 uppercase tracking-widest">Upload Files to Gallery:</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={async (e) => {
+                      const files = e.target.files
+                      if (!files || files.length === 0) return
+                      const uploadedUrls: string[] = []
+                      for (let i = 0; i < files.length; i++) {
+                        const file = files[i]
+                        const formData = new FormData()
+                        formData.append("file", file)
+                        try {
+                          const res = await fetch("/api/admin/media", {
+                            method: "POST",
+                            body: formData,
+                          })
+                          const data = await res.json()
+                          if (data.url) {
+                            uploadedUrls.push(data.url)
+                          }
+                        } catch (err) {
+                          console.error("Upload error", err)
+                        }
+                      }
+                      if (uploadedUrls.length > 0) {
+                        const currentGallery = form.gallery ? form.gallery.split("\n").filter(Boolean) : []
+                        const updatedGallery = [...currentGallery, ...uploadedUrls]
+                        set("gallery", updatedGallery.join("\n"))
+                      }
+                    }}
+                    className="text-xs text-[#1A1A1C]/60 file:mr-3 file:py-1 file:px-2.5 file:border file:border-[#1A1A1C]/15 file:text-[10px] file:uppercase file:tracking-widest file:bg-transparent file:text-[#1A1A1C]/80 file:cursor-pointer hover:file:bg-[#F5F3EF]"
+                  />
+                </div>
+              </div>
             </Card>
 
             <Card title="Details">

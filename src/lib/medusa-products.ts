@@ -8,13 +8,9 @@ import type { Product } from "./products"
 import { prisma } from "./db"
 import { MOCK_PRODUCTS } from "./mock-data"
 
-function dbToProduct(p: {
-  id: string; name: string; slug: string; kind: string; subcategory: string | null; caption: string; description: string
-  price: number; compareAtPrice: number | null; metals: string; stones: string; sizes: string
-  tag: string | null; image: string; gallery: string; modelImages: string; bundleIds: string
-  weight: number | null; material: string | null; warranty: string | null
-  published: boolean; featured: boolean
-}): Product {
+import { Product as DbProduct } from "@prisma/client"
+
+function dbToProduct(p: DbProduct): Product {
   return {
     id: p.slug,
     name: p.name,
@@ -29,6 +25,8 @@ function dbToProduct(p: {
     image: p.image,
     gallery: JSON.parse(p.gallery).length > 0 ? JSON.parse(p.gallery) : [p.image],
     desc: p.description,
+    mainHierarchy: p.mainHierarchy ?? undefined,
+    subHierarchy: p.subHierarchy ?? undefined,
     rental: { enabled: false, daily_rate: 0, security_deposit: 0, durations: [] },
   }
 }

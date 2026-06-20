@@ -3,6 +3,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { Package, Plus, Upload, Trash2, Eye, EyeOff } from "lucide-react"
+import { Sidebar } from "@/components/admin/sidebar"
 
 type Product = {
   id: string; name: string; slug: string; kind: string; price: number
@@ -12,13 +13,33 @@ type Product = {
 export function ProductsListClient({ products, user }: { products: Product[]; user: { name: string } }) {
   const router = useRouter()
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [bulkDeleting, setBulkDeleting] = useState(false)
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this product?")) return
     setDeleting(id)
     await fetch(`/api/admin/products/${id}`, { method: "DELETE" })
+    setSelectedIds((prev) => prev.filter((x) => x !== id))
     router.refresh()
     setDeleting(null)
+  }
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Delete ${selectedIds.length} selected products?`)) return
+    setBulkDeleting(true)
+    const res = await fetch("/api/admin/products/bulk", {
+      method: "DELETE",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ids: selectedIds }),
+    })
+    if (res.ok) {
+      setSelectedIds([])
+      router.refresh()
+    } else {
+      alert("Failed to delete products")
+    }
+    setBulkDeleting(false)
   }
 
   const togglePublish = async (id: string, published: boolean) => {
@@ -32,21 +53,21 @@ export function ProductsListClient({ products, user }: { products: Product[]; us
 
   return (
     <div className="flex min-h-screen bg-[#F5F3EF] text-[#1A1A1C]">
-      <aside className="hidden md:flex w-56 flex-col bg-[#0B0B0C] text-white p-6">
-        <Link href="/admin" className="font-display text-xl tracking-tight mb-10">SYRA</Link>
-        <nav className="flex-1 space-y-1">
-          <Link href="/admin" className="flex items-center gap-3 px-3 py-2.5 text-xs uppercase tracking-widest text-white/60 hover:text-white">Dashboard</Link>
-          <Link href="/admin/products" className="flex items-center gap-3 px-3 py-2.5 text-xs uppercase tracking-widest text-white bg-white/10 rounded">Products</Link>
-          <Link href="/admin/orders" className="flex items-center gap-3 px-3 py-2.5 text-xs uppercase tracking-widest text-white/60 hover:text-white">Orders</Link>
-          <Link href="/admin/content" className="flex items-center gap-3 px-3 py-2.5 text-xs uppercase tracking-widest text-white/60 hover:text-white">Content</Link>
-          <Link href="/admin/settings" className="flex items-center gap-3 px-3 py-2.5 text-xs uppercase tracking-widest text-white/60 hover:text-white">Settings</Link>
-        </nav>
-      </aside>
+      <Sidebar userName={user?.name} />
 
       <main className="flex-1 p-8 md:p-12 overflow-y-auto">
         <div className="flex items-center justify-between mb-8">
           <h1 className="font-display text-4xl tracking-tight">Products ({products.length})</h1>
           <div className="flex gap-3">
+            {selectedIds.length > 0 && (
+              <button
+                onClick={handleBulkDelete}
+                disabled={bulkDeleting}
+                className="inline-flex items-center gap-2 bg-red-600 text-white px-4 py-2 text-xs uppercase tracking-widest hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                <Trash2 size={14} /> Delete Selected ({selectedIds.length})
+              </button>
+            )}
             <Link href="/admin/products/bulk-upload" className="inline-flex items-center gap-2 border border-[#1A1A1C]/20 px-4 py-2 text-xs uppercase tracking-widest hover:border-[#c9a36b]">
               <Upload size={14} /> Bulk Upload
             </Link>
@@ -60,6 +81,20 @@ export function ProductsListClient({ products, user }: { products: Product[]; us
           <table className="w-full text-sm">
             <thead className="bg-[#F5F3EF] text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">
               <tr>
+                <th className="px-4 py-3 text-left w-10">
+                  <input
+                    type="checkbox"
+                    checked={products.length > 0 && selectedIds.length === products.length}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedIds(products.map((p) => p.id))
+                      } else {
+                        setSelectedIds([])
+                      }
+                    }}
+                    className="accent-[#c9a36b]"
+                  />
+                </th>
                 <th className="px-4 py-3 text-left">Product</th>
                 <th className="px-4 py-3 text-left">Kind</th>
                 <th className="px-4 py-3 text-left">Price</th>
@@ -71,6 +106,20 @@ export function ProductsListClient({ products, user }: { products: Product[]; us
             <tbody>
               {products.map((p) => (
                 <tr key={p.id} className="border-t border-[#1A1A1C]/5 hover:bg-[#F5F3EF]/50">
+                  <td className="px-4 py-3 w-10">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(p.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedIds([...selectedIds, p.id])
+                        } else {
+                          setSelectedIds(selectedIds.filter((id) => id !== p.id))
+                        }
+                      }}
+                      className="accent-[#c9a36b]"
+                    />
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       {p.image && (

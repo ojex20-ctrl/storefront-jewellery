@@ -3,6 +3,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState, useRef } from "react"
 import { Upload, Download, ArrowLeft, CheckCircle, AlertCircle } from "lucide-react"
+import { Sidebar } from "@/components/admin/sidebar"
 
 type ParsedRow = Record<string, string>
 type Result = { imported: number; errors: { row: number; error: string }[]; total: number } | null
@@ -14,15 +15,21 @@ export function BulkUploadClient() {
   const [headers, setHeaders] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
   const [result, setResult] = useState<Result>(null)
+  const [uploadedAssets, setUploadedAssets] = useState<string[]>([])
+  const [uploadingAssets, setUploadingAssets] = useState(false)
 
   const parseCSV = (text: string) => {
     const lines = text.split("\n").filter((l) => l.trim())
     if (lines.length < 2) return
-    const hdrs = lines[0].split(",").map((h) => h.trim().replace(/^"|"$/g, ""))
+    const firstLine = lines[0]
+    if (!firstLine) return
+    const hdrs = firstLine.split(",").map((h) => h.trim().replace(/^"|"$/g, ""))
     setHeaders(hdrs)
     const parsed: ParsedRow[] = []
     for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].match(/(".*?"|[^,]+)/g)?.map((v) => v.trim().replace(/^"|"$/g, "")) ?? []
+      const line = lines[i]
+      if (!line) continue
+      const values = line.match(/(".*?"|[^,]+)/g)?.map((v) => v.trim().replace(/^"|"$/g, "")) ?? []
       const row: ParsedRow = {}
       hdrs.forEach((h, idx) => { row[h] = values[idx] ?? "" })
       parsed.push(row)
@@ -52,13 +59,7 @@ export function BulkUploadClient() {
 
   return (
     <div className="flex min-h-screen bg-[#F5F3EF] text-[#1A1A1C]">
-      <aside className="hidden md:flex w-56 flex-col bg-[#0B0B0C] text-white p-6">
-        <Link href="/admin" className="font-display text-xl tracking-tight mb-10">SYRA</Link>
-        <nav className="flex-1 space-y-1">
-          <Link href="/admin" className="block px-3 py-2.5 text-xs uppercase tracking-widest text-white/60">Dashboard</Link>
-          <Link href="/admin/products" className="block px-3 py-2.5 text-xs uppercase tracking-widest text-white bg-white/10 rounded">Products</Link>
-        </nav>
-      </aside>
+      <Sidebar />
 
       <main className="flex-1 p-8 md:p-12 overflow-y-auto">
         <Link href="/admin/products" className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-[#1A1A1C]/50 hover:text-[#1A1A1C] mb-6">
@@ -69,10 +70,78 @@ export function BulkUploadClient() {
         {/* Step 1: Download template */}
         <div className="border border-[#1A1A1C]/10 bg-white p-6 mb-6">
           <h3 className="text-xs uppercase tracking-widest text-[#1A1A1C]/50 mb-3">Step 1: Download Template</h3>
-          <p className="text-sm text-[#1A1A1C]/60 mb-4">Download the CSV template, fill in your products, then upload below.</p>
+          <div className="text-sm text-[#1A1A1C]/60 mb-4 space-y-2">
+            <p>Download the CSV template, fill in your products, then upload below.</p>
+            <div className="text-xs border-l-2 border-[#c9a36b] pl-3 py-1 space-y-1">
+              <span className="font-semibold uppercase tracking-wider text-[10px] text-[#1A1A1C]/75">Hierarchy Tagging Columns:</span>
+              <p>• <strong>Main Hierarchy</strong> (or Category, Product Category): <code>Best Sellers</code>, <code>Earrings</code>, <code>Necklace</code>, <code>Bracelets</code>, <code>Rings</code>, <code>Pendants</code></p>
+              <p>• <strong>Sub Hierarchy</strong> (or Collection, Product Collection, Sub Category): <code>Boss Babe Basic</code>, <code>Glam Girl Hours</code>, <code>Everyday Slay</code>, <code>Main Character Campus</code>, <code>Bold Babe Edit</code></p>
+            </div>
+          </div>
           <a href="/api/admin/products/bulk" className="inline-flex items-center gap-2 border border-[#1A1A1C]/20 px-4 py-2 text-xs uppercase tracking-widest hover:border-[#c9a36b]">
             <Download size={14} /> Download Template
           </a>
+        </div>
+
+        {/* Optional: Inline Image Upload helper */}
+        <div className="border border-[#1A1A1C]/10 bg-white p-6 mb-6">
+          <h3 className="text-xs uppercase tracking-widest text-[#1A1A1C]/50 mb-3">Optional: Upload Images to get URLs</h3>
+          <p className="text-xs text-[#1A1A1C]/60 mb-4">Upload product images here, then copy their URLs to paste into your CSV template columns.</p>
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={async (e) => {
+              const files = e.target.files
+              if (!files || files.length === 0) return
+              setUploadingAssets(true)
+              const newUrls: string[] = []
+              for (let i = 0; i < files.length; i++) {
+                const file = files[i]
+                const formData = new FormData()
+                formData.append("file", file)
+                try {
+                  const res = await fetch("/api/admin/media", {
+                    method: "POST",
+                    body: formData,
+                  })
+                  const data = await res.json()
+                  if (data.url) {
+                    newUrls.push(data.url)
+                  } else {
+                    alert(`Upload failed for ${file.name}: ${data.error || "unknown error"}`)
+                  }
+                } catch {
+                  alert(`Network error uploading ${file.name}`)
+                }
+              }
+              setUploadedAssets((prev) => [...newUrls, ...prev])
+              setUploadingAssets(false)
+            }}
+            className="text-xs text-[#1A1A1C]/60 file:mr-4 file:py-2 file:px-4 file:border file:border-[#1A1A1C]/15 file:text-xs file:font-semibold file:bg-transparent file:text-[#1A1A1C]/80 file:cursor-pointer hover:file:bg-[#F5F3EF]"
+          />
+          {uploadingAssets && <p className="text-xs text-[#c9a36b] mt-2">Uploading assets...</p>}
+          {uploadedAssets.length > 0 && (
+            <div className="mt-4 border-t border-[#1A1A1C]/5 pt-4">
+              <h4 className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/40 mb-2">Recent Uploads (Click to copy URL)</h4>
+              <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                {uploadedAssets.map((url, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-2 border border-[#1A1A1C]/5 text-xs bg-[#F5F3EF]/30">
+                    <span className="truncate max-w-[200px] font-mono">{url}</span>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(url)
+                        alert("URL copied to clipboard: " + url)
+                      }}
+                      className="text-[#c9a36b] hover:underline uppercase tracking-widest text-[9px] font-bold"
+                    >
+                      Copy URL
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Step 2: Upload CSV */}

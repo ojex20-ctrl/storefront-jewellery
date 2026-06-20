@@ -44,6 +44,8 @@ export type Product = {
   gallery: string[]
   desc: string
   modelPath?: string
+  mainHierarchy?: string
+  subHierarchy?: string
   /** Rental availability + pricing. Falls back to disabled when admin hasn't configured it. */
   rental: RentalConfig
 }
