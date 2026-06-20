@@ -7,16 +7,16 @@ async function main() {
   // Create admin user
   const hash = await bcrypt.hash("admin123", 12)
   await prisma.adminUser.upsert({
-    where: { email: "admin@syra.com" },
+    where: { email: "adnan@syra.com" },
     update: {},
     create: {
-      email: "admin@syra.com",
+      email: "adnan@syra.com",
       passwordHash: hash,
-      name: "SYRA Admin",
+      name: "Adnan Admin",
       role: "superadmin",
     },
   })
-  console.log("✓ Admin user created: admin@syra.com / admin123")
+  console.log("✓ Admin user created: adnan@syra.com / admin123")
 
   // Seed products from mock data
   const products = [
