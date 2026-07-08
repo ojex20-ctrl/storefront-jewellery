@@ -4,9 +4,11 @@ import { useRouter } from "next/navigation"
 import { useState, type FormEvent } from "react"
 import { motion } from "framer-motion"
 import { toast } from "sonner"
+import { useAuthStore } from "@/stores/auth-store"
 
 export function LoginClient() {
   const router = useRouter()
+  const setSession = useAuthStore((s) => s.setSession)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [pending, setPending] = useState(false)
@@ -22,6 +24,12 @@ export function LoginClient() {
       })
       const data = await res.json()
       if (!res.ok) { toast.error(data.error); return }
+      setSession("customer_cookie", {
+        id: data.user.id,
+        email: data.user.email,
+        first_name: data.user.firstName,
+        last_name: data.user.lastName,
+      })
       toast.success("Welcome back!")
       router.push("/account")
     } catch { toast.error("Network error") }

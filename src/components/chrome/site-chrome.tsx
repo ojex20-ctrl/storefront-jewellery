@@ -57,6 +57,12 @@ export function SiteChrome({
       { href: "/privacy", label: "Privacy" },
     ] },
   ]
+  const computedFooterGroups = brand.social_links?.instagram
+    ? [
+        ...footerGroups,
+        { title: "Social", links: [{ href: brand.social_links.instagram, label: "Instagram" }] },
+      ]
+    : footerGroups
   const marqueeItems = brand.marquee_items ?? [
     `Free shipping over ${priceFmt(brand.free_shipping_threshold)}`,
     tagline.replace("|", " "),
@@ -117,7 +123,7 @@ export function SiteChrome({
         brand={brand.brand_name}
         tagline={tagline}
         marqueeItems={marqueeItems}
-        groups={footerGroups}
+        groups={computedFooterGroups}
         newsletterCopy={newsletterCopy}
         copyright={copyright}
       />

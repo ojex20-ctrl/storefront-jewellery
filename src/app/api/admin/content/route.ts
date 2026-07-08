@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { verifyAdminSession } from "@/lib/admin-auth"
+import { hasPermission } from "@/lib/rbac"
 
 export async function GET(req: Request) {
   const session = await verifyAdminSession()
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!hasPermission(session, "content:write")) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
   const url = new URL(req.url)
   const page = url.searchParams.get("page") ?? "home"
@@ -18,6 +20,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const session = await verifyAdminSession()
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!hasPermission(session, "content:write")) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
   const data = await req.json()
   const section = await prisma.siteContent.create({ data })

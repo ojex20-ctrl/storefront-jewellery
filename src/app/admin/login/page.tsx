@@ -17,14 +17,15 @@ export default function AdminLoginPage() {
       const res = await fetch("/api/admin/auth/login", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: email.trim(), password }),
       })
       if (!res.ok) {
         const data = await res.json()
         setError(data.error || "Login failed")
         return
       }
-      router.push("/admin")
+      router.replace("/admin")
+      router.refresh()
     } catch {
       setError("Network error")
     } finally {
@@ -42,9 +43,9 @@ export default function AdminLoginPage() {
         {error && <p className="text-center text-sm text-red-400">{error}</p>}
         <div className="space-y-4">
           <label className="block">
-            <span className="text-xs uppercase tracking-widest text-white/40">Email</span>
+            <span className="text-xs uppercase tracking-widest text-white/40">Username or Email</span>
             <input
-              type="email"
+              type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

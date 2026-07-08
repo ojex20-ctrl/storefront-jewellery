@@ -24,7 +24,9 @@ export function createAdminToken(user: AdminSession): string {
 }
 
 export async function verifyAdminPassword(email: string, password: string) {
-  const user = await prisma.adminUser.findUnique({ where: { email } })
+  const login = email.trim().toLowerCase()
+  const emailCandidates = login.includes("@") ? [login] : [`${login}@syra.local`, login]
+  const user = await prisma.adminUser.findFirst({ where: { email: { in: emailCandidates } } })
   if (!user) return null
   const valid = await bcrypt.compare(password, user.passwordHash)
   if (!valid) return null

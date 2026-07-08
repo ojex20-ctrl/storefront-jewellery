@@ -29,8 +29,9 @@ export function RegisterClient() {
       })
       const data = await res.json()
       if (!res.ok) { toast.error(data.error); return }
-      toast.success("Account created! Enter the OTP sent to your email.")
-      setStep("otp")
+      toast.success(data.message ?? "Account created!")
+      if (data.otp) setStep("otp")
+      else router.push("/account/login")
     } catch { toast.error("Network error") }
     finally { setPending(false) }
   }

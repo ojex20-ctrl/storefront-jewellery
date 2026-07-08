@@ -95,7 +95,36 @@ const FALLBACK: BrandConfig = {
 
 export async function getBrandConfig(): Promise<BrandConfig> {
   // [MOCK] Backend disabled for UI-only development — always return fallback config.
-  return FALLBACK
+  try {
+    const { prisma } = await import("./db")
+    const rows = await prisma.setting.findMany()
+    const settings = Object.fromEntries(rows.map((row) => [row.key, row.value]))
+    return {
+      ...FALLBACK,
+      brand_name: settings.brand_name || FALLBACK.brand_name,
+      tagline: settings.tagline || FALLBACK.tagline,
+      free_shipping_threshold: Number(settings.free_shipping_threshold || FALLBACK.free_shipping_threshold),
+      nav_links: parseJson(settings.nav_links, FALLBACK.nav_links),
+      announcement_bar: {
+        enabled: settings.announcement_bar_enabled === "true",
+        message: settings.announcement_bar_text || "",
+        href: settings.announcement_bar_link || null,
+      },
+      social_links: {
+        instagram: settings.instagram_url || process.env.PUBLIC_INSTAGRAM_URL || null,
+      },
+      shop_email: settings.contact_email || null,
+      shop_phone: settings.contact_phone || null,
+      shop_whatsapp: settings.whatsapp_number || null,
+      feature_flags: {
+        enable_search: true,
+        enable_route_transitions: true,
+        enable_announcement_bar: settings.announcement_bar_enabled === "true",
+      },
+    }
+  } catch {
+    return FALLBACK
+  }
   // try {
   //   const headers: Record<string, string> = {}
   //   const key = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
@@ -110,4 +139,13 @@ export async function getBrandConfig(): Promise<BrandConfig> {
   // } catch {
   //   return FALLBACK
   // }
+}
+
+function parseJson<T>(raw: string | undefined, fallback: T): T {
+  if (!raw) return fallback
+  try {
+    return JSON.parse(raw) as T
+  } catch {
+    return fallback
+  }
 }

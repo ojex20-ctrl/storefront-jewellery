@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { verifyAdminSession } from "@/lib/admin-auth"
+import { hasPermission } from "@/lib/rbac"
 
 export async function GET(req: Request) {
   const session = await verifyAdminSession()
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!hasPermission(session, "products:read")) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
   const url = new URL(req.url)
   const page = parseInt(url.searchParams.get("page") ?? "1")
@@ -27,6 +29,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const session = await verifyAdminSession()
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!hasPermission(session, "products:write")) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
   try {
     const body = await req.json()

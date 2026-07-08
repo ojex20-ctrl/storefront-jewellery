@@ -2,10 +2,16 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { createOtp } from "@/lib/customer-auth"
 import { sendEmail, resetPasswordEmail } from "@/lib/email"
+import { isSupabaseConfigured, supabaseForgotPassword } from "@/lib/supabase-auth"
 
 export async function POST(req: Request) {
   const { email } = await req.json()
   if (!email) return NextResponse.json({ error: "Email is required" }, { status: 400 })
+
+  if (isSupabaseConfigured()) {
+    await supabaseForgotPassword(email).catch(() => null)
+    return NextResponse.json({ message: "If the email exists, a reset link has been sent." })
+  }
 
   const customer = await prisma.customer.findUnique({ where: { email } })
   if (!customer) {

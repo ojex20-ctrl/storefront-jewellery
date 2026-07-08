@@ -39,14 +39,21 @@ export async function updateProfile(_token: string, data: ProfileUpdate) {
 }
 
 export async function listAddresses(_token: string): Promise<Address[]> {
-  // [MOCK] Return empty address list
-  return []
+  const resp = await fetch("/api/account/addresses", { credentials: "include" })
+  if (!resp.ok) return []
+  const data = await resp.json() as { addresses: Address[] }
+  return data.addresses
 }
 
 export async function addAddress(_token: string, a: Address) {
-  // [MOCK] Simulate save delay
-  await new Promise((r) => setTimeout(r, 600))
-  return { customer: { addresses: [{ ...a, id: `mock-addr-${Date.now()}` }] } }
+  const resp = await fetch("/api/account/addresses", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(a),
+  })
+  if (!resp.ok) throw new Error("Failed to add address")
+  return resp.json()
 }
 
 export async function updateAddress(_token: string, _id: string, a: Address) {
@@ -55,7 +62,13 @@ export async function updateAddress(_token: string, _id: string, a: Address) {
 }
 
 export async function deleteAddress(_token: string, _id: string) {
-  await new Promise((r) => setTimeout(r, 400))
+  const resp = await fetch("/api/account/addresses", {
+    method: "DELETE",
+    headers: { "content-type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ id: _id }),
+  })
+  if (!resp.ok) throw new Error("Failed to delete address")
   return true
 }
 

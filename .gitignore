@@ -4,3 +4,5 @@ node_modules
 prisma/dev.db
 *.tsbuildinfo
 .turbo
+*.tgz
+ssh_deploy.py

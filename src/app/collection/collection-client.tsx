@@ -17,11 +17,14 @@ import { priceFmt } from "@podium/ui/lib"
 import type { Kind, Metal, Stone, Product } from "@/lib/products"
 import { STONE_HEX } from "@/lib/products"
 import { ProductCard } from "@/components/product/product-card"
+import { CompareTray } from "@/components/commerce/compare-tray"
+import { JsonLd } from "@/components/seo/json-ld"
+import { collectionJsonLd } from "@/lib/seo-jsonld"
 
 const KINDS: Kind[] = ["Ring", "Necklace", "Earrings", "Bracelet", "Nose ring"]
 const METALS: Metal[] = ["18k Gold", "Sterling", "Rose Gold", "White Gold"]
 const STONES: Stone[] = ["Diamond", "Sapphire", "Emerald", "Onyx", "Pearl", "None"]
-const AXES = ["kind", "subcategory", "metal", "stone", "rentable"] as const
+const AXES = ["kind", "subcategory", "metal", "stone", "collection", "rentable"] as const
 
 export function CollectionClient({ products }: { products: Product[] }) {
   const filters = useListingFilters({ axes: AXES })
@@ -37,6 +40,7 @@ export function CollectionClient({ products }: { products: Product[] }) {
     subcategory: (p) => p.subcategory ? [p.subcategory] : [],
     metal: (p) => p.metals,
     stone: (p) => p.stones,
+    collection: (p) => p.subHierarchies ?? [],
     rentable: (p) => (p.rental?.enabled ? ["yes"] : []),
   }
 
@@ -54,14 +58,16 @@ export function CollectionClient({ products }: { products: Product[] }) {
     const kind: Record<string, number> = {}
     const metal: Record<string, number> = {}
     const stone: Record<string, number> = {}
+    const collection: Record<string, number> = {}
     const rentable: Record<string, number> = { yes: 0 }
     for (const p of products) {
       kind[p.kind] = (kind[p.kind] ?? 0) + 1
       for (const m of p.metals) metal[m] = (metal[m] ?? 0) + 1
       for (const s of p.stones) stone[s] = (stone[s] ?? 0) + 1
+      for (const c of p.subHierarchies ?? []) collection[c] = (collection[c] ?? 0) + 1
       if (p.rental?.enabled) rentable.yes = (rentable.yes ?? 0) + 1
     }
-    return { kind, metal, stone, rentable }
+    return { kind, metal, stone, collection, rentable }
   }, [products])
 
   const isFacetActive = (axis: string, value: string) =>
@@ -69,6 +75,7 @@ export function CollectionClient({ products }: { products: Product[] }) {
 
   return (
     <div className="overflow-x-hidden">
+      <JsonLd data={collectionJsonLd(products)} />
       {/* Simple collection header */}
       <section className="border-b border-line px-4 py-8 md:px-12 md:py-12">
         <h1 className="font-display text-3xl md:text-4xl tracking-tight">
@@ -105,6 +112,52 @@ export function CollectionClient({ products }: { products: Product[] }) {
               </Pill>
             ))}
           </Row>
+          <Row label="Price">
+            <PriceInput label="Min" value={filters.price[0]} onChange={(value) => filters.setPrice([value, filters.price[1]])} />
+            <PriceInput label="Max" value={filters.price[1]} onChange={(value) => filters.setPrice([filters.price[0], value])} />
+            <span className="font-mono text-[10px] uppercase tracking-widest text-muted">
+              {priceFmt(priceBounds[0])} - {priceFmt(priceBounds[1])}
+            </span>
+          </Row>
+          <Row label="Metal">
+            {METALS.map((m) => (
+              <Pill
+                key={m}
+                active={isFacetActive("metal", m)}
+                onClick={() => filters.toggleFacet("metal", m)}
+                count={counts.metal[m]}
+              >
+                {m}
+              </Pill>
+            ))}
+          </Row>
+          <Row label="Colour">
+            {STONES.map((s) => (
+              <Pill
+                key={s}
+                active={isFacetActive("stone", s)}
+                onClick={() => filters.toggleFacet("stone", s)}
+                count={counts.stone[s]}
+              >
+                <span className="h-2.5 w-2.5 rounded-full border border-line" style={{ background: STONE_HEX[s] }} />
+                {s}
+              </Pill>
+            ))}
+          </Row>
+          {Object.keys(counts.collection).length > 0 && (
+            <Row label="Edit">
+              {Object.keys(counts.collection).map((c) => (
+                <Pill
+                  key={c}
+                  active={isFacetActive("collection", c)}
+                  onClick={() => filters.toggleFacet("collection", c)}
+                  count={counts.collection[c]}
+                >
+                  {c}
+                </Pill>
+              ))}
+            </Row>
+          )}
         </div>
 
         {filters.isActive && (
@@ -154,7 +207,31 @@ export function CollectionClient({ products }: { products: Product[] }) {
           </div>
         )}
       </section>
+      <CompareTray products={products} />
     </div>
+  )
+}
+
+function PriceInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: number | null
+  onChange: (value: number | null) => void
+}) {
+  return (
+    <label className="inline-flex items-center gap-2 border border-line px-2 py-1">
+      <span className="font-mono text-[10px] uppercase tracking-widest text-muted">{label}</span>
+      <input
+        type="number"
+        min={0}
+        value={value ?? ""}
+        onChange={(e) => onChange(e.target.value ? Number(e.target.value) : null)}
+        className="w-20 bg-transparent font-mono text-[11px] outline-none"
+      />
+    </label>
   )
 }
 

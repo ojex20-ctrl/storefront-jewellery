@@ -4,7 +4,20 @@ import { useRouter } from "next/navigation"
 import { useState, type FormEvent } from "react"
 import { Save } from "lucide-react"
 
-export function SettingsClient({ settings }: { settings: Record<string, string> }) {
+type IntegrationStatus = {
+  razorpayConfigured: boolean
+  razorpayKeyId: string
+  smtpConfigured: boolean
+  supabaseConfigured: boolean
+}
+
+export function SettingsClient({
+  settings,
+  integrationStatus,
+}: {
+  settings: Record<string, string>
+  integrationStatus?: IntegrationStatus
+}) {
   const router = useRouter()
   const [form, setForm] = useState(settings)
   const [saving, setSaving] = useState(false)
@@ -58,6 +71,31 @@ export function SettingsClient({ settings }: { settings: Record<string, string> 
 
           <Card title="Social">
             <Field label="Instagram URL" value={form.instagram_url ?? ""} onChange={(v) => set("instagram_url", v)} />
+            <Textarea
+              label="Manual Instagram Feed JSON"
+              value={form.instagram_feed ?? ""}
+              onChange={(v) => set("instagram_feed", v)}
+              placeholder='[{"image_url":"/uploads/post.jpg","caption":"New stack","post_url":"https://instagram.com/p/...","sort_order":1,"is_active":true}]'
+            />
+          </Card>
+
+          <Card title="Integrations">
+            <StatusRow label="Razorpay" value={integrationStatus?.razorpayConfigured ? "Configured" : "Not configured"} />
+            <StatusRow label="Razorpay Key ID" value={maskKey(integrationStatus?.razorpayKeyId ?? "") || "Not set"} />
+            <StatusRow label="Supabase" value={integrationStatus?.supabaseConfigured ? "Configured" : "Not configured"} />
+            <StatusRow label="SMTP Email" value={integrationStatus?.smtpConfigured ? "Configured" : "Not configured"} />
+            <p className="text-xs leading-relaxed text-[#1A1A1C]/50">
+              Webhook URL: /api/webhooks/razorpay. Secret keys stay in environment variables only.
+            </p>
+          </Card>
+
+          <Card title="Menu Manager">
+            <Textarea
+              label="Navigation Links JSON"
+              value={form.nav_links ?? ""}
+              onChange={(v) => set("nav_links", v)}
+              placeholder='[{"href":"/collection?kind=Ring","label":"Rings"}]'
+            />
           </Card>
 
           <Card title="Announcement Bar">
@@ -97,6 +135,46 @@ function Field({ label, value, onChange }: { label: string; value: string; onCha
       <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">{label}</span>
       <input value={value} onChange={(e) => onChange(e.target.value)}
         className="mt-1 w-full border-b border-[#1A1A1C]/15 bg-transparent py-2 text-sm outline-none focus:border-[#c9a36b]" />
+    </label>
+  )
+}
+
+function StatusRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between border-b border-[#1A1A1C]/10 py-2 text-sm">
+      <span className="text-[#1A1A1C]/55">{label}</span>
+      <span className="font-mono text-[11px] uppercase tracking-widest">{value}</span>
+    </div>
+  )
+}
+
+function maskKey(value: string) {
+  if (!value) return ""
+  if (value.length <= 8) return "set"
+  return `${value.slice(0, 6)}...${value.slice(-4)}`
+}
+
+function Textarea({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string
+  value: string
+  onChange: (v: string) => void
+  placeholder?: string
+}) {
+  return (
+    <label className="block">
+      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">{label}</span>
+      <textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        rows={5}
+        className="mt-1 w-full border border-[#1A1A1C]/15 bg-transparent p-3 font-mono text-xs outline-none focus:border-[#c9a36b]"
+      />
     </label>
   )
 }

@@ -19,6 +19,7 @@ import { useAuthStore } from "@/stores/auth-store"
 // import { resolveZioraCartLines } from "@/lib/cart-to-medusa"  // [MOCK] disabled
 import { resolvePaymentChoices, type PaymentChoice } from "@/lib/payment-providers"
 import type { BrandConfig } from "@/lib/brand-config"
+import { openRazorpayCheckout } from "@/lib/razorpay"
 
 /** Perfume cart lines store flacon hex; we don't run them through a colour name lookup. */
 const colorName = (_hex: string) => "Flacon"
@@ -104,6 +105,15 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Order failed")
       const orderId = data.order.id
+
+      if (payment === "razorpay") {
+        await openRazorpayCheckout({
+          internalOrderId: orderId,
+          orderNumber: data.order.orderNumber,
+          customer: details,
+        })
+      }
+
       addOrder({ id: orderId, details, items, total, shipping, payment, createdAt: Date.now() })
       clearCart()
       router.push(`/confirmation/${orderId}`)

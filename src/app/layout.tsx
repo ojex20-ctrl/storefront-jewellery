@@ -11,6 +11,7 @@ import { ThemeBootstrap } from "@/providers/theme-bootstrap"
 import { BrandStyles } from "@/components/chrome/brand-styles"
 import { BrandProvider } from "@/providers/brand-provider"
 import { WhatsAppButton } from "@/components/chrome/whatsapp-button"
+import { MarketingWidgets } from "@/components/marketing/marketing-widgets"
 import { cookies, headers } from "next/headers"
 import { getBrandConfig } from "@/lib/brand-config"
 import { CURRENCY_COOKIE, resolveCurrency, setActiveCurrencyForRender } from "@podium/ui/lib"
@@ -68,7 +69,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <CartDrawer />
           </LenisProvider>
         </BrandProvider>
-        <WhatsAppButton />
+        <MarketingWidgets />
+        <WhatsAppButton
+          phone={process.env.PUBLIC_WHATSAPP_NUMBER ?? process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? brand.shop_whatsapp}
+          message={process.env.NEXT_PUBLIC_WHATSAPP_MESSAGE ?? "Hi, I need help with my order"}
+        />
         <Toaster
           position="bottom-right"
           toastOptions={{
