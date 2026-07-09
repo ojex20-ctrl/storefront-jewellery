@@ -11,6 +11,7 @@ export function LoginClient() {
   const setSession = useAuthStore((s) => s.setSession)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [remember, setRemember] = useState(true)
   const [pending, setPending] = useState(false)
 
   const handleSubmit = async (e: FormEvent) => {
@@ -20,7 +21,7 @@ export function LoginClient() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, remember }),
       })
       const data = await res.json()
       if (!res.ok) { toast.error(data.error); return }
@@ -40,7 +41,7 @@ export function LoginClient() {
     <div className="mx-auto max-w-md px-4 py-24 md:py-32">
       <h1 className="font-display text-3xl mb-2">Sign In</h1>
       <p className="text-sm text-muted mb-8">
-        New here? <Link href="/register" className="text-accent">Create account</Link>
+        New here? <Link href="/account/register" className="text-accent">Create account</Link>
       </p>
       <motion.form
         initial={{ opacity: 0, y: 16 }}
@@ -50,12 +51,16 @@ export function LoginClient() {
       >
         <Input label="Email" type="email" value={email} onChange={setEmail} required />
         <Input label="Password" type="password" value={password} onChange={setPassword} required />
+        <label className="flex items-center gap-3 text-xs text-muted">
+          <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="accent-accent" />
+          <span>Remember me</span>
+        </label>
         <button type="submit" disabled={pending} className="w-full bg-accent text-bg py-4 text-sm font-bold uppercase tracking-wider disabled:opacity-50 mt-2">
           {pending ? "Signing in..." : "Sign In"}
         </button>
       </motion.form>
       <div className="mt-6 text-center text-sm text-muted">
-        <Link href="/forgot-password" className="text-accent">Forgot password?</Link>
+        <Link href="/account/forgot-password" className="text-accent">Forgot password?</Link>
       </div>
     </div>
   )

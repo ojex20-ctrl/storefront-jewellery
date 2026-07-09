@@ -28,9 +28,10 @@ export function AccountClient() {
   const router = useRouter()
   const token = useAuthStore((s) => s.token)
   const customer = useAuthStore((s) => s.customer)
-  const setCustomer = useAuthStore((s) => s.setCustomer)
+  const setSession = useAuthStore((s) => s.setSession)
   const clear = useAuthStore((s) => s.clear)
   const [hydrated, setHydrated] = useState(false)
+  const [checkingSession, setCheckingSession] = useState(true)
   const [orders, setOrders] = useState<StoreOrder[] | null>(null)
   const [loyalty, setLoyalty] = useState<Loyalty | null>(null)
 
@@ -38,23 +39,32 @@ export function AccountClient() {
 
   useEffect(() => {
     if (!hydrated) return
-    if (!token) router.replace("/login?next=/account")
-  }, [hydrated, token, router])
+    void (async () => {
+      const fresh = await refreshCustomer(token || "customer_cookie")
+      if (fresh) {
+        setSession("customer_cookie", fresh)
+        setCheckingSession(false)
+        return
+      }
+      setCheckingSession(false)
+      if (!token) router.replace("/account/login?next=/account")
+    })()
+  }, [hydrated, token, router, setSession])
 
   useEffect(() => {
     if (!token) return
     void (async () => {
       const fresh = await refreshCustomer(token)
-      if (fresh) setCustomer(fresh)
+      if (fresh) setSession("customer_cookie", fresh)
     })()
     void fetchOrders(token, { limit: 5 }).then((r) => setOrders(r.orders))
     void fetch("/api/account/loyalty", { credentials: "include" })
       .then((r) => r.ok ? r.json() : null)
       .then(setLoyalty)
       .catch(() => {})
-  }, [token, setCustomer])
+  }, [token, setSession])
 
-  if (!hydrated || !token) {
+  if (!hydrated || checkingSession) {
     return (
       <div className="px-4 py-32 text-center md:px-8">
         <Eyebrow>Loading...</Eyebrow>
@@ -92,6 +102,18 @@ export function AccountClient() {
               <span>{"->"}</span>
             </Link>
           ))}
+          <Link href="/account/change-password" className="group flex w-full items-center justify-between border-b border-line py-3.5 text-left text-sm text-ink transition-colors hover:text-accent">
+            <span>Change password</span>
+            <span>{"->"}</span>
+          </Link>
+          <div className="border-b border-line py-3.5 text-sm text-muted">
+            <span>Recently Viewed</span>
+            <p className="mt-1 text-xs">Available from your product browsing history.</p>
+          </div>
+          <div className="border-b border-line py-3.5 text-sm text-muted">
+            <span>Saved Payment Methods</span>
+            <p className="mt-1 text-xs">Coming soon.</p>
+          </div>
           <button onClick={handleSignOut} className="group flex w-full items-center justify-between border-b border-line py-3.5 text-left text-sm text-muted transition-colors hover:text-accent">
             <span>Sign out</span>
             <span>{"->"}</span>

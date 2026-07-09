@@ -1,5 +1,7 @@
 node_modules
 .next
+.next-broken-*
+.codex-backups/
 .env
 prisma/dev.db
 *.tsbuildinfo

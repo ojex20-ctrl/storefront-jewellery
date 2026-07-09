@@ -7,11 +7,13 @@ import { Button, Eyebrow } from "@podium/ui/primitives"
 import { Magnetic } from "@podium/ui/motion"
 import { useAuthStore } from "@/stores/auth-store"
 import { updateProfile } from "@/lib/account"
+import { refreshCustomer } from "@/lib/auth"
 
 export function ProfileClient() {
   const router = useRouter()
   const token = useAuthStore((s) => s.token)
   const customer = useAuthStore((s) => s.customer)
+  const setSession = useAuthStore((s) => s.setSession)
   const setCustomer = useAuthStore((s) => s.setCustomer)
   const [first, setFirst] = useState("")
   const [last, setLast] = useState("")
@@ -19,14 +21,14 @@ export function ProfileClient() {
   const [pending, setPending] = useState(false)
 
   useEffect(() => {
-    if (!token) {
-      router.replace("/login?next=/account/profile")
-      return
-    }
+    if (!token) void refreshCustomer("customer_cookie").then((fresh) => {
+      if (fresh) setSession("customer_cookie", fresh)
+      else router.replace("/account/login?next=/account/profile")
+    })
     setFirst(customer?.first_name ?? "")
     setLast(customer?.last_name ?? "")
     setPhone((customer as { phone?: string })?.phone ?? "")
-  }, [token, customer, router])
+  }, [token, customer, router, setSession])
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -73,7 +75,7 @@ export function ProfileClient() {
 
       <p className="mt-6 text-sm text-muted">
         Want to change your password?{" "}
-        <Link href="/forgot-password" className="ulink text-accent">
+        <Link href="/account/change-password" className="ulink text-accent">
           Send me a reset link →
         </Link>
       </p>

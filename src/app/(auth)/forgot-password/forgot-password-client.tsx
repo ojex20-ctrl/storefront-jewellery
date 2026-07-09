@@ -41,7 +41,7 @@ export function ForgotPasswordClient() {
         </p>
         <p className="mt-4 text-sm text-muted">
           Remembered it?{" "}
-          <Link href="/login" className="ulink text-accent">
+          <Link href="/account/login" className="ulink text-accent">
             Sign in →
           </Link>
         </p>
@@ -63,7 +63,7 @@ export function ForgotPasswordClient() {
             <p className="mt-3 text-sm text-muted">
               If the email matches an account, the link arrives within a minute.
             </p>
-            <Link href="/login" className="ulink mt-6 inline-block font-mono text-[11px] uppercase tracking-widest text-accent">
+            <Link href="/account/login" className="ulink mt-6 inline-block font-mono text-[11px] uppercase tracking-widest text-accent">
               Back to sign in →
             </Link>
           </div>

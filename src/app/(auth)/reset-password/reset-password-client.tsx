@@ -22,15 +22,15 @@ export function ResetPasswordClient() {
       toast.error("Passwords don't match")
       return
     }
-    if (password.length < 6) {
-      toast.error("Password should be at least 6 characters")
+    if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password)) {
+      toast.error("Use 8+ characters with uppercase, lowercase, and a number")
       return
     }
     setPending(true)
     try {
       await performPasswordReset(token, password)
       toast.success("Password updated. Sign in with the new one.")
-      router.push("/login")
+      router.push("/account/login")
     } catch {
       toast.error("Reset link expired or invalid. Request a new one.")
     } finally {
@@ -45,7 +45,7 @@ export function ResetPasswordClient() {
         <p className="mt-3 font-display text-4xl">
           <em>Reset link is missing or expired.</em>
         </p>
-        <Link href="/forgot-password" className="ulink mt-8 inline-block font-mono text-[11px] uppercase tracking-widest text-accent">
+        <Link href="/account/forgot-password" className="ulink mt-8 inline-block font-mono text-[11px] uppercase tracking-widest text-accent">
           Request a new link →
         </Link>
       </div>

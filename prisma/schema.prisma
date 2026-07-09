@@ -208,6 +208,7 @@ model Customer {
   lastName     String   @default("")
   phone        String   @default("")
   verified     Boolean  @default(false)
+  emailVerified Boolean @default(false) @map("email_verified")
   googleId     String?
   avatar       String?
   createdAt    DateTime @default(now())
@@ -230,6 +231,40 @@ model CustomerAddress {
   updatedAt    DateTime @updatedAt
 
   @@index([customerId])
+}
+
+model Wishlist {
+  id         String   @id @default(cuid())
+  customerId String
+  productId  String
+  createdAt  DateTime @default(now())
+
+  @@unique([customerId, productId])
+  @@index([customerId])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  customerId String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([customerId])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  customerId String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([customerId])
+  @@index([expiresAt])
 }
 
 model InstagramFeedItem {

@@ -7,7 +7,7 @@ const SMTP_HOST = process.env.SMTP_HOST
 const SMTP_PORT = Number(process.env.SMTP_PORT || 587)
 const SMTP_USER = process.env.SMTP_USER
 const SMTP_PASS = process.env.SMTP_PASS
-const FROM_EMAIL = process.env.SMTP_FROM_EMAIL ?? process.env.EMAIL_FROM ?? "SYRA <noreply@syra.in>"
+const FROM_EMAIL = process.env.SMTP_FROM ?? process.env.SMTP_FROM_EMAIL ?? process.env.EMAIL_FROM ?? "SYRA <noreply@syra.in>"
 
 function isSmtpConfigured() {
   return Boolean(SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASS && FROM_EMAIL)
@@ -230,6 +230,30 @@ export function verificationEmail(firstName: string, otp: string) {
       <p>Your verification code is:</p>
       <div style="margin:20px 0;padding:20px;background:#f5f3ee;text-align:center;font-size:32px;font-weight:bold;letter-spacing:8px;">${otp}</div>
       <p style="color:#777;font-size:12px;">This code expires in 5 minutes.</p>
+    </div>`,
+  }
+}
+
+export function verificationLinkEmail(firstName: string, link: string) {
+  return {
+    subject: "SYRA - Verify your email",
+    html: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:560px;margin:0 auto;padding:40px 20px;color:#1a1a1c">
+      <h2>Welcome to SYRA, ${firstName || "there"}.</h2>
+      <p>Please verify your email before signing in.</p>
+      <p style="margin:28px 0"><a href="${link}" style="background:#0b0b0c;color:#fff;padding:14px 22px;text-decoration:none;text-transform:uppercase;letter-spacing:.12em;font-size:12px">Verify email</a></p>
+      <p style="color:#777;font-size:12px">This link expires in 24 hours.</p>
+    </div>`,
+  }
+}
+
+export function resetPasswordLinkEmail(firstName: string, link: string) {
+  return {
+    subject: "SYRA - Reset your password",
+    html: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:560px;margin:0 auto;padding:40px 20px;color:#1a1a1c">
+      <h2>Hi ${firstName || "there"},</h2>
+      <p>Use this secure link to set a new SYRA password.</p>
+      <p style="margin:28px 0"><a href="${link}" style="background:#0b0b0c;color:#fff;padding:14px 22px;text-decoration:none;text-transform:uppercase;letter-spacing:.12em;font-size:12px">Reset password</a></p>
+      <p style="color:#777;font-size:12px">This link expires in 30 minutes. If you did not request it, ignore this email.</p>
     </div>`,
   }
 }

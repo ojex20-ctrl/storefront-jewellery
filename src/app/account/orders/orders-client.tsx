@@ -1,7 +1,6 @@
 "use client"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Button, Eyebrow } from "@podium/ui/primitives"
 import { LoaderBar } from "@podium/ui/motion"
@@ -10,21 +9,16 @@ import { useAuthStore } from "@/stores/auth-store"
 import { fetchOrders, type StoreOrder } from "@/lib/orders"
 
 export function OrdersClient() {
-  const router = useRouter()
   const token = useAuthStore((s) => s.token)
   const [orders, setOrders] = useState<StoreOrder[] | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!token) {
-      router.replace("/login?next=/account/orders")
-      return
-    }
-    void fetchOrders(token, { limit: 50 }).then((r) => {
+    void fetchOrders(token || "customer_cookie", { limit: 50 }).then((r) => {
       setOrders(r.orders)
       setLoading(false)
     })
-  }, [token, router])
+  }, [token])
 
   return (
     <div className="mx-auto max-w-[960px] px-4 py-14 md:px-8 md:py-20">

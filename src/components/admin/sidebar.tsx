@@ -25,11 +25,11 @@ export function Sidebar({ userName }: { userName?: string }) {
   ]
 
   return (
-    <aside className="hidden md:flex w-56 flex-col bg-[#0B0B0C] text-white p-6 shrink-0">
-      <Link href="/admin" className="font-display text-xl tracking-tight mb-10 block">
+    <aside className="admin-sidebar flex w-full flex-col bg-[#0B0B0C] text-white p-4 shrink-0 md:w-56 md:p-6">
+      <Link href="/admin" className="font-display text-xl tracking-tight mb-4 block md:mb-10">
         SYRA
       </Link>
-      <nav className="flex-1 space-y-1">
+      <nav className="flex-1 grid grid-cols-2 gap-1 md:block md:space-y-1">
         {links.map((l) => {
           const isActive = pathname === l.href || (l.href !== "/admin" && pathname.startsWith(l.href))
           return (

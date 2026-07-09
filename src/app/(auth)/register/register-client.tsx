@@ -14,6 +14,7 @@ export function RegisterClient() {
   const [phone, setPhone] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [acceptTerms, setAcceptTerms] = useState(false)
   const [otp, setOtp] = useState("")
   const [pending, setPending] = useState(false)
 
@@ -25,13 +26,12 @@ export function RegisterClient() {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ firstName, lastName, email, phone, password, confirmPassword }),
+        body: JSON.stringify({ firstName, lastName, email, phone, password, confirmPassword, acceptTerms }),
       })
       const data = await res.json()
       if (!res.ok) { toast.error(data.error); return }
       toast.success(data.message ?? "Account created!")
-      if (data.otp) setStep("otp")
-      else router.push("/account/login")
+      router.push("/account/login")
     } catch { toast.error("Network error") }
     finally { setPending(false) }
   }
@@ -79,7 +79,7 @@ export function RegisterClient() {
     <div className="mx-auto max-w-md px-4 py-24 md:py-32">
       <h1 className="font-display text-3xl mb-2">Create Account</h1>
       <p className="text-sm text-muted mb-8">
-        Already have an account? <Link href="/login" className="text-accent">Sign in</Link>
+        Already have an account? <Link href="/account/login" className="text-accent">Sign in</Link>
       </p>
       <motion.form
         initial={{ opacity: 0, y: 16 }}
@@ -95,6 +95,16 @@ export function RegisterClient() {
         <Input label="Mobile Number" type="tel" value={phone} onChange={setPhone} />
         <Input label="Password" type="password" value={password} onChange={setPassword} required />
         <Input label="Confirm Password" type="password" value={confirmPassword} onChange={setConfirmPassword} required />
+        <label className="flex items-start gap-3 text-xs text-muted">
+          <input
+            type="checkbox"
+            checked={acceptTerms}
+            onChange={(e) => setAcceptTerms(e.target.checked)}
+            required
+            className="mt-1 accent-accent"
+          />
+          <span>I accept the <Link href="/terms" className="text-accent">Terms</Link> and <Link href="/privacy" className="text-accent">Privacy Policy</Link>.</span>
+        </label>
         <button type="submit" disabled={pending} className="w-full bg-accent text-bg py-4 text-sm font-bold uppercase tracking-wider disabled:opacity-50 mt-2">
           {pending ? "Creating..." : "Create Account"}
         </button>
