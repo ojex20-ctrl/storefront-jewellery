@@ -21,41 +21,48 @@ export async function PUT(req: Request, { params }: Ctx) {
     const { id } = await params
     const data = await req.json()
 
-    // 1. Images
-    const imagesArr = Array.isArray(data.images) ? data.images : (data.image ? [data.image] : [])
-    data.images = JSON.stringify(imagesArr)
-    data.image = imagesArr[0] || ""
-    data.gallery = JSON.stringify(imagesArr)
+    // Preserve existing media/classification fields on partial updates like Live/Draft toggles.
+    if ("images" in data || "image" in data) {
+      const imagesArr = Array.isArray(data.images) ? data.images : (data.image ? [data.image] : [])
+      data.images = JSON.stringify(imagesArr)
+      data.image = imagesArr[0] || ""
+      data.gallery = JSON.stringify(imagesArr)
+    }
 
-    // 2. Kinds
-    const kindsArr = Array.isArray(data.kinds) ? data.kinds : (data.kind ? [data.kind] : [])
-    data.kinds = JSON.stringify(kindsArr)
-    data.kind = kindsArr[0] || "Ring"
+    if ("kinds" in data || "kind" in data) {
+      const kindsArr = Array.isArray(data.kinds) ? data.kinds : (data.kind ? [data.kind] : [])
+      data.kinds = JSON.stringify(kindsArr)
+      data.kind = kindsArr[0] || "Ring"
+    }
 
-    // 3. Main Hierarchies
-    const mainArr = Array.isArray(data.mainHierarchies) ? data.mainHierarchies : (data.mainHierarchy ? [data.mainHierarchy] : [])
-    data.mainHierarchies = JSON.stringify(mainArr)
-    data.mainHierarchy = mainArr[0] || null
+    if ("mainHierarchies" in data || "mainHierarchy" in data) {
+      const mainArr = Array.isArray(data.mainHierarchies) ? data.mainHierarchies : (data.mainHierarchy ? [data.mainHierarchy] : [])
+      data.mainHierarchies = JSON.stringify(mainArr)
+      data.mainHierarchy = mainArr[0] || null
+    }
 
-    // 4. Sub Hierarchies
-    const subArr = Array.isArray(data.subHierarchies) ? data.subHierarchies : (data.subHierarchy ? [data.subHierarchy] : [])
-    data.subHierarchies = JSON.stringify(subArr)
-    data.subHierarchy = subArr[0] || null
+    if ("subHierarchies" in data || "subHierarchy" in data) {
+      const subArr = Array.isArray(data.subHierarchies) ? data.subHierarchies : (data.subHierarchy ? [data.subHierarchy] : [])
+      data.subHierarchies = JSON.stringify(subArr)
+      data.subHierarchy = subArr[0] || null
+    }
 
-    // 5. Ring Type
-    const ringTypeArr = Array.isArray(data.ringType) ? data.ringType : []
-    data.ringType = JSON.stringify(ringTypeArr)
+    if ("ringType" in data) {
+      const ringTypeArr = Array.isArray(data.ringType) ? data.ringType : []
+      data.ringType = JSON.stringify(ringTypeArr)
+    }
 
-    // 6. Tags
-    const tagsArr = Array.isArray(data.tags) ? data.tags : (data.tag ? [data.tag] : [])
-    data.tags = JSON.stringify(tagsArr)
-    data.tag = tagsArr[0] || null
+    if ("tags" in data || "tag" in data) {
+      const tagsArr = Array.isArray(data.tags) ? data.tags : (data.tag ? [data.tag] : [])
+      data.tags = JSON.stringify(tagsArr)
+      data.tag = tagsArr[0] || null
+    }
 
     // Ensure JSON fields are strings
     for (const field of ["metals", "stones", "sizes", "modelImages", "bundleIds"]) {
       if (Array.isArray(data[field])) {
         data[field] = JSON.stringify(data[field])
-      } else if (data[field] === undefined) {
+      } else if (field in data && data[field] === undefined) {
         data[field] = "[]"
       }
     }
