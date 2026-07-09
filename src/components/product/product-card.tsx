@@ -25,20 +25,20 @@ export function ProductCard({ product, index = 0 }: Props) {
         href={`/products/${product.id}`}
         className="flex flex-col gap-3"
       >
-        <div className="relative aspect-[3/4] overflow-hidden bg-bg-2">
+        <div className="product-card-media relative aspect-[3/4] overflow-hidden bg-bg-2">
           <div className="absolute right-3 top-3 z-10">
             <ProductActions productId={product.id} compact />
           </div>
           {/* Main Image */}
           <OptimizedImage
             src={product.image}
-            className={`object-cover transition-opacity duration-300 ${product.gallery[1] ? 'group-hover:opacity-0' : ''}`}
+            className={`product-card-image-main object-cover transition-all duration-300 ${product.gallery[1] ? 'group-hover:opacity-0' : ''}`}
             alt={product.name}
           />
           
           {/* Hover Image (Instant Swap) */}
           {product.gallery[1] && (
-            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div className="product-card-hover-image absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <OptimizedImage src={product.gallery[1]} alt={`${product.name} alternate view`} />
             </div>
           )}

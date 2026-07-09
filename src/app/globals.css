@@ -389,3 +389,17 @@ aside.fixed.inset-y-0.left-0 > div.border-t.border-line.px-5.py-3 {
 .admin-multiselect summary::-webkit-details-marker {
   display: none;
 }
+
+@media (hover: none) and (pointer: coarse) {
+  .product-card-media .product-card-image-main {
+    opacity: 1 !important;
+  }
+
+  .product-card-media .product-card-hover-image {
+    display: none;
+  }
+
+  .product-card-media:active .product-card-image-main {
+    transform: scale(1.08);
+  }
+}
