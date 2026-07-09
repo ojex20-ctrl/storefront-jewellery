@@ -153,6 +153,12 @@
   .card { background: transparent; }
 }
 
+/* SYRA does not show the shared Dubai live clock in storefront navigation. */
+header > div.hidden.items-center.gap-7 > span.ml-2.inline-flex,
+aside.fixed.inset-y-0.left-0 > div.border-t.border-line.px-5.py-3 {
+  display: none !important;
+}
+
 /* Marquee keyframes - must be outside @layer for inline style animation to work */
 @keyframes marquee {
   from { transform: translateX(0); }

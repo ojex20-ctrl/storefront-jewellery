@@ -7,3 +7,4 @@ prisma/dev.db
 *.tgz
 ssh_deploy.py
 deploy.py
+prod_info.txt
