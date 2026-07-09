@@ -6,3 +6,4 @@ prisma/dev.db
 .turbo
 *.tgz
 ssh_deploy.py
+deploy.py

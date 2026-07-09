@@ -16,7 +16,7 @@ export function OptimizedImage({
   sizes = "(max-width: 768px) 50vw, 25vw",
   priority = false,
 }: Props) {
-  const image = src || "/placeholder.png"
+  const image = src || "/jewellery/gen-diamond-ring.png"
   const isUploadedImage = image.startsWith("/uploads/")
   return (
     <Image
