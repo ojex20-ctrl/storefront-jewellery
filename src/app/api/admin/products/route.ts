@@ -1,14 +1,24 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { verifyAdminSession } from "@/lib/admin-auth"
+import { normalizeProductInput } from "@/lib/product-input"
+
+const MAX_LIMIT = 100
+
+/** Parse an int query param, falling back and clamping to [min, max]. */
+function clampInt(raw: string | null, fallback: number, min: number, max: number): number {
+  const n = parseInt(raw ?? "", 10)
+  if (!Number.isFinite(n)) return fallback
+  return Math.min(Math.max(n, min), max)
+}
 
 export async function GET(req: Request) {
   const session = await verifyAdminSession()
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
   const url = new URL(req.url)
-  const page = parseInt(url.searchParams.get("page") ?? "1")
-  const limit = parseInt(url.searchParams.get("limit") ?? "50")
+  const page = clampInt(url.searchParams.get("page"), 1, 1, Number.MAX_SAFE_INTEGER)
+  const limit = clampInt(url.searchParams.get("limit"), 50, 1, MAX_LIMIT)
   const search = url.searchParams.get("search") ?? ""
 
   const where = search ? { name: { contains: search } } : {}
@@ -35,57 +45,15 @@ export async function POST(req: Request) {
 
     const cleanItems = []
     for (const item of items) {
-      const data = { ...item }
-      if (!data.name) {
+      if (!item?.name) {
         return NextResponse.json({ error: "Product name is required" }, { status: 400 })
       }
       // Auto-generate slug if not provided
-      if (!data.slug) {
-        data.slug = data.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
+      if (!item.slug) {
+        item.slug = String(item.name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
       }
-
-      // 1. Images
-      const imagesArr = Array.isArray(data.images) ? data.images : (data.image ? [data.image] : [])
-      data.images = JSON.stringify(imagesArr)
-      data.image = imagesArr[0] || ""
-      data.gallery = JSON.stringify(imagesArr)
-
-      // 2. Kinds
-      const kindsArr = Array.isArray(data.kinds) ? data.kinds : (data.kind ? [data.kind] : [])
-      data.kinds = JSON.stringify(kindsArr)
-      data.kind = kindsArr[0] || "Ring"
-
-      // 3. Main Hierarchies
-      const mainArr = Array.isArray(data.mainHierarchies) ? data.mainHierarchies : (data.mainHierarchy ? [data.mainHierarchy] : [])
-      data.mainHierarchies = JSON.stringify(mainArr)
-      data.mainHierarchy = mainArr[0] || null
-
-      // 4. Sub Hierarchies
-      const subArr = Array.isArray(data.subHierarchies) ? data.subHierarchies : (data.subHierarchy ? [data.subHierarchy] : [])
-      data.subHierarchies = JSON.stringify(subArr)
-      data.subHierarchy = subArr[0] || null
-
-      // 5. Ring Type
-      const ringTypeArr = Array.isArray(data.ringType) ? data.ringType : []
-      data.ringType = JSON.stringify(ringTypeArr)
-
-      // 6. Tags
-      const tagsArr = Array.isArray(data.tags) ? data.tags : (data.tag ? [data.tag] : [])
-      data.tags = JSON.stringify(tagsArr)
-      data.tag = tagsArr[0] || null
-
-      // Ensure JSON fields are strings
-      for (const field of ["metals", "stones", "sizes", "modelImages", "bundleIds"]) {
-        if (Array.isArray(data[field])) {
-          data[field] = JSON.stringify(data[field])
-        } else if (data[field] === undefined) {
-          data[field] = "[]"
-        }
-      }
-
-      // Strip virtual fields and database-generated id to prevent prisma validation crash
-      const { vibe, id, ...rest } = data
-      cleanItems.push(rest)
+      // Whitelist + normalize (drops unknown/virtual fields, serializes arrays, coerces numbers)
+      cleanItems.push(normalizeProductInput(item))
     }
 
     // Database insertion wrapped in a transaction for all-or-nothing safety

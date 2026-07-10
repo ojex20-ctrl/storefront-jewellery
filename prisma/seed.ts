@@ -4,19 +4,26 @@ import bcrypt from "bcryptjs"
 const prisma = new PrismaClient()
 
 async function main() {
-  // Create admin user
-  const hash = await bcrypt.hash("admin123", 12)
-  await prisma.adminUser.upsert({
-    where: { email: "adnan@syra.com" },
-    update: {},
-    create: {
-      email: "adnan@syra.com",
-      passwordHash: hash,
-      name: "Adnan Admin",
-      role: "superadmin",
-    },
-  })
-  console.log("✓ Admin user created: adnan@syra.com / admin123")
+  // Create admin user — credentials come from the environment, never hardcoded.
+  const adminEmail = process.env.SEED_ADMIN_EMAIL
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD
+  const adminName = process.env.SEED_ADMIN_NAME ?? "Admin"
+  if (adminEmail && adminPassword) {
+    const hash = await bcrypt.hash(adminPassword, 12)
+    await prisma.adminUser.upsert({
+      where: { email: adminEmail },
+      update: { passwordHash: hash, name: adminName, role: "superadmin" },
+      create: {
+        email: adminEmail,
+        passwordHash: hash,
+        name: adminName,
+        role: "superadmin",
+      },
+    })
+    console.log(`✓ Admin user created: ${adminEmail}`)
+  } else {
+    console.log("⚠ Skipping admin user — set SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD to create one")
+  }
 
   // Seed products from mock data
   const products = [

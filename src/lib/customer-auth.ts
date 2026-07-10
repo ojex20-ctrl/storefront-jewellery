@@ -4,7 +4,16 @@ import bcrypt from "bcryptjs"
 import crypto from "crypto"
 import { prisma } from "./db"
 
-const SECRET = process.env.NEXTAUTH_SECRET ?? "syra-nextauth-secret-2024"
+/**
+ * Signing secret for customer session JWTs. Read lazily so a missing value
+ * fails at request time rather than at build. No hardcoded fallback — a known
+ * default would let anyone forge a customer session.
+ */
+function getSecret(): string {
+  const secret = process.env.NEXTAUTH_SECRET
+  if (!secret) throw new Error("NEXTAUTH_SECRET is not set")
+  return secret
+}
 
 export type CustomerSession = {
   id: string
@@ -18,14 +27,14 @@ export async function verifyCustomerSession(): Promise<CustomerSession | null> {
   const token = cookieStore.get("customer_token")?.value
   if (!token) return null
   try {
-    return jwt.verify(token, SECRET) as CustomerSession
+    return jwt.verify(token, getSecret()) as CustomerSession
   } catch {
     return null
   }
 }
 
 export function createCustomerToken(user: CustomerSession): string {
-  return jwt.sign(user, SECRET, { expiresIn: "30d" })
+  return jwt.sign(user, getSecret(), { expiresIn: "30d" })
 }
 
 export async function hashPassword(password: string): Promise<string> {

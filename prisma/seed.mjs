@@ -4,13 +4,21 @@ import bcrypt from "bcryptjs"
 const prisma = new PrismaClient()
 
 async function main() {
-  const hash = await bcrypt.hash("admin123", 12)
-  await prisma.adminUser.upsert({
-    where: { email: "adnan@syra.com" },
-    update: {},
-    create: { email: "adnan@syra.com", passwordHash: hash, name: "Adnan Admin", role: "superadmin" },
-  })
-  console.log("✓ Admin user: adnan@syra.com / admin123")
+  // Admin credentials come from the environment — never hardcoded.
+  const adminEmail = process.env.SEED_ADMIN_EMAIL
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD
+  const adminName = process.env.SEED_ADMIN_NAME ?? "Admin"
+  if (adminEmail && adminPassword) {
+    const hash = await bcrypt.hash(adminPassword, 12)
+    await prisma.adminUser.upsert({
+      where: { email: adminEmail },
+      update: { passwordHash: hash, name: adminName, role: "superadmin" },
+      create: { email: adminEmail, passwordHash: hash, name: adminName, role: "superadmin" },
+    })
+    console.log(`✓ Admin user: ${adminEmail}`)
+  } else {
+    console.log("⚠ Skipping admin user — set SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD to create one")
+  }
 
   const products = [
     { name: "Classic Aurelia Band", slug: "syra-ring-01", kind: "Ring", caption: "The essence of minimalist luxury.", price: 12000, metals: '["18k Gold","White Gold"]', stones: '["Diamond"]', sizes: '["6","7","8"]', tag: "BESTSELLER", image: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&q=80&w=800", gallery: '["https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&q=80&w=800","https://images.unsplash.com/photo-1603561591411-0e7320b97d17?auto=format&fit=crop&q=80&w=800"]', description: "A timeless 18k gold band featuring a single hand-set diamond. Engineered with PVD anti-tarnish technology for daily wear.", material: "Surgical Steel + 18k Gold PVD", warranty: "2 Year Anti-Tarnish Guarantee" },

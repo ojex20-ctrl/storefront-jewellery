@@ -1,42 +1,53 @@
 /**
- * Email sender — uses Brevo (free 300/day) or Resend (free 100/day).
- * Set BREVO_API_KEY or RESEND_API_KEY in .env
- * If neither is set, logs to console (dev mode).
+ * Email sender — direct SMTP (Gmail) via nodemailer.
+ *
+ * Required env (see .env.example):
+ *   SMTP_HOST   (default smtp.gmail.com)
+ *   SMTP_PORT   (default 465)
+ *   SMTP_USER   Gmail address used to authenticate
+ *   SMTP_PASS   Gmail App Password (not the account password)
+ *   EMAIL_FROM  From header, e.g. "SYRA <syrathelabel1@gmail.com>"
+ *
+ * If SMTP_USER / SMTP_PASS are not set, falls back to logging (dev mode).
+ * Gmail requires the From address to match the authenticated SMTP_USER.
  */
 
-const BREVO_KEY = process.env.BREVO_API_KEY
-const RESEND_KEY = process.env.RESEND_API_KEY
-const FROM_EMAIL = process.env.EMAIL_FROM ?? "SYRA <noreply@syra.in>"
+import "server-only"
+import nodemailer, { type Transporter } from "nodemailer"
+
+const SMTP_HOST = process.env.SMTP_HOST ?? "smtp.gmail.com"
+const SMTP_PORT = parseInt(process.env.SMTP_PORT ?? "465", 10)
+const SMTP_USER = process.env.SMTP_USER
+// Gmail App Passwords are shown with spaces ("afqf tgdv omnc wwgw"); strip them.
+const SMTP_PASS = process.env.SMTP_PASS?.replace(/\s+/g, "")
+const FROM_EMAIL = process.env.EMAIL_FROM ?? (SMTP_USER ? `SYRA <${SMTP_USER}>` : "SYRA <noreply@syra.in>")
+
+// Reuse a single connection pool across requests (Next.js keeps the module warm).
+let transporter: Transporter | null = null
+function getTransporter(): Transporter | null {
+  if (!SMTP_USER || !SMTP_PASS) return null
+  if (!transporter) {
+    transporter = nodemailer.createTransport({
+      host: SMTP_HOST,
+      port: SMTP_PORT,
+      secure: SMTP_PORT === 465, // true for 465 (SSL), false for 587 (STARTTLS)
+      auth: { user: SMTP_USER, pass: SMTP_PASS },
+    })
+  }
+  return transporter
+}
 
 export async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
-  if (BREVO_KEY) {
-    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
-      method: "POST",
-      headers: { "api-key": BREVO_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        sender: { email: FROM_EMAIL.match(/<(.+)>/)?.[1] ?? "noreply@syra.in", name: "SYRA" },
-        to: [{ email: to }],
-        subject,
-        htmlContent: html,
-      }),
-    })
-    if (!res.ok) throw new Error(`Brevo: ${res.status}`)
-    return true
+  const tx = getTransporter()
+
+  if (!tx) {
+    // Dev mode — no SMTP configured, log instead of sending.
+    console.log(`[EMAIL] To: ${to} | Subject: ${subject}`)
+    return false
   }
 
-  if (RESEND_KEY) {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: FROM_EMAIL, to: [to], subject, html }),
-    })
-    if (!res.ok) throw new Error(`Resend: ${res.status}`)
-    return true
-  }
-
-  // Dev mode — log to console
-  console.log(`[EMAIL] To: ${to} | Subject: ${subject}`)
-  return false
+  await tx.sendMail({ from: FROM_EMAIL, to, subject, html })
+  return true
 }
 
 export function verificationEmail(firstName: string, otp: string) {

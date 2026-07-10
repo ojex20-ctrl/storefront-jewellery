@@ -38,8 +38,8 @@ Change these values:
 - `DATABASE_URL` — change the password
 - `APP_SECRET` — generate with: `openssl rand -hex 32`
 - `APP_URL` — your domain or `http://144.91.102.75:4000`
-- `BREVO_API_KEY` — get free from https://app.brevo.com (300 emails/day free)
-- `EMAIL_FROM` — your sender email
+- `SMTP_USER` / `SMTP_PASS` — Gmail address + App Password (see below)
+- `EMAIL_FROM` — your sender email (must match `SMTP_USER` for Gmail)
 - `ADMIN_PASSWORD` — your admin password
 - `DOMAIN` — your domain (for SSL)
 
@@ -121,15 +121,17 @@ docker compose exec app node scripts/backup.js
 docker compose exec -T db psql -U syra syra_notifications < backups/backup-FILE.sql
 ```
 
-## Get Brevo API Key (Free)
+## Get a Gmail App Password
 
-1. Go to https://app.brevo.com
-2. Sign up (free)
-3. Go to SMTP & API → API Keys
-4. Create a new key
-5. Copy it to your `.env` as `BREVO_API_KEY`
+Emails are sent over Gmail SMTP. You need an App Password (not your normal login):
 
-Free tier: 300 emails/day — enough for most small stores.
+1. Enable 2-Step Verification on the Gmail account.
+2. Go to Google Account → Security → App passwords.
+3. Create a password for "Mail" / "Other".
+4. Copy the 16-character password into `.env` as `SMTP_PASS` (spaces are ignored).
+5. Set `SMTP_USER` and `EMAIL_FROM` to the same Gmail address.
+
+Gmail allows ~500 emails/day on a free account — enough for most small stores.
 
 ## Order Statuses
 

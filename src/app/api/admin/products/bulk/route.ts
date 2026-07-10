@@ -125,6 +125,12 @@ export async function POST(req: Request) {
         continue
       }
 
+      const price = parseInt(String(row.price).trim(), 10)
+      if (!Number.isFinite(price) || price < 0) {
+        errors.push({ row: rowIdx, error: `Invalid price '${row.price}': must be a non-negative number` })
+        continue
+      }
+
       // Parse Images
       const imgRes = parseRowImages(row, rowIdx)
       if (imgRes.error) {
@@ -191,7 +197,7 @@ export async function POST(req: Request) {
         where: { slug },
         update: {
           name: row.name,
-          price: parseInt(row.price),
+          price: price,
           caption: row.caption || "",
           description: row.description || "",
           metals: row.metals ? JSON.stringify(row.metals.split(";").map((s: string) => s.trim())) : '["18k Gold"]',
@@ -219,7 +225,7 @@ export async function POST(req: Request) {
         create: {
           slug,
           name: row.name,
-          price: parseInt(row.price),
+          price: price,
           caption: row.caption || "",
           description: row.description || "",
           metals: row.metals ? JSON.stringify(row.metals.split(";").map((s: string) => s.trim())) : '["18k Gold"]',

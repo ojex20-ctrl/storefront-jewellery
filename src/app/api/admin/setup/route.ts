@@ -13,10 +13,15 @@ import { prisma } from "@/lib/db"
  */
 export async function POST(req: Request) {
   try {
+    // The endpoint is disabled unless a setup secret is explicitly configured.
+    // No fallback default — a known default would let anyone create a superadmin.
+    const expectedSecret = process.env.SETUP_SECRET
+    if (!expectedSecret) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 })
+    }
+
     const { secret, email, password, name } = await req.json()
 
-    // Validate secret
-    const expectedSecret = process.env.SETUP_SECRET ?? "syra-setup-2024"
     if (!secret || secret !== expectedSecret) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
@@ -47,9 +52,6 @@ export async function POST(req: Request) {
     })
   } catch (err) {
     console.error("[setup] error:", err)
-    return NextResponse.json(
-      { error: "Internal server error", detail: String(err) },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
