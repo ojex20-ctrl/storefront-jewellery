@@ -25,5 +25,13 @@ export function requestIp(req: Request) {
 export function validRequestOrigin(req: Request) {
   const origin = req.headers.get("origin")
   if (!origin) return true
-  return new URL(origin).host === new URL(req.url).host
+  const originHost = new URL(origin).host
+  const requestHost = new URL(req.url).host
+  const forwardedHost = req.headers.get("x-forwarded-host")?.split(",")[0]?.trim()
+  const host = req.headers.get("host")
+  const siteHost = process.env.NEXT_PUBLIC_SITE_URL
+    ? new URL(process.env.NEXT_PUBLIC_SITE_URL).host
+    : null
+
+  return [requestHost, forwardedHost, host, siteHost].filter(Boolean).includes(originHost)
 }
