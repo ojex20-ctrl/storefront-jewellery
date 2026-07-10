@@ -1,7 +1,6 @@
 "use client"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Eyebrow, Placeholder } from "@podium/ui/primitives"
 import { LoaderBar, LiveDot } from "@podium/ui/motion"
@@ -10,23 +9,18 @@ import { useAuthStore } from "@/stores/auth-store"
 import { fetchOrder, buildTimeline, type StoreOrder } from "@/lib/orders"
 
 export function OrderDetailClient({ orderId }: { orderId: string }) {
-  const router = useRouter()
   const token = useAuthStore((s) => s.token)
   const [order, setOrder] = useState<StoreOrder | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
 
   useEffect(() => {
-    if (!token) {
-      router.replace(`/login?next=/account/orders/${orderId}`)
-      return
-    }
-    void fetchOrder(token, orderId).then((o) => {
+    void fetchOrder(token || "customer_cookie", orderId).then((o) => {
       if (!o) setNotFound(true)
       else setOrder(o)
       setLoading(false)
     })
-  }, [token, orderId, router])
+  }, [token, orderId])
 
   if (loading) {
     return (

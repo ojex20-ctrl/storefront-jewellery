@@ -65,10 +65,14 @@ model Category {
 model Order {
   id             String   @id @default(cuid())
   orderNumber    Int      @unique
-  status         String   @default("pending") // pending, confirmed, shipped, delivered, cancelled
+  status         String   @default("placed") // placed, confirmed, packed, shipped, out_for_delivery, delivered, cancelled
   paymentStatus  String   @default("pending") // pending, paid, failed, refunded
   paymentMethod  String   @default("")        // razorpay, stripe
   paymentId      String?                      // gateway transaction ID
+  customerId      String?
+  razorpayOrderId String?
+  razorpayPaymentId String?
+  razorpaySignature String?
   email          String
   phone          String
   firstName      String
@@ -91,6 +95,23 @@ model Order {
   couponCode     String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  @@index([email])
+  @@index([customerId])
+  @@index([status])
+  @@index([paymentStatus])
+}
+
+model OrderStatusHistory {
+  id        String   @id @default(cuid())
+  orderId   String
+  oldStatus String?
+  newStatus String
+  changedBy String?
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
 }
 
 // ─── CMS CONTENT ────────────────────────────────────────────────────────────
@@ -182,14 +203,81 @@ model Customer {
   id           String   @id @default(cuid())
   email        String   @unique
   passwordHash String
+  authUserId   String?  @unique
   firstName    String   @default("")
   lastName     String   @default("")
   phone        String   @default("")
   verified     Boolean  @default(false)
+  emailVerified Boolean @default(false) @map("email_verified")
   googleId     String?
   avatar       String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model CustomerAddress {
+  id           String   @id @default(cuid())
+  customerId   String
+  fullName     String
+  phone        String
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  state        String
+  pincode      String
+  country      String   @default("India")
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([customerId])
+}
+
+model Wishlist {
+  id         String   @id @default(cuid())
+  customerId String
+  productId  String
+  createdAt  DateTime @default(now())
+
+  @@unique([customerId, productId])
+  @@index([customerId])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  customerId String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([customerId])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  customerId String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([customerId])
+  @@index([expiresAt])
+}
+
+model InstagramFeedItem {
+  id        String   @id @default(cuid())
+  imageUrl  String
+  caption   String?
+  postUrl   String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
 }
 
 model Otp {

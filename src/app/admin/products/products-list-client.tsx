@@ -52,13 +52,13 @@ export function ProductsListClient({ products, user }: { products: Product[]; us
   }
 
   return (
-    <div className="flex min-h-screen bg-[#F5F3EF] text-[#1A1A1C]">
+    <div className="admin-layout flex min-h-screen bg-[#F5F3EF] text-[#1A1A1C]">
       <Sidebar userName={user?.name} />
 
-      <main className="flex-1 p-8 md:p-12 overflow-y-auto">
-        <div className="flex items-center justify-between mb-8">
+      <main className="admin-content flex-1 p-8 md:p-12 overflow-y-auto">
+        <div className="admin-page-header flex items-center justify-between mb-8">
           <h1 className="font-display text-4xl tracking-tight">Products ({products.length})</h1>
-          <div className="flex gap-3">
+          <div className="admin-actions flex gap-3">
             {selectedIds.length > 0 && (
               <button
                 onClick={handleBulkDelete}
@@ -77,7 +77,7 @@ export function ProductsListClient({ products, user }: { products: Product[]; us
           </div>
         </div>
 
-        <div className="border border-[#1A1A1C]/10 bg-white overflow-hidden">
+        <div className="products-table border border-[#1A1A1C]/10 bg-white overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-[#F5F3EF] text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">
               <tr>
@@ -157,6 +157,39 @@ export function ProductsListClient({ products, user }: { products: Product[]; us
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="mobile-products-list hidden">
+          {products.map((p) => (
+            <article key={p.id} className="mobile-product-card border border-[#1A1A1C]/10 bg-white">
+              <div className="h-[88px] w-[72px] overflow-hidden rounded-sm border border-[#1A1A1C]/10 bg-[#F5F3EF]">
+                {p.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
+                ) : null}
+              </div>
+              <div className="min-w-0">
+                <h2 className="truncate text-sm font-semibold leading-tight">{p.name}</h2>
+                <p className="mt-1 text-[10px] uppercase tracking-widest text-[#1A1A1C]/45">{p.kind}</p>
+                <p className="mt-2 font-mono text-sm">₹{(p.price / 100).toLocaleString()}</p>
+                <button onClick={() => togglePublish(p.id, p.published)} className="mt-2 text-[10px] uppercase tracking-widest">
+                  {p.published ? <span className="text-green-600 flex items-center gap-1"><Eye size={12} /> Live</span> : <span className="text-[#1A1A1C]/40 flex items-center gap-1"><EyeOff size={12} /> Draft</span>}
+                </button>
+              </div>
+              <div className="mobile-product-actions">
+                <Link href={`/admin/products/${p.id}`} className="inline-flex items-center justify-center border border-[#1A1A1C]/15 px-3 py-2 text-xs uppercase tracking-widest text-[#1A1A1C]">
+                  Edit
+                </Link>
+                <button
+                  onClick={() => handleDelete(p.id)}
+                  disabled={deleting === p.id}
+                  className="inline-flex items-center justify-center gap-2 border border-red-200 px-3 py-2 text-xs uppercase tracking-widest text-red-600 disabled:opacity-50"
+                >
+                  <Trash2 size={14} /> Delete
+                </button>
+              </div>
+            </article>
+          ))}
         </div>
       </main>
     </div>

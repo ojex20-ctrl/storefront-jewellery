@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
-import { verifyCustomerSession } from "@/lib/customer-auth"
+import { CUSTOMER_COOKIE, verifyCustomerSession } from "@/lib/customer-auth"
 
 export async function GET() {
   const session = await verifyCustomerSession()
@@ -12,6 +12,7 @@ export async function GET() {
 
 export async function DELETE() {
   const cookieStore = await cookies()
+  cookieStore.delete(CUSTOMER_COOKIE)
   cookieStore.delete("customer_token")
   return NextResponse.json({ message: "Logged out" })
 }

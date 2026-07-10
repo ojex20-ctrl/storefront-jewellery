@@ -14,6 +14,8 @@ function getSecret(): string {
   if (!secret) throw new Error("NEXTAUTH_SECRET is not set")
   return secret
 }
+export const CUSTOMER_COOKIE = "syra_customer_token"
+const LEGACY_CUSTOMER_COOKIE = "customer_token"
 
 export type CustomerSession = {
   id: string
@@ -24,7 +26,7 @@ export type CustomerSession = {
 
 export async function verifyCustomerSession(): Promise<CustomerSession | null> {
   const cookieStore = await cookies()
-  const token = cookieStore.get("customer_token")?.value
+  const token = cookieStore.get(CUSTOMER_COOKIE)?.value ?? cookieStore.get(LEGACY_CUSTOMER_COOKIE)?.value
   if (!token) return null
   try {
     return jwt.verify(token, getSecret()) as CustomerSession
@@ -43,6 +45,73 @@ export async function hashPassword(password: string): Promise<string> {
 
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {
   return bcrypt.compare(password, hash)
+}
+
+export function normalizeEmail(email: string) {
+  return email.trim().toLowerCase()
+}
+
+export function sanitizeName(value: string) {
+  return value.trim().replace(/[<>]/g, "").slice(0, 80)
+}
+
+export function sanitizePhone(value: string) {
+  return value.trim().replace(/[^\d+ -]/g, "").slice(0, 20)
+}
+
+export function isStrongPassword(password: string) {
+  return password.length >= 8 && /[A-Z]/.test(password) && /[a-z]/.test(password) && /\d/.test(password)
+}
+
+export function isValidPhone(phone: string) {
+  const cleaned = phone.replace(/[^\d]/g, "")
+  return cleaned.length >= 8 && cleaned.length <= 15
+}
+
+export function createRawToken() {
+  return crypto.randomBytes(32).toString("base64url")
+}
+
+export function hashToken(token: string) {
+  return crypto.createHash("sha256").update(token).digest("hex")
+}
+
+export async function createEmailVerificationToken(customerId: string) {
+  await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "EmailVerificationToken" ("id" TEXT NOT NULL PRIMARY KEY, "customerId" TEXT NOT NULL, "tokenHash" TEXT NOT NULL UNIQUE, "expiresAt" DATETIME NOT NULL, "usedAt" DATETIME, "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)`)
+  await prisma.$executeRawUnsafe(`UPDATE "EmailVerificationToken" SET "usedAt" = ? WHERE "customerId" = ? AND "usedAt" IS NULL`, new Date(), customerId)
+  const token = createRawToken()
+  await prisma.$executeRawUnsafe(
+    `INSERT INTO "EmailVerificationToken" ("id", "customerId", "tokenHash", "expiresAt") VALUES (?, ?, ?, ?)`,
+    crypto.randomUUID(),
+    customerId,
+    hashToken(token),
+    new Date(Date.now() + 1000 * 60 * 60 * 24),
+  )
+  return token
+}
+
+export async function createPasswordResetToken(customerId: string) {
+  await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "PasswordResetToken" ("id" TEXT NOT NULL PRIMARY KEY, "customerId" TEXT NOT NULL, "tokenHash" TEXT NOT NULL UNIQUE, "expiresAt" DATETIME NOT NULL, "usedAt" DATETIME, "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)`)
+  await prisma.$executeRawUnsafe(`UPDATE "PasswordResetToken" SET "usedAt" = ? WHERE "customerId" = ? AND "usedAt" IS NULL`, new Date(), customerId)
+  const token = createRawToken()
+  await prisma.$executeRawUnsafe(
+    `INSERT INTO "PasswordResetToken" ("id", "customerId", "tokenHash", "expiresAt") VALUES (?, ?, ?, ?)`,
+    crypto.randomUUID(),
+    customerId,
+    hashToken(token),
+    new Date(Date.now() + 1000 * 60 * 30),
+  )
+  return token
+}
+
+export function publicCustomer(customer: { id: string; email: string; firstName: string; lastName: string; phone?: string | null }) {
+  return {
+    id: customer.id,
+    email: customer.email,
+    firstName: customer.firstName,
+    lastName: customer.lastName,
+    phone: customer.phone ?? "",
+  }
 }
 
 export function generateOtp(): string {

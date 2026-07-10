@@ -35,14 +35,19 @@ export type Product = {
   subcategory?: string
   caption: string
   price: number
+  compareAtPrice?: number | null
   metals: Metal[]
   stones: Stone[]
   sizes: string[]
-  tag?: "BESTSELLER" | "NEW" | "ONE OF ONE" | "LOW STOCK"
+  tag?: "BESTSELLER" | "NEW" | "ONE OF ONE" | "LOW STOCK" | "SALE" | "OUT OF STOCK" | string
   image: string
   /** Full gallery shown on the detail page (always non-empty; falls back to [image]). */
   gallery: string[]
   desc: string
+  material?: string | null
+  warranty?: string | null
+  seoTitle?: string | null
+  seoDescription?: string | null
   modelPath?: string
   mainHierarchy?: string
   subHierarchy?: string

@@ -33,52 +33,73 @@ function coerceInt(value: unknown, field: string): number {
 
 // Returns `any` so the result stays assignable to Prisma's generated
 // create/update input types (the callers previously passed the raw body as `any`).
+//
+// `partial` (used by PUT) only transforms a group when one of its keys is
+// present, so partial updates like a Live/Draft toggle ({ published: true })
+// don't blank out media/classification columns. Create (POST) uses full mode,
+// which fills every column with its default.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function normalizeProductInput(input: Record<string, unknown>): any {
+export function normalizeProductInput(
+  input: Record<string, unknown>,
+  { partial = false }: { partial?: boolean } = {},
+): any {
   // 1. Whitelist — drop any key we don't explicitly allow.
   const data: Record<string, any> = {}
   for (const key of Object.keys(input)) {
     if (WRITABLE_FIELDS.has(key)) data[key] = (input as Record<string, any>)[key]
   }
+  const has = (...keys: string[]) => !partial || keys.some((k) => k in data)
 
   // 2. Images (+ legacy single `image` / `gallery` mirror)
-  const imagesArr = Array.isArray(data.images) ? data.images : (data.image ? [data.image] : [])
-  data.images = JSON.stringify(imagesArr)
-  data.image = imagesArr[0] || ""
-  data.gallery = JSON.stringify(imagesArr)
+  if (has("images", "image")) {
+    const imagesArr = Array.isArray(data.images) ? data.images : (data.image ? [data.image] : [])
+    data.images = JSON.stringify(imagesArr)
+    data.image = imagesArr[0] || ""
+    data.gallery = JSON.stringify(imagesArr)
+  }
 
   // 3. Kinds
-  const kindsArr = Array.isArray(data.kinds) ? data.kinds : (data.kind ? [data.kind] : [])
-  data.kinds = JSON.stringify(kindsArr)
-  data.kind = kindsArr[0] || "Ring"
+  if (has("kinds", "kind")) {
+    const kindsArr = Array.isArray(data.kinds) ? data.kinds : (data.kind ? [data.kind] : [])
+    data.kinds = JSON.stringify(kindsArr)
+    data.kind = kindsArr[0] || "Ring"
+  }
 
   // 4. Main hierarchies
-  const mainArr = Array.isArray(data.mainHierarchies) ? data.mainHierarchies : (data.mainHierarchy ? [data.mainHierarchy] : [])
-  data.mainHierarchies = JSON.stringify(mainArr)
-  data.mainHierarchy = mainArr[0] || null
+  if (has("mainHierarchies", "mainHierarchy")) {
+    const mainArr = Array.isArray(data.mainHierarchies) ? data.mainHierarchies : (data.mainHierarchy ? [data.mainHierarchy] : [])
+    data.mainHierarchies = JSON.stringify(mainArr)
+    data.mainHierarchy = mainArr[0] || null
+  }
 
   // 5. Sub hierarchies
-  const subArr = Array.isArray(data.subHierarchies) ? data.subHierarchies : (data.subHierarchy ? [data.subHierarchy] : [])
-  data.subHierarchies = JSON.stringify(subArr)
-  data.subHierarchy = subArr[0] || null
+  if (has("subHierarchies", "subHierarchy")) {
+    const subArr = Array.isArray(data.subHierarchies) ? data.subHierarchies : (data.subHierarchy ? [data.subHierarchy] : [])
+    data.subHierarchies = JSON.stringify(subArr)
+    data.subHierarchy = subArr[0] || null
+  }
 
   // 6. Ring type (accepts `ringType` or `ringTypes`; column is `ringType`)
-  const ringTypeArr = Array.isArray(data.ringType)
-    ? data.ringType
-    : (Array.isArray(data.ringTypes) ? data.ringTypes : [])
-  data.ringType = JSON.stringify(ringTypeArr)
+  if (has("ringType", "ringTypes")) {
+    const ringTypeArr = Array.isArray(data.ringType)
+      ? data.ringType
+      : (Array.isArray(data.ringTypes) ? data.ringTypes : [])
+    data.ringType = JSON.stringify(ringTypeArr)
+  }
   delete data.ringTypes
 
   // 7. Tags (+ legacy single `tag` mirror)
-  const tagsArr = Array.isArray(data.tags) ? data.tags : (data.tag ? [data.tag] : [])
-  data.tags = JSON.stringify(tagsArr)
-  data.tag = tagsArr[0] || null
+  if (has("tags", "tag")) {
+    const tagsArr = Array.isArray(data.tags) ? data.tags : (data.tag ? [data.tag] : [])
+    data.tags = JSON.stringify(tagsArr)
+    data.tag = tagsArr[0] || null
+  }
 
   // 8. Remaining JSON-array columns
   for (const field of ["metals", "stones", "sizes", "modelImages", "bundleIds"]) {
     if (Array.isArray(data[field])) {
       data[field] = JSON.stringify(data[field])
-    } else if (data[field] === undefined) {
+    } else if (!partial && data[field] === undefined) {
       data[field] = "[]"
     }
   }

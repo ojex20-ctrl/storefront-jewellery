@@ -13,12 +13,14 @@ function getJwtSecret(): string {
   if (!secret) throw new Error("ADMIN_JWT_SECRET is not set")
   return secret
 }
+export const ADMIN_COOKIE = "syra_admin_token"
+const LEGACY_ADMIN_COOKIE = "admin_token"
 
 export type AdminSession = { id: string; email: string; name: string; role: string }
 
 export async function verifyAdminSession(): Promise<AdminSession | null> {
   const cookieStore = await cookies()
-  const token = cookieStore.get("admin_token")?.value
+  const token = cookieStore.get(ADMIN_COOKIE)?.value ?? cookieStore.get(LEGACY_ADMIN_COOKIE)?.value
   if (!token) return null
   try {
     const payload = jwt.verify(token, getJwtSecret()) as AdminSession
@@ -33,7 +35,9 @@ export function createAdminToken(user: AdminSession): string {
 }
 
 export async function verifyAdminPassword(email: string, password: string) {
-  const user = await prisma.adminUser.findUnique({ where: { email } })
+  const login = email.trim().toLowerCase()
+  const emailCandidates = login.includes("@") ? [login] : [`${login}@syra.local`, login]
+  const user = await prisma.adminUser.findFirst({ where: { email: { in: emailCandidates } } })
   if (!user) return null
   const valid = await bcrypt.compare(password, user.passwordHash)
   if (!valid) return null

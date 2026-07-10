@@ -1,6 +1,12 @@
 node_modules
 .next
+.next-broken-*
+.codex-backups/
 .env
 prisma/dev.db
 *.tsbuildinfo
 .turbo
+*.tgz
+ssh_deploy.py
+deploy.py
+prod_info.txt

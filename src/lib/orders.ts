@@ -1,9 +1,3 @@
-// [MOCK] Backend disabled for UI-only development.
-// All order fetchers return empty/mock data without hitting Medusa.
-
-// const BACKEND = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? "http://localhost:9000"
-// const KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? ""
-
 export type OrderStatus =
   | "pending"
   | "completed"
@@ -49,22 +43,24 @@ export type StoreOrder = {
   shipping_address?: OrderShippingAddress | null
 }
 
-/** Paged list of the signed-in customer's orders. */
 export async function fetchOrders(
   _token: string,
   _opts: { limit?: number; offset?: number } = {},
 ): Promise<{ orders: StoreOrder[]; count: number }> {
-  // [MOCK] Return empty orders list
-  return { orders: [], count: 0 }
+  const resp = await fetch("/api/account/orders", { credentials: "include" })
+  if (!resp.ok) return { orders: [], count: 0 }
+  const data = await resp.json() as { orders: LocalOrder[] }
+  const orders = data.orders.map(localOrderToStoreOrder)
+  return { orders, count: orders.length }
 }
 
-/** Single order detail — used on the tracking page. */
-export async function fetchOrder(_token: string, _id: string): Promise<StoreOrder | null> {
-  // [MOCK] Return null — confirmation page falls back to local order store
-  return null
+export async function fetchOrder(_token: string, id: string): Promise<StoreOrder | null> {
+  const resp = await fetch(`/api/account/orders/${id}`, { credentials: "include" })
+  if (!resp.ok) return null
+  const data = await resp.json() as { order: LocalOrder }
+  return localOrderToStoreOrder(data.order)
 }
 
-/** Synthesize a 4-step shipment timeline from order status flags. */
 export type TrackingStep = {
   key: "placed" | "confirmed" | "shipped" | "delivered"
   label: string
@@ -72,19 +68,82 @@ export type TrackingStep = {
   active: boolean
   date?: string
 }
+
 export function buildTimeline(o: StoreOrder): TrackingStep[] {
   const status = (o.fulfillment_status ?? "").toLowerCase()
   const placed = true
-  const confirmed = ["fulfilled", "shipped", "delivered", "partially_shipped", "partially_delivered"].includes(status) ||
+  const confirmed =
+    ["fulfilled", "shipped", "delivered", "partially_shipped", "partially_delivered"].includes(status) ||
     (o.payment_status ?? "").toLowerCase() === "captured"
   const shipped = ["shipped", "delivered", "partially_shipped", "partially_delivered"].includes(status)
   const delivered = ["delivered"].includes(status)
 
-  const steps: TrackingStep[] = [
+  return [
     { key: "placed", label: "Order placed", done: placed, active: placed && !confirmed, date: o.created_at },
     { key: "confirmed", label: "Confirmed", done: confirmed, active: confirmed && !shipped },
     { key: "shipped", label: "Shipped", done: shipped, active: shipped && !delivered },
     { key: "delivered", label: "Delivered", done: delivered, active: delivered },
   ]
-  return steps
+}
+
+type LocalOrder = {
+  id: string
+  orderNumber: number
+  status: string
+  paymentStatus: string
+  email: string
+  firstName: string
+  lastName: string
+  address: string
+  city: string
+  pincode: string
+  country: string
+  subtotal: number
+  shippingCost: number
+  total: number
+  items: string
+  createdAt: string | Date
+}
+
+function localOrderToStoreOrder(order: LocalOrder): StoreOrder {
+  return {
+    id: order.id,
+    display_id: order.orderNumber,
+    status: order.status === "cancelled" ? "canceled" : (order.status as OrderStatus),
+    payment_status: order.paymentStatus,
+    fulfillment_status: order.status,
+    email: order.email,
+    total: order.total,
+    subtotal: order.subtotal,
+    shipping_total: order.shippingCost,
+    tax_total: 0,
+    currency_code: "inr",
+    created_at: new Date(order.createdAt).toISOString(),
+    items: parseItems(order.items),
+    shipping_address: {
+      first_name: order.firstName,
+      last_name: order.lastName,
+      address_1: order.address,
+      city: order.city,
+      postal_code: order.pincode,
+      country_code: order.country,
+    },
+  }
+}
+
+function parseItems(raw: string): OrderItem[] {
+  try {
+    const parsed = JSON.parse(raw) as Array<{ name?: string; productId?: string; image?: string; price?: number; qty?: number; size?: string }>
+    return parsed.map((item, index) => ({
+      id: item.productId ?? `item_${index}`,
+      title: item.name ?? "SYRA item",
+      variant_title: item.size ?? null,
+      thumbnail: item.image ?? null,
+      unit_price: item.price ?? 0,
+      quantity: item.qty ?? 1,
+      subtotal: (item.price ?? 0) * (item.qty ?? 1),
+    }))
+  } catch {
+    return []
+  }
 }

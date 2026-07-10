@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import { Inter, Instrument_Serif, JetBrains_Mono } from "next/font/google"
 import { Toaster } from "sonner"
 import "./globals.css"
 
@@ -11,13 +10,11 @@ import { ThemeBootstrap } from "@/providers/theme-bootstrap"
 import { BrandStyles } from "@/components/chrome/brand-styles"
 import { BrandProvider } from "@/providers/brand-provider"
 import { WhatsAppButton } from "@/components/chrome/whatsapp-button"
+import { MarketingWidgets } from "@/components/marketing/marketing-widgets"
 import { cookies, headers } from "next/headers"
 import { getBrandConfig } from "@/lib/brand-config"
 import { CURRENCY_COOKIE, resolveCurrency, setActiveCurrencyForRender } from "@podium/ui/lib"
-
-const display = Instrument_Serif({ subsets: ["latin"], weight: ["400"], variable: "--font-display-pkg" })
-const body = Inter({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-body-pkg" })
-const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-mono-pkg" })
+import { verifyAdminSession } from "@/lib/admin-auth"
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await getBrandConfig()
@@ -35,6 +32,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const brand = await getBrandConfig()
+  const adminSession = await verifyAdminSession()
   const cookieJar = await cookies()
   const headerJar = await headers()
   const country =
@@ -53,7 +51,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html
       lang="en"
       data-theme="dark"
-      className={`${display.variable} ${body.variable} ${mono.variable}`}
       suppressHydrationWarning
     >
       <head>
@@ -64,11 +61,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <BrandProvider brand={brand}>
           <LenisProvider>
             <ScrollProgress />
-            <SiteChrome brand={brand} currency={currency}>{children}</SiteChrome>
+            <SiteChrome brand={brand} currency={currency} adminPreview={Boolean(adminSession)}>{children}</SiteChrome>
             <CartDrawer />
           </LenisProvider>
         </BrandProvider>
-        <WhatsAppButton />
+        <MarketingWidgets />
+        <WhatsAppButton
+          phone={process.env.PUBLIC_WHATSAPP_NUMBER ?? process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? brand.shop_whatsapp}
+          message={process.env.NEXT_PUBLIC_WHATSAPP_MESSAGE ?? "Hi, I need help with my order"}
+        />
         <Toaster
           position="bottom-right"
           toastOptions={{

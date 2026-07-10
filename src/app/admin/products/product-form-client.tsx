@@ -23,8 +23,9 @@ type Product = {
 const MAIN_HIERARCHIES = ["Best Sellers", "Earrings", "Necklace", "Bracelets", "Rings", "Pendants"]
 const SUB_HIERARCHIES = ["Boss Babe Basic", "Glam Girl Hours", "Everyday Slay", "Main Character Campus", "Bold Babe Edit"]
 const KIND_OPTIONS = [
+  "Ring", "Necklace", "Earrings", "Bracelet", "Nose ring",
   "Stud", "Hoop", "Huggie", "Drop", "Dangler", "Ear Cuff", "Statement", "Minimal",
-  "Chain", "Choker", "Pendant", "Layered", "Charm", "Bracelet", "Kada", "Cuff",
+  "Chain", "Choker", "Pendant", "Layered", "Charm", "Kada", "Cuff",
   "Chain Bracelet", "Charm Bracelet", "Adjustable", "Stackable", "Band", "Solitaire", "Cocktail"
 ]
 const RING_TYPE_OPTIONS = [
@@ -318,11 +319,11 @@ export function ProductFormClient({ product }: { product: Product | null }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#F5F3EF] text-[#1A1A1C]">
+    <div className="admin-layout flex min-h-screen bg-[#F5F3EF] text-[#1A1A1C]">
       <Sidebar />
 
-      <main className="flex-1 p-8 md:p-12 overflow-y-auto">
-        <div className="flex items-center justify-between mb-8 border-b border-[#1A1A1C]/10 pb-4">
+      <main className="admin-content flex-1 p-8 md:p-12 overflow-y-auto">
+        <div className="admin-page-header flex items-center justify-between mb-8 border-b border-[#1A1A1C]/10 pb-4">
           <div>
             <Link href="/admin/products" className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-[#1A1A1C]/50 hover:text-[#1A1A1C] mb-2">
               <ArrowLeft size={14} /> Back to products
@@ -340,7 +341,7 @@ export function ProductFormClient({ product }: { product: Product | null }) {
           )}
         </div>
 
-        <form onSubmit={onSubmit} className="grid grid-cols-1 gap-8 lg:grid-cols-[2.5fr_1fr]">
+        <form onSubmit={onSubmit} className="admin-form product-form grid grid-cols-1 gap-8 lg:grid-cols-[2.5fr_1fr]">
           <div className="space-y-6">
             {forms.map((form, index) => {
               const showAdv = showAdvanced[index] || false
@@ -671,32 +672,36 @@ function TextArea({ label, value, onChange, rows = 3 }: { label: string; value: 
 
 function ScrollableCheckboxGroup({ label, values, options, onChange }: { label: string; values: string[]; options: string[]; onChange: (v: string[]) => void }) {
   const displayLabel = label === "Ring" ? "Ring Type" : label
+  const summary = values.length > 0 ? values.join(", ") : `Select ${displayLabel}`
   return (
     <div className="block">
       <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">{displayLabel}</span>
-      <div className="mt-1 border border-[#1A1A1C]/10 p-2 max-h-32 overflow-y-auto space-y-1.5 bg-[#F5F3EF]/20 rounded-sm">
-        {options.map((opt) => {
-          if (!opt) return null
-          const isChecked = values.includes(opt)
-          return (
-            <label key={opt} className="flex items-center gap-2 text-xs cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={isChecked}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    onChange([...values, opt])
-                  } else {
-                    onChange(values.filter((v) => v !== opt))
-                  }
-                }}
-                className="accent-[#c9a36b] h-3.5 w-3.5 shrink-0"
-              />
-              <span className="text-[#1A1A1C]/80 line-clamp-1">{opt}</span>
-            </label>
-          )
-        })}
-      </div>
+      <details className="admin-multiselect mt-1 rounded-sm border border-[#1A1A1C]/10 bg-white">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-xs text-[#1A1A1C]">
+          <span className="min-w-0 truncate">{summary}</span>
+          <span className="shrink-0 text-[#c9a36b]">Select</span>
+        </summary>
+        <div className="grid max-h-64 gap-1 overflow-y-auto border-t border-[#1A1A1C]/10 p-2">
+          {options.map((opt) => {
+            if (!opt) return null
+            const isChecked = values.includes(opt)
+            return (
+              <label key={opt} className="flex min-h-10 items-center gap-3 rounded-sm px-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={isChecked}
+                  onChange={(e) => {
+                    if (e.target.checked) onChange([...values, opt])
+                    else onChange(values.filter((v) => v !== opt))
+                  }}
+                  className="h-4 w-4 shrink-0 accent-[#c9a36b]"
+                />
+                <span className="min-w-0 text-[#1A1A1C]/80">{opt}</span>
+              </label>
+            )
+          })}
+        </div>
+      </details>
     </div>
   )
 }

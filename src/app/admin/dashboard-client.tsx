@@ -18,9 +18,9 @@ export function AdminDashboard({ user, stats, recentOrders }: Props) {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#F5F3EF] text-[#1A1A1C]">
+    <div className="admin-layout flex min-h-screen bg-[#F5F3EF] text-[#1A1A1C]">
       <Sidebar onLogout={handleLogout} userName={user.name} />
-      <main className="flex-1 p-8 md:p-12 overflow-y-auto">
+      <main className="admin-content flex-1 p-8 md:p-12 overflow-y-auto">
         <h1 className="font-display text-4xl tracking-tight mb-8">Dashboard</h1>
 
         {/* Stats */}
@@ -99,9 +99,9 @@ function Sidebar({ onLogout, userName }: { onLogout: () => void; userName: strin
   ]
 
   return (
-    <aside className="hidden md:flex w-56 flex-col bg-[#0B0B0C] text-white p-6">
-      <div className="font-display text-xl tracking-tight mb-10">SYRA</div>
-      <nav className="flex-1 space-y-1">
+    <aside className="admin-sidebar flex w-full flex-col bg-[#0B0B0C] text-white p-4 md:w-56 md:p-6">
+      <div className="font-display text-xl tracking-tight mb-4 md:mb-10">SYRA</div>
+      <nav className="flex-1 grid grid-cols-2 gap-1 md:block md:space-y-1">
         {links.map((l) => (
           <Link
             key={l.href}

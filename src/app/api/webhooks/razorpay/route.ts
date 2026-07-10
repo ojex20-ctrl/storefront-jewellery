@@ -1,31 +1,61 @@
 import { NextResponse } from "next/server"
+import { prisma } from "@/lib/db"
+import { verifyRazorpayWebhookSignature } from "@/lib/razorpay-server"
+import { sendOrderStatusUpdateEmail } from "@/lib/email"
 
-/**
- * Razorpay forwards events directly to Medusa (configure the webhook URL
- * in the Razorpay dashboard as `https://<your-medusa-host>/hooks/payment/razorpay`).
- *
- * This handler is a thin pass-through used only when you'd like to receive
- * events on the storefront domain (e.g. for analytics) — it forwards the
- * raw body and signature header on to Medusa untouched so signature
- * verification stays valid.
- */
 export const dynamic = "force-dynamic"
 
-export async function POST(req: Request) {
-  const medusaUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL
-  if (!medusaUrl) return NextResponse.json({ ok: false }, { status: 500 })
+type RazorpayWebhook = {
+  event?: string
+  payload?: {
+    payment?: {
+      entity?: {
+        id?: string
+        order_id?: string
+        notes?: { orderId?: string; orderNumber?: string }
+      }
+    }
+  }
+}
 
-  const body = await req.arrayBuffer()
-  const resp = await fetch(`${medusaUrl}/hooks/payment/razorpay`, {
-    method: "POST",
-    headers: {
-      "content-type": req.headers.get("content-type") ?? "application/json",
-      "x-razorpay-signature": req.headers.get("x-razorpay-signature") ?? "",
-    },
-    body,
-  })
-  return new NextResponse(await resp.arrayBuffer(), {
-    status: resp.status,
-    headers: { "content-type": resp.headers.get("content-type") ?? "application/json" },
-  })
+export async function POST(req: Request) {
+  const raw = await req.text()
+  const signature = req.headers.get("x-razorpay-signature")
+  if (!verifyRazorpayWebhookSignature(raw, signature)) {
+    return NextResponse.json({ error: "Invalid webhook signature" }, { status: 400 })
+  }
+
+  const event = JSON.parse(raw) as RazorpayWebhook
+  const payment = event.payload?.payment?.entity
+  const internalOrderId = payment?.notes?.orderId
+  if (!internalOrderId) return NextResponse.json({ ok: true, ignored: true })
+
+  if (event.event === "payment.captured") {
+    const order = await prisma.order.update({
+      where: { id: internalOrderId },
+      data: {
+        paymentStatus: "paid",
+        status: "confirmed",
+        paymentMethod: "razorpay",
+        paymentId: payment?.id ?? null,
+        notes: JSON.stringify({ razorpay_order_id: payment?.order_id, razorpay_payment_id: payment?.id }),
+      },
+    })
+    await sendOrderStatusUpdateEmail(order).catch(() => false)
+  }
+
+  if (event.event === "payment.failed") {
+    const order = await prisma.order.update({
+      where: { id: internalOrderId },
+      data: {
+        paymentStatus: "failed",
+        paymentMethod: "razorpay",
+        paymentId: payment?.id ?? null,
+        notes: JSON.stringify({ razorpay_order_id: payment?.order_id, razorpay_payment_id: payment?.id }),
+      },
+    })
+    await sendOrderStatusUpdateEmail(order).catch(() => false)
+  }
+
+  return NextResponse.json({ ok: true })
 }

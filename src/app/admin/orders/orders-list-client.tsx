@@ -74,9 +74,11 @@ export function OrdersListClient({ orders }: { orders: Order[] }) {
                         onChange={(e) => updateStatus(o.id, e.target.value)}
                         className="text-xs border border-[#1A1A1C]/10 bg-transparent px-2 py-1 outline-none focus:border-[#c9a36b]"
                       >
-                        <option value="pending">Pending</option>
+                        <option value="placed">Placed</option>
                         <option value="confirmed">Confirmed</option>
+                        <option value="packed">Packed</option>
                         <option value="shipped">Shipped</option>
+                        <option value="out_for_delivery">Out for delivery</option>
                         <option value="delivered">Delivered</option>
                         <option value="cancelled">Cancelled</option>
                       </select>

@@ -5,8 +5,9 @@ import { verifyAdminSession } from "@/lib/admin-auth"
 const ALLOWED_MAIN = ["Best Sellers", "Earrings", "Necklace", "Bracelets", "Rings", "Pendants"]
 const ALLOWED_SUB = ["Boss Babe Basic", "Glam Girl Hours", "Everyday Slay", "Main Character Campus", "Bold Babe Edit"]
 const ALLOWED_KIND = [
+  "Ring", "Necklace", "Earrings", "Bracelet", "Nose ring",
   "Stud", "Hoop", "Huggie", "Drop", "Dangler", "Ear Cuff", "Statement", "Minimal",
-  "Chain", "Choker", "Pendant", "Layered", "Charm", "Bracelet", "Kada", "Cuff",
+  "Chain", "Choker", "Pendant", "Layered", "Charm", "Kada", "Cuff",
   "Chain Bracelet", "Charm Bracelet", "Adjustable", "Stackable", "Band", "Solitaire", "Cocktail"
 ]
 const ALLOWED_RING_TYPE = [

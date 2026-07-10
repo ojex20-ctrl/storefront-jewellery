@@ -21,6 +21,7 @@ export function HomeClient({ products }: { products: Product[] }) {
   
   // ─── COLLECTION MASK CAROUSEL LOGIC ───
   const [carouselIndex, setCarouselIndex] = useState(0)
+  const collectionTouchStart = useRef<number | null>(null)
 
   const baseCategories = [
     { name: "Bracelets", key: "Bracelet", img: products.find(p => p.kind === "Bracelet")?.image },
@@ -39,6 +40,8 @@ export function HomeClient({ products }: { products: Product[] }) {
 
   const handleNext = () => setCarouselIndex(p => Math.min(p + 1, extendedCategories.length - windows.length))
   const handlePrev = () => setCarouselIndex(p => Math.max(p - 1, 0))
+  const handleMobileCollectionNext = () => setCarouselIndex(p => (p + 1) % baseCategories.length)
+  const handleMobileCollectionPrev = () => setCarouselIndex(p => (p - 1 + baseCategories.length) % baseCategories.length)
 
   const heroSlides = [
     {
@@ -70,6 +73,13 @@ export function HomeClient({ products }: { products: Product[] }) {
     }, 5000)
     return () => clearInterval(timer)
   }, [heroSlides.length])
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCarouselIndex((prev) => (prev + 1) % baseCategories.length)
+    }, 3800)
+    return () => clearInterval(timer)
+  }, [baseCategories.length])
 
   return (
     <div className="bg-bg text-ink">
@@ -196,7 +206,7 @@ export function HomeClient({ products }: { products: Product[] }) {
       <section className="px-6 py-20 md:px-12 bg-bg">
         <div className="mx-auto max-w-[1400px]">
           <h2 className="font-display text-3xl md:text-4xl text-ink mb-10">Shop Your Vibe</h2>
-          <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4">
+          <div className="shop-vibe-scroller flex gap-4 overflow-x-auto no-scrollbar pb-4">
             {[
               { title: "Boss Babe Basic", sub: "Minimal. Mindful. Made To Impress.", color: "from-[#D4C9B5] to-[#E8DFD0]", img: "/jewellery/gen-gold-bracelet.png", href: "/collection?vibe=minimal" },
               { title: "Glam Girl Hours", sub: "Shines Loud, Glow Louder.", color: "from-[#F5C6D0] to-[#FDDDE6]", img: "/jewellery/gen-crystal-earrings.png", href: "/collection?vibe=glam" },
@@ -207,7 +217,7 @@ export function HomeClient({ products }: { products: Product[] }) {
               <Link
                 key={i}
                 href={vibe.href}
-                className="group min-w-[200px] md:min-w-[240px] flex-shrink-0"
+                className="shop-vibe-card group min-w-[200px] md:min-w-[240px] flex-shrink-0"
               >
                 <div className={`relative h-[320px] md:h-[380px] rounded-2xl overflow-hidden bg-gradient-to-b ${vibe.color} border border-white/10 flex flex-col justify-end transition-transform duration-300 group-hover:scale-[1.02]`}>
                   {/* Product image */}
@@ -265,10 +275,22 @@ export function HomeClient({ products }: { products: Product[] }) {
            </div>
         </div>
         
-        <div className="overflow-x-auto no-scrollbar pb-12 pt-4 w-full">
-           <div className="flex gap-6 w-max mx-auto [--card-w:280px] md:[--card-w:340px] [--gap:24px]">
+        <div
+          className="collection-mobile-slider overflow-x-auto no-scrollbar pb-12 pt-4 w-full"
+          onTouchStart={(e) => { collectionTouchStart.current = e.touches[0]?.clientX ?? null }}
+          onTouchEnd={(e) => {
+            if (collectionTouchStart.current === null) return
+            const delta = (e.changedTouches[0]?.clientX ?? collectionTouchStart.current) - collectionTouchStart.current
+            if (Math.abs(delta) > 36) {
+              if (delta < 0) handleMobileCollectionNext()
+              else handleMobileCollectionPrev()
+            }
+            collectionTouchStart.current = null
+          }}
+        >
+           <div className="collection-mobile-track flex gap-6 w-max mx-auto [--card-w:280px] md:[--card-w:340px] [--gap:24px]">
              {windows.map((shape, i) => (
-                <div key={i} className={`w-[var(--card-w)] h-[420px] shrink-0 overflow-hidden relative ${shape} bg-bg shadow-lg border border-white/10 pointer-events-none`}>
+                <div key={i} className={`collection-window w-[var(--card-w)] h-[420px] shrink-0 overflow-hidden relative ${shape} bg-bg shadow-lg border border-white/10 pointer-events-none`}>
                    <div 
                       className="absolute top-0 flex gap-[var(--gap)] transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] pointer-events-auto"
                       style={{

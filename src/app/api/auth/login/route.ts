@@ -1,33 +1,77 @@
 import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { prisma } from "@/lib/db"
-import { verifyPassword, createCustomerToken, createOtp } from "@/lib/customer-auth"
-import { sendEmail, loginOtpEmail } from "@/lib/email"
+import { verifyPassword, createCustomerToken, CUSTOMER_COOKIE, normalizeEmail } from "@/lib/customer-auth"
+import { isSupabaseConfigured, supabasePasswordLogin } from "@/lib/supabase-auth"
+import { rateLimit, requestIp, validRequestOrigin } from "@/lib/rate-limit"
 
 export async function POST(req: Request) {
-  const { email, password, method } = await req.json()
+  if (!validRequestOrigin(req)) return NextResponse.json({ error: "Invalid request" }, { status: 403 })
+  if (!rateLimit(`customer-login:${requestIp(req)}`, 12)) {
+    return NextResponse.json({ error: "Too many login attempts. Try again later." }, { status: 429 })
+  }
+  const body = await req.json()
+  const email = normalizeEmail(body.email ?? "")
+  const password = String(body.password ?? "")
+  const remember = Boolean(body.remember)
+  const method = body.method
 
   if (!email) {
     return NextResponse.json({ error: "Email is required" }, { status: 400 })
+  }
+
+  if (isSupabaseConfigured() && method !== "otp") {
+    if (!password) return NextResponse.json({ error: "Password is required" }, { status: 400 })
+    try {
+      const auth = await supabasePasswordLogin({ email, password })
+      const meta = auth.user.user_metadata ?? {}
+      const customer = await prisma.customer.upsert({
+        where: { email: auth.user.email ?? email },
+        update: {
+          firstName: meta.first_name ?? "",
+          lastName: meta.last_name ?? "",
+          phone: meta.phone ?? "",
+          verified: true,
+        },
+        create: {
+          email: auth.user.email ?? email,
+          passwordHash: "supabase",
+          firstName: meta.first_name ?? "",
+          lastName: meta.last_name ?? "",
+          phone: meta.phone ?? "",
+          verified: true,
+        },
+      })
+      const token = createCustomerToken({
+        id: customer.id,
+        email: customer.email,
+        firstName: customer.firstName,
+        lastName: customer.lastName,
+      })
+      const cookieStore = await cookies()
+      const options = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: remember ? 60 * 60 * 24 * 30 : 60 * 60 * 8,
+        path: "/",
+      } as const
+      cookieStore.set(CUSTOMER_COOKIE, token, options)
+      cookieStore.set("customer_token", token, options)
+      return NextResponse.json({ user: { id: customer.id, email: customer.email, firstName: customer.firstName, lastName: customer.lastName } })
+    } catch (err) {
+      return NextResponse.json({ error: err instanceof Error ? err.message : "Login failed" }, { status: 401 })
+    }
   }
 
   const customer = await prisma.customer.findUnique({ where: { email } })
   if (!customer) {
     return NextResponse.json({ error: "Account not found" }, { status: 404 })
   }
-
-  // OTP-based login
-  if (method === "otp") {
-    const { code } = await createOtp(email, "login")
-    const { subject, html } = loginOtpEmail(customer.firstName, code)
-    await sendEmail({ to: email, subject, html }).catch(() => {})
-    return NextResponse.json({
-      message: "OTP sent to your email",
-      ...(process.env.NODE_ENV !== "production" && { otp: code }),
-    })
+  if (!customer.verified) {
+    return NextResponse.json({ error: "Please verify your email before logging in." }, { status: 403 })
   }
 
-  // Password-based login
   if (!password) {
     return NextResponse.json({ error: "Password is required" }, { status: 400 })
   }
@@ -45,13 +89,15 @@ export async function POST(req: Request) {
   })
 
   const cookieStore = await cookies()
-  cookieStore.set("customer_token", token, {
+  const options = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: 60 * 60 * 24 * 30,
+    maxAge: remember ? 60 * 60 * 24 * 30 : 60 * 60 * 8,
     path: "/",
-  })
+  } as const
+  cookieStore.set(CUSTOMER_COOKIE, token, options)
+  cookieStore.set("customer_token", token, options)
 
   return NextResponse.json({ user: { id: customer.id, email: customer.email, firstName: customer.firstName, lastName: customer.lastName } })
 }

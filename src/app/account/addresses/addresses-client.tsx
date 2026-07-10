@@ -1,7 +1,6 @@
 "use client"
 import Link from "next/link"
 import { useEffect, useState, type FormEvent } from "react"
-import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
 import { Button, Eyebrow } from "@podium/ui/primitives"
@@ -20,7 +19,6 @@ const EMPTY: Address = {
 }
 
 export function AddressesClient() {
-  const router = useRouter()
   const token = useAuthStore((s) => s.token)
   const [addresses, setAddresses] = useState<Address[] | null>(null)
   const [showForm, setShowForm] = useState(false)
@@ -28,24 +26,18 @@ export function AddressesClient() {
   const [pending, setPending] = useState(false)
 
   useEffect(() => {
-    if (!token) {
-      router.replace("/login?next=/account/addresses")
-      return
-    }
-    void listAddresses(token).then(setAddresses)
-  }, [token, router])
+    void listAddresses(token || "customer_cookie").then(setAddresses)
+  }, [token])
 
   const refresh = async () => {
-    if (!token) return
-    setAddresses(await listAddresses(token))
+    setAddresses(await listAddresses(token || "customer_cookie"))
   }
 
   const onAdd = async (e: FormEvent) => {
     e.preventDefault()
-    if (!token) return
     setPending(true)
     try {
-      await addAddress(token, draft)
+      await addAddress(token || "customer_cookie", draft)
       toast.success("Address added")
       setDraft(EMPTY)
       setShowForm(false)
@@ -58,9 +50,8 @@ export function AddressesClient() {
   }
 
   const onDelete = async (id: string) => {
-    if (!token) return
     try {
-      await deleteAddress(token, id)
+      await deleteAddress(token || "customer_cookie", id)
       toast.success("Address removed")
       await refresh()
     } catch (err) {

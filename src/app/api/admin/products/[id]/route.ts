@@ -22,8 +22,9 @@ export async function PUT(req: Request, { params }: Ctx) {
     const { id } = await params
     const data = await req.json()
 
-    // Whitelist + normalize (drops unknown/virtual fields, serializes arrays, coerces numbers)
-    const rest = normalizeProductInput(data)
+    // Whitelist + normalize. Partial mode only touches fields that are present,
+    // so Live/Draft toggles ({ published: true }) don't blank out media/classification.
+    const rest = normalizeProductInput(data, { partial: true })
 
     const product = await prisma.product.update({ where: { id }, data: rest })
     return NextResponse.json({ product })

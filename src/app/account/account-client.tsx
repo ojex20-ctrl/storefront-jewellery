@@ -18,53 +18,63 @@ const MENU = [
   { key: "wishlist", label: "Wishlist", href: "/account/wishlist" },
 ] as const
 
-/**
- * Account dashboard. Authentication-gated — unauthenticated users are
- * redirected to /login with `?next=/account` so they bounce back here
- * after signing in. Pulls the live order list from Medusa
- * (`/store/customers/me/orders`) so the recent-orders strip is real.
- */
+type Loyalty = {
+  rewards: { points: number; tier: string }
+  storeCredits: number
+  referralCode: string
+}
+
 export function AccountClient() {
   const router = useRouter()
   const token = useAuthStore((s) => s.token)
   const customer = useAuthStore((s) => s.customer)
-  const setCustomer = useAuthStore((s) => s.setCustomer)
+  const setSession = useAuthStore((s) => s.setSession)
   const clear = useAuthStore((s) => s.clear)
-
   const [hydrated, setHydrated] = useState(false)
+  const [checkingSession, setCheckingSession] = useState(true)
   const [orders, setOrders] = useState<StoreOrder[] | null>(null)
+  const [loyalty, setLoyalty] = useState<Loyalty | null>(null)
 
-  useEffect(() => {
-    setHydrated(true)
-  }, [])
+  useEffect(() => setHydrated(true), [])
 
   useEffect(() => {
     if (!hydrated) return
-    if (!token) router.replace("/login?next=/account")
-  }, [hydrated, token, router])
+    void (async () => {
+      const fresh = await refreshCustomer(token || "customer_cookie")
+      if (fresh) {
+        setSession("customer_cookie", fresh)
+        setCheckingSession(false)
+        return
+      }
+      setCheckingSession(false)
+      if (!token) router.replace("/account/login?next=/account")
+    })()
+  }, [hydrated, token, router, setSession])
 
   useEffect(() => {
     if (!token) return
-    // [MOCK] Backend disabled — skip Medusa customer refresh and orders fetch.
-    // void (async () => {
-    //   const fresh = await refreshCustomer(token)
-    //   if (fresh) setCustomer(fresh)
-    // })()
-    // void fetchOrders(token, { limit: 5 }).then((r) => setOrders(r.orders))
-    setOrders([]) // show empty state
-  }, [token, setCustomer])
+    void (async () => {
+      const fresh = await refreshCustomer(token)
+      if (fresh) setSession("customer_cookie", fresh)
+    })()
+    void fetchOrders(token, { limit: 5 }).then((r) => setOrders(r.orders))
+    void fetch("/api/account/loyalty", { credentials: "include" })
+      .then((r) => r.ok ? r.json() : null)
+      .then(setLoyalty)
+      .catch(() => {})
+  }, [token, setSession])
 
-  if (!hydrated || !token) {
+  if (!hydrated || checkingSession) {
     return (
       <div className="px-4 py-32 text-center md:px-8">
-        <Eyebrow>Loading…</Eyebrow>
+        <Eyebrow>Loading...</Eyebrow>
       </div>
     )
   }
 
   const displayName = customer?.first_name || customer?.email?.split("@")[0] || "friend"
-
   const handleSignOut = () => {
+    void fetch("/api/auth/me", { method: "DELETE", credentials: "include" }).catch(() => null)
     clear()
     toast.success("Signed out")
     router.push("/")
@@ -87,56 +97,59 @@ export function AccountClient() {
         <aside>
           <Eyebrow className="mb-3.5 block">Menu</Eyebrow>
           {MENU.map((m) => (
-            <Link
-              key={m.key}
-              href={m.href}
-              className="group flex w-full items-center justify-between border-b border-line py-3.5 text-left text-sm text-ink transition-colors hover:text-accent"
-            >
+            <Link key={m.key} href={m.href} className="group flex w-full items-center justify-between border-b border-line py-3.5 text-left text-sm text-ink transition-colors hover:text-accent">
               <span>{m.label}</span>
-              <span>→</span>
+              <span>{"->"}</span>
             </Link>
           ))}
-          <button
-            onClick={handleSignOut}
-            className="group flex w-full items-center justify-between border-b border-line py-3.5 text-left text-sm text-muted transition-colors hover:text-accent"
-          >
+          <Link href="/account/change-password" className="group flex w-full items-center justify-between border-b border-line py-3.5 text-left text-sm text-ink transition-colors hover:text-accent">
+            <span>Change password</span>
+            <span>{"->"}</span>
+          </Link>
+          <div className="border-b border-line py-3.5 text-sm text-muted">
+            <span>Recently Viewed</span>
+            <p className="mt-1 text-xs">Available from your product browsing history.</p>
+          </div>
+          <div className="border-b border-line py-3.5 text-sm text-muted">
+            <span>Saved Payment Methods</span>
+            <p className="mt-1 text-xs">Coming soon.</p>
+          </div>
+          <button onClick={handleSignOut} className="group flex w-full items-center justify-between border-b border-line py-3.5 text-left text-sm text-muted transition-colors hover:text-accent">
             <span>Sign out</span>
-            <span>→</span>
+            <span>{"->"}</span>
           </button>
         </aside>
 
         <div>
+          {loyalty && (
+            <div className="mb-8 grid grid-cols-1 border border-line md:grid-cols-3">
+              <Metric label="Rewards" value={`${loyalty.rewards.points} pts`} sub={loyalty.rewards.tier} />
+              <Metric label="Store Credits" value={priceFmt(loyalty.storeCredits)} sub="Available" />
+              <Metric label="Referral" value={loyalty.referralCode} sub="Share with friends" />
+            </div>
+          )}
           <div className="mb-3.5 flex items-end justify-between">
             <Eyebrow className="block">Recent orders</Eyebrow>
             <Link href="/account/orders" className="ulink font-mono text-[11px] uppercase tracking-widest text-accent">
-              View all →
+              View all {"->"}
             </Link>
           </div>
           {orders === null ? (
-            <Eyebrow className="text-muted">Loading orders…</Eyebrow>
+            <Eyebrow className="text-muted">Loading orders...</Eyebrow>
           ) : orders.length === 0 ? (
             <div className="border border-line p-14 text-center">
-              <p className="mb-2 font-display text-4xl">
-                <em>No orders yet.</em>
-              </p>
+              <p className="mb-2 font-display text-4xl"><em>No orders yet.</em></p>
               <Eyebrow className="mb-6 block">Place an order to see it here</Eyebrow>
-              <Link href="/collection">
-                <Button>Shop the collection</Button>
-              </Link>
+              <Link href="/collection"><Button>Shop the collection</Button></Link>
             </div>
           ) : (
             orders.map((o) => (
-              <motion.div
-                key={o.id}
-                whileHover={{ borderColor: "var(--accent)" }}
-                transition={{ duration: 0.3 }}
-                className="mb-3 border border-line p-6"
-              >
+              <motion.div key={o.id} whileHover={{ borderColor: "var(--accent)" }} transition={{ duration: 0.3 }} className="mb-3 border border-line p-6">
                 <Link href={`/account/orders/${o.id}`} className="flex items-start justify-between">
                   <div>
                     <p className="font-display text-2xl">#{o.display_id}</p>
                     <Eyebrow className="mt-1 block">
-                      {o.items.length} items · {(o.fulfillment_status ?? "pending").replace(/_/g, " ")}
+                      {o.items.length} items / {(o.fulfillment_status ?? "pending").replace(/_/g, " ")}
                     </Eyebrow>
                   </div>
                   <div className="text-right">
@@ -152,6 +165,16 @@ export function AccountClient() {
           )}
         </div>
       </div>
+    </div>
+  )
+}
+
+function Metric({ label, value, sub }: { label: string; value: string; sub: string }) {
+  return (
+    <div className="border-b border-line p-5 md:border-b-0 md:border-r">
+      <Eyebrow className="mb-2 block">{label}</Eyebrow>
+      <p className="font-display text-2xl">{value}</p>
+      <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-muted">{sub}</p>
     </div>
   )
 }

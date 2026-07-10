@@ -1,18 +1,24 @@
 "use client"
+
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
-import { useEffect, useState } from "react"
-import { motion } from "framer-motion"
+import { useEffect, useMemo, useState } from "react"
 import { toast } from "sonner"
-import { Reveal } from "@podium/ui/motion"
-import { Placeholder } from "@podium/ui/primitives"
 import { RentalRequestModal } from "@podium/ui/chrome"
 import { priceFmt } from "@podium/ui/lib"
+import { ProductActions } from "@/components/commerce/product-actions"
+import { FrequentlyBoughtTogether, CompleteTheLook } from "@/components/commerce/merchandising-sections"
+import { AIRecommendations } from "@/components/commerce/ai-recommendations"
+import { RecentlyViewed } from "@/components/commerce/recently-viewed"
+import { StickyAddToCart } from "@/components/commerce/sticky-add-to-cart"
+import { BackInStock } from "@/components/commerce/back-in-stock"
+import { OptimizedImage } from "@/components/media/optimized-image"
 import { useCartStore } from "@/stores/cart-store"
 import { useAuthStore } from "@/stores/auth-store"
+import { useRecentlyViewedStore } from "@/stores/recently-viewed-store"
 import {
-  STONE_HEX,
   METAL_NOTES,
+  STONE_HEX,
   toCartLine,
   type Metal,
   type Mode,
@@ -22,266 +28,257 @@ import {
 
 type Props = { product: Product; related: Product[] }
 
+function uniqueImages(product: Product) {
+  const seen = new Set<string>()
+  return [product.image, ...(product.gallery ?? []), ...(product.images ?? [])]
+    .map((src) => src?.trim())
+    .filter((src): src is string => Boolean(src))
+    .filter((src) => {
+      if (seen.has(src)) return false
+      seen.add(src)
+      return true
+    })
+}
+
+function isOutOfStock(product: Product) {
+  const labels = [product.tag, ...(product.tags ?? [])].filter(Boolean).join(" ")
+  return /out of stock|sold out|unavailable/i.test(labels)
+}
+
+function usefulDescription(product: Product) {
+  return product.desc?.trim() || product.caption?.trim() || `${product.name} is a SYRA ${product.kind.toLowerCase()} designed for everyday styling.`
+}
+
 export function ProductDetailClient({ product, related }: Props) {
   const params = useSearchParams()
   const add = useCartStore((s) => s.add)
   const customer = useAuthStore((s) => s.customer)
-  const [metal, setMetal] = useState<Metal>(product.metals[0] ?? "Sterling")
-  const [stone, setStone] = useState<Stone>(product.stones[0] ?? "None")
-  const [size, setSize] = useState<string | null>(product.sizes[0] ?? null)
-  const [qty, setQty] = useState(1)
+  const trackViewed = useRecentlyViewedStore((s) => s.track)
+
+  const gallery = useMemo(() => uniqueImages(product), [product])
+  const unavailable = isOutOfStock(product)
+  const hasRingSizes = product.kind === "Ring" && product.sizes.length > 0
   const [activeImg, setActiveImg] = useState(0)
-  const [descOpen, setDescOpen] = useState(false)
-  const [faqOpen, setFaqOpen] = useState(false)
-  const initialMode: Mode =
-    params.get("mode") === "rent" && product.rental.enabled ? "rent" : "buy"
+  const [metal, setMetal] = useState<Metal>((product.metals[0] as Metal | undefined) ?? "Sterling")
+  const [stone, setStone] = useState<Stone>((product.stones[0] as Stone | undefined) ?? "None")
+  const [size, setSize] = useState<string | null>(hasRingSizes ? product.sizes[0] ?? null : null)
+  const [qty, setQty] = useState(1)
+  const [openSection, setOpenSection] = useState<string>("details")
+  const initialMode: Mode = params.get("mode") === "rent" && product.rental.enabled ? "rent" : "buy"
   const [mode, setMode] = useState<Mode>(initialMode)
   const [rentalModalOpen, setRentalModalOpen] = useState(false)
 
   useEffect(() => {
-    setMetal(product.metals[0] ?? "Sterling")
-    setStone(product.stones[0] ?? "None")
-    setSize(product.sizes[0] ?? null)
+    setMetal((product.metals[0] as Metal | undefined) ?? "Sterling")
+    setStone((product.stones[0] as Stone | undefined) ?? "None")
+    setSize(product.kind === "Ring" ? product.sizes[0] ?? null : null)
     setActiveImg(0)
     setQty(1)
     const wantsRent = params.get("mode") === "rent" && product.rental.enabled
     setMode(wantsRent ? "rent" : "buy")
     if (wantsRent) setRentalModalOpen(true)
-  }, [product.id, product.metals, product.stones, product.sizes, product.rental.enabled, params])
+  }, [product.id, product.kind, product.metals, product.stones, product.sizes, product.rental.enabled, params])
 
-  const onAdd = () => {
-    if (mode === "rent") { setRentalModalOpen(true); return }
-    if (product.sizes.length > 0 && !size) { toast.error("Choose a size"); return }
-    for (let i = 0; i < qty; i++) {
-      add(toCartLine(product, metal, stone, size))
+  useEffect(() => {
+    trackViewed({
+      id: product.id,
+      name: product.name,
+      image: product.image,
+      price: product.price,
+      kind: product.kind,
+    })
+  }, [product.id, product.name, product.image, product.price, product.kind, trackViewed])
+
+  const addToCart = () => {
+    if (unavailable) return
+    if (mode === "rent") {
+      setRentalModalOpen(true)
+      return
     }
+    if (hasRingSizes && !size) {
+      toast.error("Choose a ring size")
+      return
+    }
+    for (let i = 0; i < qty; i += 1) add(toCartLine(product, metal, stone, size))
     toast.success(`${product.name} added to bag`)
   }
 
-  const gallery = product.gallery.length > 0 ? product.gallery : [product.image]
+  const description = usefulDescription(product)
+  const material = product.material || product.metals.join(", ") || "Anti-tarnish plated jewellery"
+  const compareAt = product.compareAtPrice && product.compareAtPrice > product.price ? product.compareAtPrice : null
+  const qualifiesMysteryGift = product.price >= 59900
+  const qualifiesOrganiser = product.price >= 199900
 
   return (
-    <div className="bg-white text-[#0A0A0A] min-h-screen">
-      {/* Breadcrumbs */}
-      <div className="px-6 py-4 md:px-12 border-b border-gray-100">
-        <nav className="text-[12px] text-gray-500 space-x-2">
+    <div className="min-h-screen bg-white text-[#0A0A0A]">
+      <div className="border-b border-gray-100 px-5 py-4 md:px-12">
+        <nav className="flex flex-wrap items-center gap-2 text-[12px] text-gray-500">
           <Link href="/" className="hover:text-black">Home</Link>
           <span>/</span>
-          <Link href="/collection" className="hover:text-black">{product.kind}</Link>
+          <Link href={`/collection?kind=${encodeURIComponent(product.kind)}`} className="hover:text-black">{product.kind}</Link>
           <span>/</span>
           <span className="text-black">{product.name}</span>
         </nav>
       </div>
 
-      {/* Main product section */}
-      <section className="flex flex-col md:flex-row px-6 md:px-12 py-8 gap-8 lg:gap-12 max-w-[1400px] mx-auto">
-        {/* LEFT: Gallery */}
-        <div className="flex gap-4 flex-1">
-          {/* Thumbnail strip */}
-          <div className="hidden md:flex flex-col gap-2 w-[70px] shrink-0">
-            {gallery.map((src, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveImg(i)}
-                className={`aspect-square border-2 overflow-hidden transition-all ${
-                  activeImg === i ? "border-black" : "border-gray-200 hover:border-gray-400"
-                }`}
-              >
-                <Placeholder image={src} className="w-full h-full object-cover" alt={`Thumb ${i+1}`} />
-              </button>
-            ))}
-          </div>
+      <section className="mx-auto grid max-w-[1400px] gap-8 px-5 py-6 md:grid-cols-[minmax(0,1fr)_440px] md:px-12 md:py-10 lg:gap-12">
+        <div className="min-w-0">
+          <div className="grid gap-3 md:grid-cols-[76px_minmax(0,1fr)] md:gap-4">
+            {gallery.length > 1 && (
+              <div className="order-2 flex gap-2 overflow-x-auto md:order-1 md:flex-col md:overflow-visible">
+                {gallery.map((src, index) => (
+                  <button
+                    key={src}
+                    type="button"
+                    onClick={() => setActiveImg(index)}
+                    className={`relative h-16 w-16 shrink-0 overflow-hidden border bg-gray-50 md:h-[76px] md:w-[76px] ${
+                      activeImg === index ? "border-black" : "border-gray-200"
+                    }`}
+                    aria-label={`Show image ${index + 1}`}
+                  >
+                    <OptimizedImage src={src} alt={`${product.name} thumbnail ${index + 1}`} sizes="76px" />
+                  </button>
+                ))}
+              </div>
+            )}
 
-          {/* Main image */}
-          <div className="flex-1 aspect-[3/4] bg-gray-50 overflow-hidden relative">
-            <Placeholder
-              image={gallery[activeImg] ?? product.image}
-              className="w-full h-full object-cover"
-              alt={product.name}
-            />
+            <div className="relative order-1 aspect-[4/5] overflow-hidden bg-gray-50 md:order-2">
+              <OptimizedImage
+                src={gallery[activeImg] ?? product.image}
+                alt={product.name}
+                sizes="(max-width: 768px) 100vw, 58vw"
+                priority
+              />
+            </div>
           </div>
         </div>
 
-        {/* RIGHT: Product info */}
-        <div className="md:w-[420px] lg:w-[480px] space-y-6">
-          {/* Category tag */}
-          <span className="text-[12px] text-accent font-medium">{product.kind}</span>
-
-          {/* Title */}
-          <h1 className="text-2xl md:text-3xl font-semibold leading-tight">
-            {product.name}
-          </h1>
-
-          {/* Rating */}
-          <div className="flex items-center gap-2">
-            <div className="flex text-amber-400">
-              {"★★★★★".split("").map((s, i) => <span key={i}>{s}</span>)}
+        <div className="space-y-6">
+          <div className="space-y-3">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="font-mono text-[11px] uppercase tracking-widest text-gray-500">{product.kind}</p>
+                <h1 className="mt-2 font-display text-3xl leading-tight tracking-tight md:text-4xl">{product.name}</h1>
+              </div>
+              <ProductActions productId={product.id} />
             </div>
-            <span className="text-[13px] text-gray-500">(36 Reviews)</span>
-          </div>
 
-          {/* Price + Quantity */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl font-bold">{priceFmt(product.price)}</span>
-              {product.price < 100000 && (
-                <span className="text-sm text-gray-400 line-through">{priceFmt(Math.round(product.price * 2.5))}</span>
-              )}
-            </div>
-            <div className="flex items-center border border-gray-300 rounded">
-              <button onClick={() => setQty(Math.max(1, qty - 1))} className="px-3 py-2 text-lg hover:bg-gray-100">−</button>
-              <span className="px-3 py-2 text-sm font-medium min-w-[32px] text-center">{qty}</span>
-              <button onClick={() => setQty(qty + 1)} className="px-3 py-2 text-lg hover:bg-gray-100">+</button>
+            {product.caption && <p className="text-sm leading-6 text-gray-600">{product.caption}</p>}
+
+            <div className="flex flex-wrap items-end gap-3">
+              <span className="text-2xl font-semibold">{priceFmt(product.price)}</span>
+              {compareAt && <span className="pb-1 text-sm text-gray-400 line-through">{priceFmt(compareAt)}</span>}
+              <span className={`pb-1 text-xs uppercase tracking-widest ${unavailable ? "text-red-600" : "text-emerald-700"}`}>
+                {unavailable ? "Out of stock" : product.tag === "LOW STOCK" ? "Low stock" : "In stock"}
+              </span>
             </div>
           </div>
 
-          {/* Tax note */}
-          <p className="text-[11px] text-gray-500">Tax included. Shipping calculated at checkout.</p>
+          <div className="space-y-4 border-y border-gray-100 py-5">
+            {product.metals.length > 0 && (
+              <OptionGroup label="Color / finish">
+                {product.metals.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => setMetal(item)}
+                    className={`border px-4 py-2 text-xs transition ${metal === item ? "border-black bg-black text-white" : "border-gray-300 hover:border-black"}`}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </OptionGroup>
+            )}
 
-          {/* Add to Cart */}
+            {product.stones.filter((item) => item !== "None").length > 0 && (
+              <OptionGroup label="Stone">
+                {product.stones.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => setStone(item)}
+                    className={`inline-flex items-center gap-2 border px-4 py-2 text-xs transition ${stone === item ? "border-black" : "border-gray-300 hover:border-black"}`}
+                  >
+                    <span className="h-3 w-3 rounded-full border" style={{ background: STONE_HEX[item] }} />
+                    {item}
+                  </button>
+                ))}
+              </OptionGroup>
+            )}
+
+            {hasRingSizes && (
+              <OptionGroup label="Ring size">
+                {product.sizes.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => setSize(item)}
+                    className={`h-10 min-w-10 border px-3 text-sm transition ${size === item ? "border-black bg-black text-white" : "border-gray-300 hover:border-black"}`}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </OptionGroup>
+            )}
+
+            <div>
+              <p className="mb-2 font-mono text-[11px] uppercase tracking-widest text-gray-500">Quantity</p>
+              <div className="inline-grid grid-cols-[40px_48px_40px] items-center border border-gray-300">
+                <button type="button" onClick={() => setQty((value) => Math.max(1, value - 1))} className="h-10 text-lg hover:bg-gray-50" aria-label="Decrease quantity">-</button>
+                <span className="text-center text-sm font-medium">{qty}</span>
+                <button type="button" onClick={() => setQty((value) => value + 1)} className="h-10 text-lg hover:bg-gray-50" aria-label="Increase quantity">+</button>
+              </div>
+            </div>
+          </div>
+
           <button
-            onClick={onAdd}
-            className="w-full bg-accent text-white py-4 rounded-full text-[14px] font-semibold tracking-wide hover:opacity-90 transition-opacity"
+            type="button"
+            onClick={addToCart}
+            disabled={unavailable}
+            className="w-full bg-black px-6 py-4 text-sm font-semibold uppercase tracking-widest text-white transition hover:bg-accent disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
           >
-            Add to Cart
+            {unavailable ? "Out of Stock" : "Add to Cart"}
           </button>
 
-          {/* Offers */}
-          <div className="border border-accent/30 rounded-lg p-4 space-y-2 bg-accent/5">
-            <p className="text-[13px] flex items-center gap-2">
-              <span className="text-accent">🎁</span> Mystery Jewellery Gift above ₹599
-            </p>
-            <p className="text-[13px] flex items-center gap-2">
-              <span className="text-accent">🎁</span> Free Earring Organiser above ₹1999
-            </p>
+          {unavailable && <BackInStock productId={product.id} />}
+
+          <div className="space-y-2 border border-gray-200 p-4">
+            <p className="text-sm">Free shipping over {priceFmt(500)}</p>
+            {qualifiesMysteryGift && <p className="text-sm">Gift offer available for this product.</p>}
+            {qualifiesOrganiser && <p className="text-sm">Premium organiser offer available at checkout.</p>}
           </div>
 
-          {/* Trust badges */}
-          <div className="grid grid-cols-3 gap-4 py-4 border-t border-b border-gray-100">
-            <div className="text-center">
-              <p className="text-[11px] font-semibold uppercase">Easy Returns</p>
-              <p className="text-[10px] text-gray-500">COD Available</p>
-            </div>
-            <div className="text-center">
-              <p className="text-[11px] font-semibold uppercase">12L+ Customers</p>
-              <p className="text-[10px] text-gray-500">4.8 Google Rating</p>
-            </div>
-            <div className="text-center">
-              <p className="text-[11px] font-semibold uppercase">Customer Support</p>
-              <p className="text-[10px] text-gray-500">10:30am–5:30pm</p>
-            </div>
+          <div className="grid grid-cols-1 gap-3 text-sm text-gray-600 sm:grid-cols-2">
+            <InfoTile label="Material" value={material} />
+            <InfoTile label="Category" value={product.subcategory ? `${product.kind} / ${product.subcategory}` : product.kind} />
+            <InfoTile label="Anti-tarnish" value={product.warranty || "Anti-tarnish finish for everyday wear."} />
+            <InfoTile label="Shipping" value="Ships after order confirmation. Returns follow the published SYRA policy." />
           </div>
 
-          {/* Metal selector */}
-          {product.metals.length > 1 && (
-            <div>
-              <span className="text-[12px] font-medium text-gray-600 block mb-2">Material</span>
-              <div className="flex flex-wrap gap-2">
-                {product.metals.map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => setMetal(m)}
-                    className={`border px-4 py-2 text-[12px] rounded transition-all ${
-                      metal === m ? "border-black bg-black text-white" : "border-gray-300 hover:border-black"
-                    }`}
-                  >
-                    {m}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          <Accordion title="Description" open={openSection === "details"} onClick={() => setOpenSection(openSection === "details" ? "" : "details")}>
+            <p>{description}</p>
+            <p>{METAL_NOTES[metal] ?? "Finished for daily wear with a protective anti-tarnish layer."}</p>
+          </Accordion>
 
-          {/* Size selector */}
-          {product.sizes.length > 0 && (
-            <div>
-              <span className="text-[12px] font-medium text-gray-600 block mb-2">Size</span>
-              <div className="flex flex-wrap gap-2">
-                {product.sizes.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setSize(s)}
-                    className={`border w-10 h-10 flex items-center justify-center text-[12px] rounded transition-all ${
-                      size === s ? "border-black bg-black text-white" : "border-gray-300 hover:border-black"
-                    }`}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          <Accordion title="Care, shipping and returns" open={openSection === "care"} onClick={() => setOpenSection(openSection === "care" ? "" : "care")}>
+            <p>Store separately in a dry pouch after wear. Wipe gently with a soft cloth and avoid perfumes, harsh cleaners, and prolonged contact with chlorinated water.</p>
+            <p>Shipping is calculated at checkout. Returns and exchanges follow the current SYRA policy for eligible unused pieces.</p>
+          </Accordion>
 
-          {/* Collapsible Description */}
-          <div className="border border-gray-200 rounded-lg overflow-hidden">
-            <button
-              onClick={() => setDescOpen(!descOpen)}
-              className="w-full flex items-center justify-between px-4 py-3 text-[14px] font-medium hover:bg-gray-50"
-            >
-              Description
-              <span className="text-gray-400">{descOpen ? "−" : "+"}</span>
-            </button>
-            {descOpen && (
-              <div className="px-4 pb-4 text-[13px] text-gray-600 leading-relaxed border-t border-gray-100 pt-3">
-                <p>{product.desc}</p>
-                <p className="mt-3 text-[12px] text-gray-500">{METAL_NOTES[metal]}</p>
-              </div>
-            )}
-          </div>
-
-          {/* Collapsible FAQ */}
-          <div className="border border-gray-200 rounded-lg overflow-hidden">
-            <button
-              onClick={() => setFaqOpen(!faqOpen)}
-              className="w-full flex items-center justify-between px-4 py-3 text-[14px] font-medium hover:bg-gray-50"
-            >
-              Frequently Asked Questions
-              <span className="text-gray-400">{faqOpen ? "−" : "+"}</span>
-            </button>
-            {faqOpen && (
-              <div className="px-4 pb-4 text-[13px] text-gray-600 leading-relaxed border-t border-gray-100 pt-3 space-y-3">
-                <div>
-                  <p className="font-medium text-black">Is this anti-tarnish?</p>
-                  <p>Yes, all SYRA pieces feature our proprietary anti-tarnish coating that lasts 2+ years.</p>
-                </div>
-                <div>
-                  <p className="font-medium text-black">Is it waterproof?</p>
-                  <p>Our jewellery is water-resistant. We recommend removing before swimming or showering.</p>
-                </div>
-                <div>
-                  <p className="font-medium text-black">What is the return policy?</p>
-                  <p>Easy 7-day returns. No questions asked.</p>
-                </div>
-              </div>
-            )}
-          </div>
+          <Accordion title="FAQ" open={openSection === "faq"} onClick={() => setOpenSection(openSection === "faq" ? "" : "faq")}>
+            <p><strong>Is this anti-tarnish?</strong><br />Yes. This piece is finished for daily wear with an anti-tarnish protective layer.</p>
+            <p><strong>Which size should I choose?</strong><br />For rings, choose your usual ring size from the available size options. For other jewellery, check the product description and size guide.</p>
+            <p><strong>Can I return it?</strong><br />Eligible unused products can be returned according to the published SYRA returns policy.</p>
+          </Accordion>
         </div>
       </section>
 
-      {/* Customer Reviews */}
-      <section className="max-w-[1400px] mx-auto px-6 md:px-12 py-16 border-t border-gray-100">
-        <h2 className="text-xl font-semibold text-center mb-10">Customer Reviews</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            { name: "Priya S.", date: "05/2026", text: "Anti tarnish quality is amazing. Looks exactly like the picture!", rating: 5 },
-            { name: "Ananya R.", date: "04/2026", text: "Quality is good with low rate. Very happy with my purchase.", rating: 5 },
-            { name: "Meera K.", date: "03/2026", text: "Beautiful piece. Got so many compliments!", rating: 5 },
-          ].map((review, i) => (
-            <div key={i} className="border border-gray-200 rounded-lg p-5 space-y-2">
-              <div className="flex text-amber-400 text-sm">
-                {"★".repeat(review.rating)}
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-[13px] font-medium">{review.name}</span>
-                <span className="text-[11px] text-gray-400">{review.date}</span>
-              </div>
-              <p className="text-[13px] text-gray-600">{review.text}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+      <FrequentlyBoughtTogether product={product} related={related} />
+      <AIRecommendations productId={product.id} />
+      <CompleteTheLook product={product} related={related} />
+      <RecentlyViewed excludeId={product.id} />
+      <StickyAddToCart product={product} metal={metal} stone={stone} size={size} disabled={unavailable} />
 
-      {/* Rental Modal */}
       {product.rental.enabled && (
         <RentalRequestModal
           open={rentalModalOpen}
@@ -312,6 +309,46 @@ export function ProductDetailClient({ product, related }: Props) {
           }}
         />
       )}
+    </div>
+  )
+}
+
+function OptionGroup({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="mb-2 font-mono text-[11px] uppercase tracking-widest text-gray-500">{label}</p>
+      <div className="flex flex-wrap gap-2">{children}</div>
+    </div>
+  )
+}
+
+function InfoTile({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="border border-gray-200 p-3">
+      <p className="font-mono text-[10px] uppercase tracking-widest text-gray-400">{label}</p>
+      <p className="mt-1 leading-5 text-black">{value}</p>
+    </div>
+  )
+}
+
+function Accordion({
+  title,
+  open,
+  onClick,
+  children,
+}: {
+  title: string
+  open: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <div className="border border-gray-200">
+      <button type="button" onClick={onClick} className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium">
+        {title}
+        <span className="text-gray-400">{open ? "-" : "+"}</span>
+      </button>
+      {open && <div className="space-y-3 border-t border-gray-100 px-4 py-4 text-sm leading-6 text-gray-600">{children}</div>}
     </div>
   )
 }

@@ -25,28 +25,32 @@ export type ProfileUpdate = {
 }
 
 export async function updateProfile(_token: string, data: ProfileUpdate) {
-  // [MOCK] Simulate save delay
-  await new Promise((r) => setTimeout(r, 600))
-  return {
-    customer: {
-      id: "mock-customer-01",
-      email: "demo@syra.com",
-      first_name: data.first_name ?? "Demo",
-      last_name: data.last_name ?? "User",
-      phone: data.phone ?? "",
-    },
-  }
+  const resp = await fetch("/api/account/profile", {
+    method: "PUT",
+    headers: { "content-type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(data),
+  })
+  if (!resp.ok) throw new Error("Failed to update profile")
+  return resp.json()
 }
 
 export async function listAddresses(_token: string): Promise<Address[]> {
-  // [MOCK] Return empty address list
-  return []
+  const resp = await fetch("/api/account/addresses", { credentials: "include" })
+  if (!resp.ok) return []
+  const data = await resp.json() as { addresses: Address[] }
+  return data.addresses
 }
 
 export async function addAddress(_token: string, a: Address) {
-  // [MOCK] Simulate save delay
-  await new Promise((r) => setTimeout(r, 600))
-  return { customer: { addresses: [{ ...a, id: `mock-addr-${Date.now()}` }] } }
+  const resp = await fetch("/api/account/addresses", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(a),
+  })
+  if (!resp.ok) throw new Error("Failed to add address")
+  return resp.json()
 }
 
 export async function updateAddress(_token: string, _id: string, a: Address) {
@@ -55,18 +59,32 @@ export async function updateAddress(_token: string, _id: string, a: Address) {
 }
 
 export async function deleteAddress(_token: string, _id: string) {
-  await new Promise((r) => setTimeout(r, 400))
+  const resp = await fetch("/api/account/addresses", {
+    method: "DELETE",
+    headers: { "content-type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ id: _id }),
+  })
+  if (!resp.ok) throw new Error("Failed to delete address")
   return true
 }
 
-/** Trigger a password-reset email — mocked to always succeed. */
-export async function requestPasswordReset(_email: string) {
-  await new Promise((r) => setTimeout(r, 800))
-  // [MOCK] No-op — just resolves successfully
+export async function requestPasswordReset(email: string) {
+  const resp = await fetch("/api/auth/forgot-password", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ email }),
+  })
+  if (!resp.ok) throw new Error("Failed to request reset")
+  return resp.json()
 }
 
-/** Submit a new password against a reset token — mocked to always succeed. */
-export async function performPasswordReset(_token: string, _password: string) {
-  await new Promise((r) => setTimeout(r, 800))
-  // [MOCK] No-op — just resolves successfully
+export async function performPasswordReset(token: string, password: string) {
+  const resp = await fetch("/api/auth/reset-password", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ token, newPassword: password }),
+  })
+  if (!resp.ok) throw new Error("Failed to reset password")
+  return resp.json()
 }

@@ -13,10 +13,12 @@ import type { BrandConfig } from "@/lib/brand-config"
 export function SiteChrome({
   brand,
   currency,
+  adminPreview = false,
   children,
 }: {
   brand: BrandConfig
   currency: string
+  adminPreview?: boolean
   children: React.ReactNode
 }) {
   const pathname = usePathname()
@@ -57,6 +59,12 @@ export function SiteChrome({
       { href: "/privacy", label: "Privacy" },
     ] },
   ]
+  const computedFooterGroups = brand.social_links?.instagram
+    ? [
+        ...footerGroups,
+        { title: "Social", links: [{ href: brand.social_links.instagram, label: "Instagram" }] },
+      ]
+    : footerGroups
   const marqueeItems = brand.marquee_items ?? [
     `Free shipping over ${priceFmt(brand.free_shipping_threshold)}`,
     tagline.replace("|", " "),
@@ -117,10 +125,18 @@ export function SiteChrome({
         brand={brand.brand_name}
         tagline={tagline}
         marqueeItems={marqueeItems}
-        groups={footerGroups}
+        groups={computedFooterGroups}
         newsletterCopy={newsletterCopy}
         copyright={copyright}
       />
+      {adminPreview && !pathname.startsWith("/admin") && (
+        <a
+          href="/admin"
+          className="fixed bottom-5 left-5 z-50 border border-white/10 bg-[#0B0B0C] px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-white shadow-2xl transition-colors hover:bg-accent hover:text-bg"
+        >
+          Back to Admin
+        </a>
+      )}
     </>
   )
 }
