@@ -221,6 +221,13 @@ export function CartDrawer() {
                     Checkout →
                   </Button>
                 </Link>
+                <Link
+                  href="/cart"
+                  onClick={() => setOpen(false)}
+                  className="mt-3 block text-center font-mono text-[10px] uppercase tracking-widest text-muted underline"
+                >
+                  View full bag
+                </Link>
               </footer>
             )}
           </motion.aside>

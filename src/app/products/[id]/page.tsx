@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import { ProductDetailClient } from "./product-detail-client"
+import { Reviews } from "@/components/product/reviews"
 import { fetchProduct, fetchProducts } from "@/lib/medusa-products"
 import { JsonLd } from "@/components/seo/json-ld"
 import { productFaqJsonLd, productJsonLd } from "@/lib/seo-jsonld"
@@ -46,6 +47,7 @@ export default async function ProductPage({ params }: { params: Params }) {
     <Suspense>
       <JsonLd data={[productJsonLd(product), productFaqJsonLd()]} />
       <ProductDetailClient product={product} related={related} />
+      <Reviews productId={product.id} />
     </Suspense>
   )
 }

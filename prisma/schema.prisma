@@ -300,3 +300,21 @@ model Setting {
   key   String @unique
   value String @default("")
 }
+
+// ─── PRODUCT REVIEWS ────────────────────────────────────────────────────────
+
+model Review {
+  id         String   @id @default(cuid()) @map("_id")
+  productId  String   // product slug (public product identifier)
+  customerId String?  // set when submitted by a logged-in customer
+  name       String
+  rating     Int      // 1..5
+  title      String?
+  body       String   @default("")
+  verified   Boolean  @default(false) // purchased this product
+  approved   Boolean  @default(true)  // admin can hide by setting false
+  createdAt  DateTime @default(now())
+
+  @@index([productId])
+  @@index([approved])
+}
