@@ -5,8 +5,9 @@ import { useState, type FormEvent } from "react"
 import { motion } from "framer-motion"
 import { toast } from "sonner"
 import { useAuthStore } from "@/stores/auth-store"
+import { GoogleButton, OrDivider } from "@/components/auth/google-button"
 
-export function LoginClient() {
+export function LoginClient({ googleEnabled = false }: { googleEnabled?: boolean }) {
   const router = useRouter()
   const setSession = useAuthStore((s) => s.setSession)
   const [email, setEmail] = useState("")
@@ -56,6 +57,12 @@ export function LoginClient() {
       <p className="text-sm text-muted mb-8">
         New here? <Link href="/account/register" className="text-accent">Create account</Link>
       </p>
+      {googleEnabled && (
+        <>
+          <GoogleButton label="Sign in with Google" />
+          <OrDivider />
+        </>
+      )}
       <motion.form
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { sendAdminNewOrderAlert, sendOrderPlacedEmail } from "@/lib/email"
+import { verifyCustomerSession, sanitizeName, sanitizePhone } from "@/lib/customer-auth"
 
 type CheckoutItem = {
   name?: string
@@ -12,6 +13,7 @@ type CheckoutItem = {
 }
 
 export async function POST(req: Request) {
+  const session = await verifyCustomerSession().catch(() => null)
   const body = await req.json()
   const {
     email,
@@ -92,6 +94,7 @@ export async function POST(req: Request) {
   const order = await prisma.order.create({
     data: {
       orderNumber,
+      customerId: session?.id ?? null,
       email,
       phone: phone ?? "",
       firstName,
@@ -117,6 +120,21 @@ export async function POST(req: Request) {
 
   if (validCoupon) {
     await prisma.coupon.update({ where: { id: validCoupon.id }, data: { usedCount: { increment: 1 } } }).catch(() => null)
+  }
+
+  // Enrich the logged-in customer's profile with any details we just captured
+  // at checkout that were missing on their account (name / phone).
+  if (session) {
+    const c = await prisma.customer.findUnique({ where: { id: session.id } }).catch(() => null)
+    if (c) {
+      const patch: Record<string, string> = {}
+      if (!c.firstName && firstName) patch.firstName = sanitizeName(firstName)
+      if (!c.lastName && lastName) patch.lastName = sanitizeName(lastName)
+      if (!c.phone && phone) patch.phone = sanitizePhone(phone)
+      if (Object.keys(patch).length > 0) {
+        await prisma.customer.update({ where: { id: session.id }, data: patch }).catch(() => null)
+      }
+    }
   }
 
   await Promise.all([
