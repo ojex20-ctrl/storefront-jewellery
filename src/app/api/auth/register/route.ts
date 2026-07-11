@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import {
-  createEmailVerificationToken,
+  createOtp,
   hashPassword,
   isStrongPassword,
   isValidPhone,
@@ -9,7 +9,7 @@ import {
   sanitizeName,
   sanitizePhone,
 } from "@/lib/customer-auth"
-import { sendEmail, verificationLinkEmail } from "@/lib/email"
+import { sendEmail, verificationEmail } from "@/lib/email"
 import { isSupabaseConfigured, supabaseSignUp } from "@/lib/supabase-auth"
 import { rateLimit, requestIp, validRequestOrigin } from "@/lib/rate-limit"
 
@@ -58,23 +58,26 @@ export async function POST(req: Request) {
   }
 
   const existing = await prisma.customer.findUnique({ where: { email } })
-  if (existing) {
+  if (existing?.verified) {
     return NextResponse.json({ error: "Email already registered" }, { status: 409 })
   }
 
   const passwordHash = await hashPassword(password)
-  const customer = await prisma.customer.create({
-    data: { email, passwordHash, firstName, lastName, phone, verified: false }
+  // Create, or refresh an unverified account so a user who never verified can retry.
+  await prisma.customer.upsert({
+    where: { email },
+    update: { passwordHash, firstName, lastName, phone, verified: false },
+    create: { email, passwordHash, firstName, lastName, phone, verified: false },
   })
 
-  const token = await createEmailVerificationToken(customer.id)
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(req.url).origin
-  const link = `${siteUrl}/account/verify?token=${encodeURIComponent(token)}`
-  const { subject, html } = verificationLinkEmail(firstName, link)
+  // OTP-based signup: email a 6-digit code the user enters to verify + auto-login.
+  const { code } = await createOtp(email, "register")
+  const { subject, html } = verificationEmail(firstName, code)
   await sendEmail({ to: email, subject, html }).catch(() => {})
 
   return NextResponse.json({
-    message: "Account created. Please verify your email before logging in.",
-    ...(process.env.NODE_ENV !== "production" && { verificationLink: link }),
+    message: "We've emailed you a 6-digit verification code.",
+    otpSent: true,
+    ...(process.env.NODE_ENV !== "production" && { devCode: code }),
   })
 }

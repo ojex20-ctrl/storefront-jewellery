@@ -34,6 +34,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid payment signature" }, { status: 400 })
   }
 
+  // Guard against sending a duplicate confirmation email if the webhook already marked it paid.
+  const before = await prisma.order.findUnique({ where: { id: internalOrderId }, select: { paymentStatus: true } })
   const order = await prisma.order.update({
     where: { id: internalOrderId },
     data: {
@@ -49,6 +51,8 @@ export async function POST(req: Request) {
     },
   })
 
-  await sendOrderStatusUpdateEmail(order).catch(() => false)
+  if (before?.paymentStatus !== "paid") {
+    await sendOrderStatusUpdateEmail(order).catch(() => false)
+  }
   return NextResponse.json({ order: { id: order.id, orderNumber: order.orderNumber, paymentStatus: order.paymentStatus } })
 }

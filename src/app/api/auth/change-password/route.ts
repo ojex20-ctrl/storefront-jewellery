@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { hashPassword, isStrongPassword, verifyCustomerSession, verifyPassword } from "@/lib/customer-auth"
 import { validRequestOrigin } from "@/lib/rate-limit"
+import { sendEmail, passwordChangedEmail } from "@/lib/email"
 
 export async function POST(req: Request) {
   if (!validRequestOrigin(req)) return NextResponse.json({ error: "Invalid request" }, { status: 403 })
@@ -20,5 +21,9 @@ export async function POST(req: Request) {
   if (!valid) return NextResponse.json({ error: "Current password is incorrect." }, { status: 401 })
 
   await prisma.customer.update({ where: { id: session.id }, data: { passwordHash: await hashPassword(newPassword) } })
+
+  const { subject, html } = passwordChangedEmail(customer.firstName)
+  await sendEmail({ to: customer.email, subject, html }).catch(() => {})
+
   return NextResponse.json({ message: "Password updated." })
 }

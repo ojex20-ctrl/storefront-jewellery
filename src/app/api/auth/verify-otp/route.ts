@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { prisma } from "@/lib/db"
 import { verifyOtp, createCustomerToken, CUSTOMER_COOKIE, normalizeEmail } from "@/lib/customer-auth"
+import { sendEmail, welcomeEmail } from "@/lib/email"
 
 export async function POST(req: Request) {
   const { email: rawEmail, code, type } = await req.json()
@@ -21,6 +22,12 @@ export async function POST(req: Request) {
     where: { email },
     data: { verified: true }
   })
+
+  // Welcome email (only meaningful for the register flow).
+  if ((type ?? "register") === "register") {
+    const { subject, html } = welcomeEmail(customer.firstName)
+    await sendEmail({ to: customer.email, subject, html }).catch(() => {})
+  }
 
   // Auto-login after verification
   const token = createCustomerToken({

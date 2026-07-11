@@ -77,11 +77,12 @@ export async function register(input: {
 export async function refreshCustomer(_token: string): Promise<Customer | null> {
   const resp = await fetch("/api/auth/me", { credentials: "include" }).catch(() => null)
   if (!resp?.ok) return null
-  const data = await resp.json() as { user: { id: string; email: string; firstName: string; lastName: string } }
+  const data = await resp.json() as { user: { id: string; email: string; firstName: string; lastName: string; phone?: string } }
   return {
     id: data.user.id,
     email: data.user.email,
     first_name: data.user.firstName,
     last_name: data.user.lastName,
+    phone: data.user.phone ?? "",
   }
 }

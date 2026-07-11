@@ -131,8 +131,10 @@ export async function sendEmail(payload: EmailPayload) {
   }
 }
 
+const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "https://syrathelabel.com"
+
 function money(value: number) {
-  return `Rs. ${(value / 100).toLocaleString("en-IN")}`
+  return `₹${(value / 100).toLocaleString("en-IN")}`
 }
 
 type MailOrder = {
@@ -153,132 +155,181 @@ type MailOrder = {
   status: string
 }
 
-function parseOrderItems(raw: string) {
-  try {
-    const items = JSON.parse(raw) as Array<{ name?: string; qty?: number; price?: number }>
-    return items.map((item) => `<li>${item.name ?? "SYRA item"} x ${item.qty ?? 1} - ${money(item.price ?? 0)}</li>`).join("")
-  } catch {
-    return "<li>Order items</li>"
-  }
+// ─── Shared branded email layout ────────────────────────────────────────────
+
+const P = 'style="margin:0 0 16px;font-size:15px;line-height:1.65;color:#3a3a3c;"'
+const MUTED = 'style="margin:0 0 8px;font-size:12px;line-height:1.6;color:#9a948a;"'
+
+/** Table-based, inline-styled shell for maximum email-client compatibility. */
+function emailShell(heading: string, bodyHtml: string, preheader = ""): string {
+  const year = new Date().getFullYear()
+  return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#efece6;">
+<span style="display:none;max-height:0;overflow:hidden;opacity:0;color:#efece6;">${preheader}</span>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#efece6;padding:28px 12px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+<tr><td align="center">
+  <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#ffffff;border:1px solid #e6e1d8;border-radius:6px;overflow:hidden;">
+    <tr><td style="background:#0b0b0c;padding:26px 32px;text-align:center;">
+      <div style="color:#ffffff;font-size:22px;font-weight:600;letter-spacing:0.42em;">SYRA</div>
+      <div style="color:#c9a36b;font-size:9px;letter-spacing:0.28em;text-transform:uppercase;margin-top:6px;">Anti-tarnish · Waterproof · For life</div>
+    </td></tr>
+    <tr><td style="padding:38px 32px 6px;">
+      <h1 style="margin:0 0 18px;font-size:25px;line-height:1.25;color:#0b0b0c;font-weight:600;">${heading}</h1>
+      ${bodyHtml}
+    </td></tr>
+    <tr><td style="padding:24px 32px 34px;">
+      <hr style="border:none;border-top:1px solid #eeeae2;margin:0 0 18px;">
+      <div style="font-size:11px;line-height:1.8;color:#9a948a;">
+        <a href="${SITE}/collection" style="color:#0b0b0c;text-decoration:none;">Shop</a> &nbsp;·&nbsp;
+        <a href="${SITE}/order-track" style="color:#0b0b0c;text-decoration:none;">Track order</a> &nbsp;·&nbsp;
+        <a href="${SITE}/help" style="color:#0b0b0c;text-decoration:none;">Help</a>
+        <br>© ${year} SYRA Jewellery · Made to be worn every day.
+      </div>
+    </td></tr>
+  </table>
+</td></tr></table>
+</body></html>`
 }
 
-function supportLink() {
+function button(href: string, label: string): string {
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0;"><tr>
+    <td style="background:#0b0b0c;border-radius:3px;">
+      <a href="${href}" style="display:inline-block;padding:14px 30px;color:#ffffff;text-decoration:none;font-size:12px;letter-spacing:0.14em;text-transform:uppercase;">${label}</a>
+    </td></tr></table>`
+}
+
+function otpBox(code: string): string {
+  return `<div style="margin:22px 0;padding:22px;background:#f6f2ea;border:1px solid #ece5d8;border-radius:6px;text-align:center;">
+    <div style="font-size:34px;font-weight:700;letter-spacing:0.32em;color:#0b0b0c;">${code}</div>
+  </div>`
+}
+
+function supportLink(): string {
   const phone = process.env.PUBLIC_WHATSAPP_NUMBER || process.env.NEXT_PUBLIC_WHATSAPP_NUMBER
   if (!phone) return ""
-  return `<p><a href="https://wa.me/${phone}?text=${encodeURIComponent("Hi, I need help with my order")}">Contact support on WhatsApp</a></p>`
+  return `<p ${MUTED}>Need help? <a href="https://wa.me/${phone}?text=${encodeURIComponent("Hi, I need help with my order")}" style="color:#0b0b0c;">Message us on WhatsApp</a>.</p>`
 }
 
-function orderHtml(order: MailOrder, title: string, message: string) {
+function orderItemsTable(raw: string): string {
+  let items: Array<{ name?: string; qty?: number; price?: number }> = []
+  try { items = JSON.parse(raw) } catch { items = [] }
+  const rows = items
+    .map(
+      (i) => `<tr>
+        <td style="padding:10px 0;border-bottom:1px solid #f1ede5;font-size:14px;color:#1a1a1c;">${i.name ?? "SYRA item"} <span style="color:#9a948a;">× ${i.qty ?? 1}</span></td>
+        <td align="right" style="padding:10px 0;border-bottom:1px solid #f1ede5;font-size:14px;color:#1a1a1c;">${money(i.price ?? 0)}</td>
+      </tr>`,
+    )
+    .join("")
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;border-top:1px solid #f1ede5;">${rows}</table>`
+}
+
+function orderHtml(order: MailOrder, title: string, message: string): string {
   const name = `${order.firstName} ${order.lastName ?? ""}`.trim()
-  return `<div style="font-family:Arial,sans-serif;line-height:1.5;color:#1a1a1c">
-    <h2>${title}</h2>
-    <p>Hi ${name || "there"},</p>
-    <p>${message}</p>
-    <p><strong>Order:</strong> #${order.orderNumber}<br/>
-    <strong>Status:</strong> ${order.status.replace(/_/g, " ")}<br/>
-    <strong>Payment:</strong> ${order.paymentStatus}<br/>
-    <strong>Total:</strong> ${money(order.total)}</p>
-    <h3>Items</h3>
-    <ul>${parseOrderItems(order.items)}</ul>
-    <h3>Shipping address</h3>
-    <p>${order.address}, ${order.city}, ${order.state ?? ""} ${order.pincode}, ${order.country}</p>
-    ${supportLink()}
-    <p><a href="${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3002"}">Visit SYRA</a></p>
-  </div>`
+  const paid = order.paymentStatus === "paid"
+  const body = `
+    <p ${P}>Hi ${name || "there"}, ${message}</p>
+    ${orderItemsTable(order.items)}
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;color:#3a3a3c;">
+      <tr><td style="padding:3px 0;">Order</td><td align="right" style="padding:3px 0;font-weight:600;color:#0b0b0c;">#${order.orderNumber}</td></tr>
+      <tr><td style="padding:3px 0;">Status</td><td align="right" style="padding:3px 0;text-transform:capitalize;">${order.status.replace(/_/g, " ")}</td></tr>
+      <tr><td style="padding:3px 0;">Payment</td><td align="right" style="padding:3px 0;color:${paid ? "#2e7d46" : "#9a948a"};text-transform:capitalize;">${order.paymentStatus}</td></tr>
+      <tr><td style="padding:8px 0 0;font-size:17px;font-weight:600;color:#0b0b0c;">Total</td><td align="right" style="padding:8px 0 0;font-size:17px;font-weight:600;color:#0b0b0c;">${money(order.total)}</td></tr>
+    </table>
+    ${button(`${SITE}/order-track`, "Track your order")}
+    <p ${MUTED}>Shipping to: ${order.address}, ${order.city}, ${order.state ?? ""} ${order.pincode}, ${order.country}</p>
+    ${supportLink()}`
+  return emailShell(title, body, `Order #${order.orderNumber} — ${order.status.replace(/_/g, " ")}`)
 }
 
 export async function sendOrderPlacedEmail(order: MailOrder) {
   return sendEmail({
     to: order.email,
-    subject: `SYRA order #${order.orderNumber} placed`,
-    html: orderHtml(order, "Order placed", "We have received your order."),
+    subject: `Your SYRA order #${order.orderNumber} is confirmed`,
+    html: orderHtml(order, "Thank you for your order", "we've received it and we're getting it ready. Here's a summary:"),
   })
 }
 
 export async function sendOrderStatusUpdateEmail(order: MailOrder) {
+  const nice = order.status.replace(/_/g, " ")
   return sendEmail({
     to: order.email,
-    subject: `SYRA order #${order.orderNumber}: ${order.status.replace(/_/g, " ")}`,
-    html: orderHtml(order, "Order update", `Your order is now ${order.status.replace(/_/g, " ")}.`),
+    subject: `SYRA order #${order.orderNumber}: ${nice}`,
+    html: orderHtml(order, `Your order is ${nice}`, `there's an update on your order — it's now ${nice}.`),
   })
 }
 
 export async function sendAdminNewOrderAlert(order: MailOrder) {
   const to = process.env.ADMIN_ORDER_ALERT_EMAIL
   if (!to) return false
-  const adminLink = `${process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3002"}/admin/orders`
-  return sendEmail({
-    to,
-    subject: `New SYRA order #${order.orderNumber}`,
-    html: `<div style="font-family:Arial,sans-serif;line-height:1.5">
-      <h2>New order received</h2>
-      <p><strong>Customer:</strong> ${order.firstName} ${order.lastName ?? ""}<br/>
-      <strong>Email:</strong> ${order.email}<br/>
-      <strong>Phone:</strong> ${order.phone ?? ""}<br/>
-      <strong>Total:</strong> ${money(order.total)}<br/>
-      <strong>Payment:</strong> ${order.paymentStatus}</p>
-      <ul>${parseOrderItems(order.items)}</ul>
-      <p><a href="${adminLink}">Open admin orders</a></p>
-    </div>`,
-  })
+  const body = `
+    <p ${P}>A new order just came in.</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;color:#3a3a3c;">
+      <tr><td style="padding:3px 0;">Customer</td><td align="right" style="padding:3px 0;">${order.firstName} ${order.lastName ?? ""}</td></tr>
+      <tr><td style="padding:3px 0;">Email</td><td align="right" style="padding:3px 0;">${order.email}</td></tr>
+      <tr><td style="padding:3px 0;">Phone</td><td align="right" style="padding:3px 0;">${order.phone ?? "—"}</td></tr>
+      <tr><td style="padding:3px 0;">Payment</td><td align="right" style="padding:3px 0;text-transform:capitalize;">${order.paymentStatus}</td></tr>
+      <tr><td style="padding:8px 0 0;font-weight:600;color:#0b0b0c;">Total</td><td align="right" style="padding:8px 0 0;font-weight:600;color:#0b0b0c;">${money(order.total)}</td></tr>
+    </table>
+    ${orderItemsTable(order.items)}
+    ${button(`${SITE}/admin/orders/${order.id}`, "Open in admin")}`
+  return sendEmail({ to, subject: `New order #${order.orderNumber} — ${money(order.total)}`, html: emailShell("New order received", body) })
 }
+
+// ─── Auth / account emails ──────────────────────────────────────────────────
 
 export function verificationEmail(firstName: string, otp: string) {
-  return {
-    subject: "SYRA - Verify your email",
-    html: `<div style="font-family:-apple-system,sans-serif;max-width:500px;margin:0 auto;padding:40px 20px;">
-      <h2>Welcome to SYRA, ${firstName}!</h2>
-      <p>Your verification code is:</p>
-      <div style="margin:20px 0;padding:20px;background:#f5f3ee;text-align:center;font-size:32px;font-weight:bold;letter-spacing:8px;">${otp}</div>
-      <p style="color:#777;font-size:12px;">This code expires in 5 minutes.</p>
-    </div>`,
-  }
+  const body = `
+    <p ${P}>Welcome to SYRA${firstName ? `, ${firstName}` : ""} — you're one step away. Enter this code to verify your email and activate your account:</p>
+    ${otpBox(otp)}
+    <p ${MUTED}>This code expires in 5 minutes. If you didn't create a SYRA account, you can safely ignore this email.</p>`
+  return { subject: `${otp} is your SYRA verification code`, html: emailShell("Verify your email", body, "Your SYRA verification code") }
 }
 
-export function verificationLinkEmail(firstName: string, link: string) {
-  return {
-    subject: "SYRA - Verify your email",
-    html: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:560px;margin:0 auto;padding:40px 20px;color:#1a1a1c">
-      <h2>Welcome to SYRA, ${firstName || "there"}.</h2>
-      <p>Please verify your email before signing in.</p>
-      <p style="margin:28px 0"><a href="${link}" style="background:#0b0b0c;color:#fff;padding:14px 22px;text-decoration:none;text-transform:uppercase;letter-spacing:.12em;font-size:12px">Verify email</a></p>
-      <p style="color:#777;font-size:12px">This link expires in 24 hours.</p>
-    </div>`,
-  }
-}
-
-export function resetPasswordLinkEmail(firstName: string, link: string) {
-  return {
-    subject: "SYRA - Reset your password",
-    html: `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:560px;margin:0 auto;padding:40px 20px;color:#1a1a1c">
-      <h2>Hi ${firstName || "there"},</h2>
-      <p>Use this secure link to set a new SYRA password.</p>
-      <p style="margin:28px 0"><a href="${link}" style="background:#0b0b0c;color:#fff;padding:14px 22px;text-decoration:none;text-transform:uppercase;letter-spacing:.12em;font-size:12px">Reset password</a></p>
-      <p style="color:#777;font-size:12px">This link expires in 30 minutes. If you did not request it, ignore this email.</p>
-    </div>`,
-  }
+export function welcomeEmail(firstName: string) {
+  const body = `
+    <p ${P}>Your email is verified and your account is ready${firstName ? `, ${firstName}` : ""}. Welcome to SYRA — anti-tarnish, waterproof jewellery made to be worn every single day.</p>
+    ${button(`${SITE}/collection`, "Start shopping")}
+    <p ${MUTED}>Free shipping over ₹999 · 2-year anti-tarnish guarantee · Easy returns.</p>`
+  return { subject: "Welcome to SYRA ✨", html: emailShell("You're in.", body, "Welcome to SYRA") }
 }
 
 export function loginOtpEmail(firstName: string, otp: string) {
-  return {
-    subject: "SYRA - Your login code",
-    html: `<div style="font-family:-apple-system,sans-serif;max-width:500px;margin:0 auto;padding:40px 20px;">
-      <h2>Hi ${firstName},</h2>
-      <p>Your login code is:</p>
-      <div style="margin:20px 0;padding:20px;background:#f5f3ee;text-align:center;font-size:32px;font-weight:bold;letter-spacing:8px;">${otp}</div>
-      <p style="color:#777;font-size:12px;">This code expires in 5 minutes.</p>
-    </div>`,
-  }
+  const body = `
+    <p ${P}>Hi ${firstName || "there"}, use this code to sign in to your SYRA account:</p>
+    ${otpBox(otp)}
+    <p ${MUTED}>This code expires in 5 minutes. If you didn't try to sign in, please ignore this email.</p>`
+  return { subject: `${otp} is your SYRA login code`, html: emailShell("Your login code", body, "Your SYRA login code") }
+}
+
+export function verificationLinkEmail(firstName: string, link: string) {
+  const body = `
+    <p ${P}>Welcome to SYRA${firstName ? `, ${firstName}` : ""}. Please confirm your email address to activate your account.</p>
+    ${button(link, "Verify email")}
+    <p ${MUTED}>This link expires in 24 hours. If you didn't create an account, you can ignore this email.</p>`
+  return { subject: "Verify your SYRA email", html: emailShell("Verify your email", body, "Confirm your SYRA email") }
+}
+
+export function resetPasswordLinkEmail(firstName: string, link: string) {
+  const body = `
+    <p ${P}>Hi ${firstName || "there"}, we received a request to reset your SYRA password. Use the button below to set a new one.</p>
+    ${button(link, "Reset password")}
+    <p ${MUTED}>This link expires in 30 minutes. If you didn't request this, you can safely ignore this email — your password won't change.</p>`
+  return { subject: "Reset your SYRA password", html: emailShell("Reset your password", body, "Reset your SYRA password") }
+}
+
+export function passwordChangedEmail(firstName: string) {
+  const body = `
+    <p ${P}>Hi ${firstName || "there"}, this is a confirmation that your SYRA account password was just changed.</p>
+    <p ${MUTED}>If this was you, no action is needed. If you didn't change it, reset your password immediately using the button below.</p>
+    ${button(`${SITE}/account/forgot-password`, "Reset password")}`
+  return { subject: "Your SYRA password was changed", html: emailShell("Password changed", body, "Your SYRA password was changed") }
 }
 
 export function resetPasswordEmail(firstName: string, otp: string) {
-  return {
-    subject: "SYRA - Reset your password",
-    html: `<div style="font-family:-apple-system,sans-serif;max-width:500px;margin:0 auto;padding:40px 20px;">
-      <h2>Hi ${firstName},</h2>
-      <p>Your password reset code is:</p>
-      <div style="margin:20px 0;padding:20px;background:#f5f3ee;text-align:center;font-size:32px;font-weight:bold;letter-spacing:8px;">${otp}</div>
-      <p style="color:#777;font-size:12px;">This code expires in 5 minutes.</p>
-    </div>`,
-  }
+  const body = `
+    <p ${P}>Hi ${firstName || "there"}, use this code to reset your SYRA password:</p>
+    ${otpBox(otp)}
+    <p ${MUTED}>This code expires in 5 minutes. If you didn't request this, ignore this email.</p>`
+  return { subject: `${otp} is your SYRA password reset code`, html: emailShell("Reset your password", body, "Your SYRA reset code") }
 }

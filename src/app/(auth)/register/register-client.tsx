@@ -30,8 +30,23 @@ export function RegisterClient() {
       })
       const data = await res.json()
       if (!res.ok) { toast.error(data.error); return }
-      toast.success(data.message ?? "Account created!")
-      router.push("/account/login")
+      toast.success(data.message ?? "Verification code sent")
+      setStep("otp")
+    } catch { toast.error("Network error") }
+    finally { setPending(false) }
+  }
+
+  const resendCode = async () => {
+    setPending(true)
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ firstName, lastName, email, phone, password, confirmPassword, acceptTerms }),
+      })
+      const data = await res.json()
+      if (!res.ok) { toast.error(data.error); return }
+      toast.success("New code sent")
     } catch { toast.error("Network error") }
     finally { setPending(false) }
   }
@@ -71,6 +86,14 @@ export function RegisterClient() {
             {pending ? "Verifying..." : "Verify & Continue"}
           </button>
         </form>
+        <div className="mt-6 flex items-center justify-between text-xs text-muted">
+          <button onClick={resendCode} disabled={pending} className="uppercase tracking-widest text-accent disabled:opacity-50">
+            Resend code
+          </button>
+          <button onClick={() => setStep("form")} className="uppercase tracking-widest underline">
+            Change email
+          </button>
+        </div>
       </div>
     )
   }

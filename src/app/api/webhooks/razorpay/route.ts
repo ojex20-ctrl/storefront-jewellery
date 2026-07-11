@@ -31,6 +31,8 @@ export async function POST(req: Request) {
   if (!internalOrderId) return NextResponse.json({ ok: true, ignored: true })
 
   if (event.event === "payment.captured") {
+    // Skip the confirmation email if the client-verify path already marked it paid.
+    const before = await prisma.order.findUnique({ where: { id: internalOrderId }, select: { paymentStatus: true } })
     const order = await prisma.order.update({
       where: { id: internalOrderId },
       data: {
@@ -41,7 +43,9 @@ export async function POST(req: Request) {
         notes: JSON.stringify({ razorpay_order_id: payment?.order_id, razorpay_payment_id: payment?.id }),
       },
     })
-    await sendOrderStatusUpdateEmail(order).catch(() => false)
+    if (before?.paymentStatus !== "paid") {
+      await sendOrderStatusUpdateEmail(order).catch(() => false)
+    }
   }
 
   if (event.event === "payment.failed") {

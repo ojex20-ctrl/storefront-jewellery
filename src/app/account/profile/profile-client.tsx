@@ -20,22 +20,32 @@ export function ProfileClient() {
   const [phone, setPhone] = useState("")
   const [pending, setPending] = useState(false)
 
+  // Always load the freshest customer from the DB on mount so Phone is
+  // populated (the JWT/store omit it) — otherwise saving could wipe it.
   useEffect(() => {
-    if (!token) void refreshCustomer("customer_cookie").then((fresh) => {
-      if (fresh) setSession("customer_cookie", fresh)
-      else router.replace("/account/login?next=/account/profile")
+    void refreshCustomer("customer_cookie").then((fresh) => {
+      if (!fresh) { router.replace("/account/login?next=/account/profile"); return }
+      setSession("customer_cookie", fresh)
+      setFirst(fresh.first_name ?? "")
+      setLast(fresh.last_name ?? "")
+      setPhone(fresh.phone ?? "")
     })
-    setFirst(customer?.first_name ?? "")
-    setLast(customer?.last_name ?? "")
-    setPhone((customer as { phone?: string })?.phone ?? "")
-  }, [token, customer, router, setSession])
+    // run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
     if (!token) return
+    if (!first.trim()) { toast.error("First name is required."); return }
+    const cleanedPhone = phone.replace(/[^\d]/g, "")
+    if (phone.trim() && (cleanedPhone.length < 8 || cleanedPhone.length > 15)) {
+      toast.error("Enter a valid phone number.")
+      return
+    }
     setPending(true)
     try {
-      const r = await updateProfile(token, { first_name: first, last_name: last, phone })
+      const r = await updateProfile(token, { first_name: first.trim(), last_name: last.trim(), phone: phone.trim() })
       setCustomer(r.customer)
       toast.success("Profile updated")
     } catch (err) {

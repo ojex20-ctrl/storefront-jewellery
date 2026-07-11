@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { hashPassword, hashToken, isStrongPassword } from "@/lib/customer-auth"
 import { validRequestOrigin } from "@/lib/rate-limit"
+import { sendEmail, passwordChangedEmail } from "@/lib/email"
 
 export async function POST(req: Request) {
   if (!validRequestOrigin(req)) return NextResponse.json({ error: "Invalid request" }, { status: 403 })
@@ -22,8 +23,11 @@ export async function POST(req: Request) {
   }
 
   const passwordHash = await hashPassword(newPassword)
-  await prisma.customer.update({ where: { id: reset.customerId }, data: { passwordHash } })
+  const customer = await prisma.customer.update({ where: { id: reset.customerId }, data: { passwordHash } })
   await prisma.passwordResetToken.update({ where: { id: reset.id }, data: { usedAt: new Date() } })
+
+  const { subject, html } = passwordChangedEmail(customer.firstName)
+  await sendEmail({ to: customer.email, subject, html }).catch(() => {})
 
   return NextResponse.json({ message: "Password reset successfully" })
 }
