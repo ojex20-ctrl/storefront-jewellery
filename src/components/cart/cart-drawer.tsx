@@ -107,10 +107,10 @@ export function CartDrawer() {
                   <Button
                     onClick={() => {
                       setOpen(false)
-                      router.push("/tops")
+                      router.push("/collection")
                     }}
                   >
-                    Browse Tops
+                    Explore the collection
                   </Button>
                 </div>
               ) : (

@@ -61,7 +61,25 @@ export async function POST(req: Request) {
     return sum + Number(item.price ?? 0) * Number(item.qty ?? 1)
   }, 0)
   const serverShipping = Number(shippingCost ?? 0)
-  const serverDiscount = Number(discount ?? 0)
+
+  // Recompute the discount from the coupon server-side — never trust the client value.
+  let serverDiscount = 0
+  let validCoupon: { id: string; code: string } | null = null
+  if (couponCode) {
+    const coupon = await prisma.coupon.findUnique({ where: { code: String(couponCode).toUpperCase() } })
+    const usable =
+      coupon &&
+      coupon.active &&
+      (!coupon.expiresAt || new Date() <= coupon.expiresAt) &&
+      (!coupon.maxUses || coupon.usedCount < coupon.maxUses) &&
+      (!coupon.minOrder || serverSubtotal >= coupon.minOrder)
+    if (usable && coupon) {
+      serverDiscount =
+        coupon.type === "percentage" ? Math.round((serverSubtotal * coupon.value) / 100) : coupon.value
+      serverDiscount = Math.min(serverDiscount, serverSubtotal)
+      validCoupon = { id: coupon.id, code: coupon.code }
+    }
+  }
   const serverTotal = Math.max(0, serverSubtotal + serverShipping - serverDiscount)
 
   if (Number(subtotal ?? 0) !== serverSubtotal || Number(total ?? 0) !== serverTotal) {
@@ -93,9 +111,13 @@ export async function POST(req: Request) {
       status: "placed",
       giftWrap: giftWrap ?? false,
       giftMessage: giftMessage ?? null,
-      couponCode: couponCode ?? null,
+      couponCode: validCoupon?.code ?? null,
     },
   })
+
+  if (validCoupon) {
+    await prisma.coupon.update({ where: { id: validCoupon.id }, data: { usedCount: { increment: 1 } } }).catch(() => null)
+  }
 
   await Promise.all([
     sendOrderPlacedEmail(order).catch(() => false),

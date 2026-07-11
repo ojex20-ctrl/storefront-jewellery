@@ -1,31 +1,26 @@
 "use client"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { toast } from "sonner"
 import { Magnetic, LoaderBar } from "@podium/ui/motion"
 import { Button, Eyebrow, Placeholder } from "@podium/ui/primitives"
-import {
-  priceFmt,
-  // createMedusaCheckout,  // [MOCK] disabled
-  // MedusaCheckoutError,    // [MOCK] disabled
-} from "@podium/ui/lib"
+import { priceFmt } from "@podium/ui/lib"
 import { useCartStore } from "@/stores/cart-store"
 import { useOrderStore } from "@/stores/order-store"
-import { useAuthStore } from "@/stores/auth-store"
-// import { openRazorpayPopup } from "@/lib/razorpay-popup"  // [MOCK] disabled
-// import { openStripePopup } from "@/lib/stripe-popup"      // [MOCK] disabled
-// import { resolveZioraCartLines } from "@/lib/cart-to-medusa"  // [MOCK] disabled
-import { resolvePaymentChoices, type PaymentChoice } from "@/lib/payment-providers"
 import type { BrandConfig } from "@/lib/brand-config"
 import { openRazorpayCheckout } from "@/lib/razorpay"
 
-/** Perfume cart lines store flacon hex; we don't run them through a colour name lookup. */
-const colorName = (_hex: string) => "Flacon"
+/** Rental cart lines store a flacon hex; buy lines store a stone hex. Not shown as a colour name. */
+const variantLabel = (_hex: string) => "Finish"
 
 type Shipping = "standard" | "express" | "pickup"
-type Payment = "razorpay" | "stripe"
+
+// All money is in paise (₹1 = 100). Matches product prices and the /api/checkout server calc.
+const FREE_SHIPPING_OVER = 99900 // ₹999
+const STANDARD_RATE = 4900 // ₹49
+const EXPRESS_RATE = 9900 // ₹99
 
 const blank = {
   email: "",
@@ -34,41 +29,32 @@ const blank = {
   address: "",
   city: "",
   postcode: "",
-  country: "United Arab Emirates",
+  country: "India",
   phone: "",
 }
 
-export function CheckoutClient({ brand }: { brand: BrandConfig }) {
+type AppliedCoupon = { code: string; discount: number; message: string }
+
+export function CheckoutClient({ brand: _brand }: { brand: BrandConfig }) {
   const items = useCartStore((s) => s.items)
   const clearCart = useCartStore((s) => s.clear)
   const addOrder = useOrderStore((s) => s.add)
-  const customerToken = useAuthStore((s) => s.token)
   const router = useRouter()
 
   const [step, setStep] = useState(1)
   const [details, setDetails] = useState(blank)
   const [shipping, setShipping] = useState<Shipping>("standard")
-  const [payment, setPayment] = useState<Payment>("razorpay")
   const [placing, setPlacing] = useState(false)
 
-  const [choices, setChoices] = useState<PaymentChoice[] | null>(null)
-  useEffect(() => {
-    void (async () => {
-      const list = await resolvePaymentChoices(null, brand)
-      setChoices(list)
-      if (list.length > 0) {
-        setPayment(list[0]!.id.includes("razorpay") ? "razorpay" : "stripe")
-      }
-    })()
-  }, [brand])
+  const [couponInput, setCouponInput] = useState("")
+  const [coupon, setCoupon] = useState<AppliedCoupon | null>(null)
+  const [couponBusy, setCouponBusy] = useState(false)
 
   const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0)
-  const deposit = items.reduce(
-    (s, i) => s + (i.rental?.security_deposit ?? 0) * i.qty,
-    0,
-  )
-  const ship = shipping === "express" ? 50 : shipping === "pickup" ? 0 : subtotal > 500 ? 0 : 30
-  const total = subtotal + ship + deposit
+  const ship =
+    shipping === "pickup" ? 0 : shipping === "express" ? EXPRESS_RATE : subtotal >= FREE_SHIPPING_OVER ? 0 : STANDARD_RATE
+  const discount = Math.min(coupon?.discount ?? 0, subtotal)
+  const total = Math.max(0, subtotal + ship - discount)
 
   if (items.length === 0) return <EmptyState />
 
@@ -76,6 +62,28 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
     step === 1
       ? details.email && details.firstName && details.address && details.city && details.postcode && details.phone
       : true
+
+  const applyCoupon = async () => {
+    const code = couponInput.trim()
+    if (!code) return
+    setCouponBusy(true)
+    try {
+      const res = await fetch("/api/coupons/validate", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ code, subtotal }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.valid) throw new Error(data.error || "Invalid coupon")
+      setCoupon({ code: data.code, discount: data.discount, message: data.message })
+      toast.success(data.message)
+    } catch (err) {
+      setCoupon(null)
+      toast.error(err instanceof Error ? err.message : "Invalid coupon")
+    } finally {
+      setCouponBusy(false)
+    }
+  }
 
   const handlePlace = async () => {
     setPlacing(true)
@@ -96,9 +104,10 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
           items: items.map((i) => ({ name: i.name, productId: i.productId, size: i.size, qty: i.qty, price: i.price, image: i.image })),
           subtotal,
           shippingCost: ship,
-          discount: 0,
+          discount,
           total,
-          payment,
+          payment: "razorpay",
+          couponCode: coupon?.code ?? null,
           giftWrap: false,
         }),
       })
@@ -106,15 +115,13 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
       if (!res.ok) throw new Error(data.error || "Order failed")
       const orderId = data.order.id
 
-      if (payment === "razorpay") {
-        await openRazorpayCheckout({
-          internalOrderId: orderId,
-          orderNumber: data.order.orderNumber,
-          customer: details,
-        })
-      }
+      await openRazorpayCheckout({
+        internalOrderId: orderId,
+        orderNumber: data.order.orderNumber,
+        customer: details,
+      })
 
-      addOrder({ id: orderId, details, items, total, shipping, payment, createdAt: Date.now() })
+      addOrder({ id: orderId, details, items, total, shipping, payment: "razorpay", createdAt: Date.now() })
       clearCart()
       router.push(`/confirmation/${orderId}`)
     } catch (err) {
@@ -139,7 +146,7 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
             <div className="w-60">
               <LoaderBar />
             </div>
-            <Eyebrow>Securely confirming with {payment === "razorpay" ? "Razorpay" : "Stripe"}</Eyebrow>
+            <Eyebrow>Securely confirming with Razorpay</Eyebrow>
           </motion.div>
         )}
       </AnimatePresence>
@@ -193,10 +200,10 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
                 <Field label="Address" value={details.address} onChange={(v) => setDetails({ ...details, address: v })} />
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-[2fr_1fr_1fr]">
                   <Field label="City" value={details.city} onChange={(v) => setDetails({ ...details, city: v })} />
-                  <Field label="Postcode" value={details.postcode} onChange={(v) => setDetails({ ...details, postcode: v })} />
+                  <Field label="Pincode" value={details.postcode} onChange={(v) => setDetails({ ...details, postcode: v })} />
                   <Field label="Country" value={details.country} onChange={(v) => setDetails({ ...details, country: v })} />
                 </div>
-                <Field label="Phone (Mobile)" value={details.phone} onChange={(v) => setDetails({ ...details, phone: v })} placeholder="+971 ..." />
+                <Field label="Phone (Mobile)" value={details.phone} onChange={(v) => setDetails({ ...details, phone: v })} placeholder="+91 ..." />
               </div>
             )}
 
@@ -204,9 +211,9 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
               <div className="flex flex-col gap-3">
                 {(
                   [
-                    { id: "standard", label: "Standard", desc: "2–4 days · Tracked", price: subtotal > 500 ? 0 : 30 },
-                    { id: "express", label: "Express", desc: "24 hours · Same emirate", price: 50 },
-                    { id: "pickup", label: "Studio pickup", desc: "Dubai · Al Quoz", price: 0 },
+                    { id: "standard", label: "Standard", desc: "3–5 days · Tracked", price: subtotal >= FREE_SHIPPING_OVER ? 0 : STANDARD_RATE },
+                    { id: "express", label: "Express", desc: "1–2 days · Priority", price: EXPRESS_RATE },
+                    { id: "pickup", label: "Store pickup", desc: "Collect in-store", price: 0 },
                   ] as const
                 ).map((opt) => {
                   const active = shipping === opt.id
@@ -222,9 +229,7 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
                         <p className="font-display text-2xl">{opt.label}</p>
                         <Eyebrow className="mt-1 block">{opt.desc}</Eyebrow>
                       </div>
-                      <span className="font-mono text-sm">
-                        {opt.price === 0 ? "FREE" : priceFmt(opt.price)}
-                      </span>
+                      <span className="font-mono text-sm">{opt.price === 0 ? "FREE" : priceFmt(opt.price)}</span>
                     </button>
                   )
                 })}
@@ -232,42 +237,19 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
             )}
 
             {step === 3 && (
-              <div className="flex flex-col gap-3">
-                {choices === null && (
-                  <div className="border border-line p-6">
-                    <Eyebrow>Loading payment options…</Eyebrow>
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between border border-accent bg-accent-soft p-6">
+                  <div>
+                    <p className="font-display text-2xl">Razorpay</p>
+                    <Eyebrow className="mt-1 block">Cards · UPI · Netbanking · Wallets</Eyebrow>
                   </div>
-                )}
-                {choices !== null && choices.length === 0 && (
-                  <div className="border border-line p-6">
-                    <Eyebrow className="text-accent">No payment gateways enabled</Eyebrow>
-                    <p className="mt-2 text-sm text-muted">
-                      Enable a gateway in the admin (Settings → Regions → Payment, or
-                      Brand settings → Enabled payment gateways).
-                    </p>
-                  </div>
-                )}
-                {choices?.map((opt) => {
-                  const shortId = opt.id.includes("razorpay") ? "razorpay" : "stripe"
-                  const active = payment === shortId
-                  return (
-                    <button
-                      key={opt.id}
-                      onClick={() => setPayment(shortId)}
-                      className={`flex items-center justify-between border p-6 text-left transition-all ${
-                        active ? "border-accent bg-accent-soft" : "border-line bg-transparent"
-                      }`}
-                    >
-                      <div>
-                        <p className="font-display text-2xl">{opt.label}</p>
-                        <Eyebrow className="mt-1 block">{opt.description}</Eyebrow>
-                      </div>
-                      <span className="border border-line px-2 py-1 font-mono text-[9px] uppercase tracking-widest text-muted">
-                        {opt.badge}
-                      </span>
-                    </button>
-                  )
-                })}
+                  <span className="border border-line px-2 py-1 font-mono text-[9px] uppercase tracking-widest text-muted">
+                    Secure
+                  </span>
+                </div>
+                <p className="text-[13px] text-muted">
+                  You&apos;ll complete payment securely via Razorpay. Your card details never touch our servers.
+                </p>
               </div>
             )}
           </motion.div>
@@ -318,23 +300,52 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
               <div>
                 <p className="font-display text-base">{item.name}</p>
                 <Eyebrow className="mt-0.5 block">
-                  {colorName(item.color)} · {item.size} · ×{item.qty}
+                  {variantLabel(item.color)} · {item.size} · ×{item.qty}
                 </Eyebrow>
-                {item.rental && (
-                  <span className="mt-1 inline-block bg-accent/15 px-2 py-0.5 font-mono text-[9px] uppercase tracking-widest text-accent">
-                    ★ rent · {item.rental.days}d · returns {prettyDate(item.rental.end_date)}
-                  </span>
-                )}
               </div>
               <span className="font-mono text-xs">{priceFmt(item.price * item.qty)}</span>
             </div>
           ))}
         </div>
+
+        {/* Coupon */}
+        <div className="mb-6 border-b border-line pb-6">
+          {coupon ? (
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="font-mono text-[11px] uppercase tracking-widest text-accent">✓ {coupon.code}</span>
+                <p className="mt-0.5 text-[12px] text-muted">{coupon.message}</p>
+              </div>
+              <button
+                onClick={() => { setCoupon(null); setCouponInput("") }}
+                className="font-mono text-[10px] uppercase tracking-widest text-muted underline"
+              >
+                Remove
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <input
+                value={couponInput}
+                onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                onKeyDown={(e) => e.key === "Enter" && applyCoupon()}
+                placeholder="PROMO CODE"
+                className="w-full border border-line bg-transparent px-3 py-2.5 font-mono text-[12px] uppercase tracking-widest text-ink outline-none focus:border-ink"
+              />
+              <button
+                onClick={applyCoupon}
+                disabled={couponBusy || !couponInput.trim()}
+                className="shrink-0 border border-ink px-4 py-2.5 font-mono text-[10px] uppercase tracking-widest text-ink transition-colors hover:bg-ink hover:text-bg disabled:opacity-40"
+              >
+                {couponBusy ? "…" : "Apply"}
+              </button>
+            </div>
+          )}
+        </div>
+
         <Row label="Subtotal" value={priceFmt(subtotal)} />
         <Row label="Shipping" value={ship === 0 ? "FREE" : priceFmt(ship)} />
-        {deposit > 0 && (
-          <Row label="Refundable deposit" value={priceFmt(deposit)} />
-        )}
+        {discount > 0 && <Row label={`Discount (${coupon?.code})`} value={`− ${priceFmt(discount)}`} accent />}
         <Row label="Tax" value="Included" muted />
         <div className="mt-4 flex justify-between border-t border-line pt-4">
           <span className="font-display text-2xl">Total</span>
@@ -382,17 +393,13 @@ function Field({
   )
 }
 
-function Row({ label, value, muted }: { label: string; value: string; muted?: boolean }) {
+function Row({ label, value, muted, accent }: { label: string; value: string; muted?: boolean; accent?: boolean }) {
   return (
     <div className="flex justify-between py-1 text-[13px]">
       <span className="text-muted">{label}</span>
-      <span className={`font-mono ${muted ? "text-muted" : "text-ink"}`}>{value}</span>
+      <span className={`font-mono ${accent ? "text-accent" : muted ? "text-muted" : "text-ink"}`}>{value}</span>
     </div>
   )
-}
-
-function prettyDate(s: string): string {
-  return new Date(s).toLocaleDateString(undefined, { day: "2-digit", month: "short" })
 }
 
 function EmptyState() {
@@ -402,8 +409,8 @@ function EmptyState() {
       <p className="mb-4 font-display text-6xl tracking-tighter">
         Your bag is <em>empty</em>.
       </p>
-      <Link href="/tops">
-        <Button>Browse Tops →</Button>
+      <Link href="/collection">
+        <Button>Explore the collection →</Button>
       </Link>
     </div>
   )
