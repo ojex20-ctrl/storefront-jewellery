@@ -17,11 +17,6 @@ const variantLabel = (_hex: string) => "Finish"
 
 type Shipping = "standard" | "express" | "pickup"
 
-// All money is in paise (₹1 = 100). Matches product prices and the /api/checkout server calc.
-const FREE_SHIPPING_OVER = 99900 // ₹999
-const STANDARD_RATE = 4900 // ₹49
-const EXPRESS_RATE = 9900 // ₹99
-
 const blank = {
   email: "",
   firstName: "",
@@ -35,7 +30,12 @@ const blank = {
 
 type AppliedCoupon = { code: string; discount: number; message: string }
 
-export function CheckoutClient({ brand: _brand }: { brand: BrandConfig }) {
+export function CheckoutClient({ brand }: { brand: BrandConfig }) {
+  // All money is in paise. Rates are admin-configurable (Store Settings).
+  const FREE_SHIPPING_OVER = brand.free_shipping_threshold
+  const STANDARD_RATE = brand.shipping_standard_rate
+  const EXPRESS_RATE = brand.shipping_express_rate
+
   const items = useCartStore((s) => s.items)
   const clearCart = useCartStore((s) => s.clear)
   const addOrder = useOrderStore((s) => s.add)

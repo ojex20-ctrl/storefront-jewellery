@@ -22,8 +22,8 @@ import { organizationJsonLd, websiteJsonLd } from "@/lib/seo-jsonld"
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await getBrandConfig()
   return {
-    title: { default: `${brand.brand_name} — Rentals and Jewels`, template: `%s · ${brand.brand_name}` },
-    description: brand.hero_copy ?? "SYRA — Premium anti-tarnish jewellery and editorial pieces.",
+    title: { default: brand.seo_title || `${brand.brand_name} — Anti-Tarnish Jewellery`, template: `%s · ${brand.brand_name}` },
+    description: brand.seo_description || brand.hero_copy || "SYRA — Premium anti-tarnish jewellery and editorial pieces.",
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3002"),
     openGraph: {
       title: brand.brand_name,

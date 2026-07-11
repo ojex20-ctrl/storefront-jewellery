@@ -13,6 +13,7 @@ export default async function AdminSettingsPage() {
   return (
     <SettingsClient
       settings={settings}
+      user={session}
       integrationStatus={{
         razorpayConfigured: Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET),
         razorpayKeyId: process.env.RAZORPAY_KEY_ID ?? process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "",

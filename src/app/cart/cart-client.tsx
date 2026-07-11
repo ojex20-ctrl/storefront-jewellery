@@ -5,10 +5,9 @@ import { Button, Eyebrow, Placeholder } from "@podium/ui/primitives"
 import { priceFmt } from "@podium/ui/lib"
 import { useCartStore } from "@/stores/cart-store"
 
-const FREE_SHIPPING_OVER = 99900 // ₹999 in paise
-const STANDARD_RATE = 4900 // ₹49
-
-export function CartClient() {
+export function CartClient({ freeShippingOver, standardRate }: { freeShippingOver: number; standardRate: number }) {
+  const FREE_SHIPPING_OVER = freeShippingOver
+  const STANDARD_RATE = standardRate
   const items = useCartStore((s) => s.items)
   const setQty = useCartStore((s) => s.setQty)
   const remove = useCartStore((s) => s.remove)

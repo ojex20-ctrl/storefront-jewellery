@@ -35,6 +35,10 @@ export type BrandConfig = {
   hero_product_handle: string | null
   enabled_payment_providers: string[] | null
   free_shipping_threshold: number
+  shipping_standard_rate: number
+  shipping_express_rate: number
+  seo_title: string | null
+  seo_description: string | null
   gender_entry: boolean
   nav_links: NavLink[] | null
   footer_groups: FooterGroup[] | null
@@ -72,7 +76,11 @@ const FALLBACK: BrandConfig = {
   hero_copy: null,
   hero_product_handle: null,
   enabled_payment_providers: null,
-  free_shipping_threshold: 500,
+  free_shipping_threshold: 99900, // ₹999 in paise
+  shipping_standard_rate: 4900, // ₹49
+  shipping_express_rate: 9900, // ₹99
+  seo_title: null,
+  seo_description: null,
   gender_entry: false,
   nav_links: null,
   footer_groups: null,
@@ -99,11 +107,22 @@ export async function getBrandConfig(): Promise<BrandConfig> {
     const { prisma } = await import("./db")
     const rows = await prisma.setting.findMany()
     const settings = Object.fromEntries(rows.map((row) => [row.key, row.value]))
+    const num = (v: string | undefined, fb: number) => {
+      const n = Number(v)
+      return v !== undefined && v !== "" && Number.isFinite(n) ? n : fb
+    }
     return {
       ...FALLBACK,
       brand_name: settings.brand_name || FALLBACK.brand_name,
       tagline: settings.tagline || FALLBACK.tagline,
-      free_shipping_threshold: Number(settings.free_shipping_threshold || FALLBACK.free_shipping_threshold),
+      logo_url: settings.logo_url || FALLBACK.logo_url,
+      free_shipping_threshold: num(settings.free_shipping_threshold, FALLBACK.free_shipping_threshold),
+      shipping_standard_rate: num(settings.shipping_standard_rate, FALLBACK.shipping_standard_rate),
+      shipping_express_rate: num(settings.shipping_express_rate, FALLBACK.shipping_express_rate),
+      seo_title: settings.seo_title || FALLBACK.seo_title,
+      seo_description: settings.seo_description || FALLBACK.seo_description,
+      newsletter_copy: settings.newsletter_copy || FALLBACK.newsletter_copy,
+      footer_copyright: settings.footer_copyright || FALLBACK.footer_copyright,
       nav_links: parseJson(settings.nav_links, FALLBACK.nav_links),
       announcement_bar: {
         enabled: settings.announcement_bar_enabled === "true",
@@ -112,9 +131,15 @@ export async function getBrandConfig(): Promise<BrandConfig> {
       },
       social_links: {
         instagram: settings.instagram_url || process.env.PUBLIC_INSTAGRAM_URL || null,
+        facebook: settings.facebook_url || null,
+        twitter: settings.twitter_url || null,
+        youtube: settings.youtube_url || null,
+        pinterest: settings.pinterest_url || null,
       },
       shop_email: settings.contact_email || null,
       shop_phone: settings.contact_phone || null,
+      shop_address: settings.shop_address || null,
+      shop_hours: settings.shop_hours || null,
       shop_whatsapp: settings.whatsapp_number || null,
       feature_flags: {
         enable_search: true,
