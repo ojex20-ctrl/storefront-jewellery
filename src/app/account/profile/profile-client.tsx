@@ -15,6 +15,7 @@ export function ProfileClient() {
   const customer = useAuthStore((s) => s.customer)
   const setSession = useAuthStore((s) => s.setSession)
   const setCustomer = useAuthStore((s) => s.setCustomer)
+  const clear = useAuthStore((s) => s.clear)
   const [first, setFirst] = useState("")
   const [last, setLast] = useState("")
   const [phone, setPhone] = useState("")
@@ -24,7 +25,7 @@ export function ProfileClient() {
   // populated (the JWT/store omit it) — otherwise saving could wipe it.
   useEffect(() => {
     void refreshCustomer("customer_cookie").then((fresh) => {
-      if (!fresh) { router.replace("/account/login?next=/account/profile"); return }
+      if (!fresh) { clear(); router.replace("/account/login?next=/account/profile"); return }
       setSession("customer_cookie", fresh)
       setFirst(fresh.first_name ?? "")
       setLast(fresh.last_name ?? "")

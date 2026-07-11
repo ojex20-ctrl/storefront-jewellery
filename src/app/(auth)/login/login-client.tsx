@@ -24,7 +24,20 @@ export function LoginClient() {
         body: JSON.stringify({ email, password, remember }),
       })
       const data = await res.json()
-      if (!res.ok) { toast.error(data.error); return }
+      if (!res.ok) {
+        if (res.status === 403 && data.needsVerification) {
+          toast.message("Verify your email to continue — we've sent you a code.")
+          await fetch("/api/auth/resend-otp", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ email }),
+          }).catch(() => {})
+          router.push(`/account/verify-otp?email=${encodeURIComponent(email)}`)
+          return
+        }
+        toast.error(data.error)
+        return
+      }
       setSession("customer_cookie", {
         id: data.user.id,
         email: data.user.email,

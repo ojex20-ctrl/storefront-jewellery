@@ -46,10 +46,13 @@ export function AccountClient() {
         setCheckingSession(false)
         return
       }
+      // Cookie is missing/expired — drop any stale persisted token so the UI
+      // doesn't linger in a broken "logged in but every request 401s" state.
+      clear()
       setCheckingSession(false)
-      if (!token) router.replace("/account/login?next=/account")
+      router.replace("/account/login?next=/account")
     })()
-  }, [hydrated, token, router, setSession])
+  }, [hydrated, token, router, setSession, clear])
 
   useEffect(() => {
     if (!token) return

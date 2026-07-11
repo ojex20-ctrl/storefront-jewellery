@@ -4,9 +4,11 @@ import { useRouter } from "next/navigation"
 import { useState, type FormEvent } from "react"
 import { motion } from "framer-motion"
 import { toast } from "sonner"
+import { useAuthStore } from "@/stores/auth-store"
 
 export function RegisterClient() {
   const router = useRouter()
+  const setSession = useAuthStore((s) => s.setSession)
   const [step, setStep] = useState<"form" | "otp">("form")
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
@@ -62,6 +64,16 @@ export function RegisterClient() {
       })
       const data = await res.json()
       if (!res.ok) { toast.error(data.error); return }
+      // verify-otp sets the httpOnly cookie AND returns the user — sync the
+      // client store so the nav/greeting reflect the logged-in state at once.
+      if (data.user) {
+        setSession("customer_cookie", {
+          id: data.user.id,
+          email: data.user.email,
+          first_name: data.user.firstName,
+          last_name: data.user.lastName,
+        })
+      }
       toast.success("Email verified! Welcome to SYRA.")
       router.push("/account")
     } catch { toast.error("Network error") }

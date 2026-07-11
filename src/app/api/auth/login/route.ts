@@ -65,11 +65,16 @@ export async function POST(req: Request) {
   }
 
   const customer = await prisma.customer.findUnique({ where: { email } })
+  // Generic message for both unknown-email and wrong-password to avoid revealing
+  // which emails have accounts (account enumeration).
   if (!customer) {
-    return NextResponse.json({ error: "Account not found" }, { status: 404 })
+    return NextResponse.json({ error: "Invalid email or password." }, { status: 401 })
   }
   if (!customer.verified) {
-    return NextResponse.json({ error: "Please verify your email before logging in." }, { status: 403 })
+    return NextResponse.json(
+      { error: "Please verify your email to continue.", needsVerification: true },
+      { status: 403 },
+    )
   }
 
   if (!password) {
@@ -78,7 +83,7 @@ export async function POST(req: Request) {
 
   const valid = await verifyPassword(password, customer.passwordHash)
   if (!valid) {
-    return NextResponse.json({ error: "Invalid password" }, { status: 401 })
+    return NextResponse.json({ error: "Invalid email or password." }, { status: 401 })
   }
 
   const token = createCustomerToken({
