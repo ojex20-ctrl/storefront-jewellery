@@ -4,7 +4,7 @@ import { Eyebrow, Button } from "@podium/ui/primitives"
 import { PageBlocks } from "@podium/ui/chrome"
 import { getPageContent } from "@/lib/page-content"
 
-export const metadata = { title: "Bespoke — ZIORA" }
+export const metadata = { title: "Bespoke — SYRA" }
 
 const STAGES = [
   { num: "01", title: "Brief", copy: "We meet at the atelier in Marampally — sketches, reference pieces, conversation. 1 hour, free of cost." },
@@ -77,7 +77,7 @@ export default async function BespokePage() {
           <p className="mx-auto max-w-[640px] font-display text-3xl italic text-ink-2 md:text-4xl">
             &ldquo;Every piece begins with a single sketch. The hand still does most of the work.&rdquo;
           </p>
-          <Eyebrow className="mt-6 block text-accent">— ZIORA Atelier</Eyebrow>
+          <Eyebrow className="mt-6 block text-accent">— SYRA Atelier</Eyebrow>
         </Reveal>
       </section>
       {cms?.blocks && cms.blocks.length > 0 && (

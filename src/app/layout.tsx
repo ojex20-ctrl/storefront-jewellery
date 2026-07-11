@@ -15,6 +15,8 @@ import { cookies, headers } from "next/headers"
 import { getBrandConfig } from "@/lib/brand-config"
 import { CURRENCY_COOKIE, resolveCurrency, setActiveCurrencyForRender } from "@podium/ui/lib"
 import { verifyAdminSession } from "@/lib/admin-auth"
+import { JsonLd } from "@/components/seo/json-ld"
+import { organizationJsonLd, websiteJsonLd } from "@/lib/seo-jsonld"
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await getBrandConfig()
@@ -55,6 +57,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     >
       <head>
         <BrandStyles brand={brand} />
+        <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
       </head>
       <body className="min-h-screen bg-bg text-ink antialiased">
         <ThemeBootstrap />

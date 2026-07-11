@@ -34,11 +34,11 @@ function buildFallback(
   return {
   shipping: {
     eyebrow: "Shipping",
-    title: "Tracked, _GCC_.",
-    intro: "Pieces ship insured from the atelier in Marampally. UAE-only doorstep for now.",
+    title: "Tracked, _pan-India_.",
+    intro: "Pieces ship insured from the atelier in Marampally. Pan-India doorstep delivery.",
     rows: [
-      { label: "GCC standard", value: `Free over ${currency} ${threshold} · 2–4 days` },
-      { label: "GCC express", value: `${currency} 50 · 24h same emirate` },
+      { label: "Standard", value: `Free over ${currency} ${threshold} · 2–4 days` },
+      { label: "Express", value: `${currency} 99 · 1–2 days` },
       { label: "Pickup", value: "Free · Marampally atelier" },
     ],
   },

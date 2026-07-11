@@ -2,7 +2,7 @@ import { Suspense } from "react"
 import { CollectionClient } from "../collection/collection-client"
 import { fetchProducts } from "@/lib/medusa-products"
 
-export const metadata = { title: "Search — ZIORA" }
+export const metadata = { title: "Search — SYRA" }
 
 /**
  * /search reuses the collection client — the listing already binds its

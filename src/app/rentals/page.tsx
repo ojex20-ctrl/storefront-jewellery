@@ -6,7 +6,7 @@ import { fetchProducts } from "@/lib/medusa-products"
 import { PageBlocks } from "@podium/ui/chrome"
 import { getPageContent } from "@/lib/page-content"
 
-export const metadata = { title: "Rentals — ZIORA" }
+export const metadata = { title: "Rentals — SYRA" }
 
 const STEPS: [string, string, string][] = [
   ["01", "Browse + request", "Pick a piece and submit your dates with name, phone, email, and ID number. We don't take payment online."],

@@ -21,7 +21,7 @@ export default function TermsPage() {
           <p className="mb-4">We attempt to be as accurate as possible in the description of our products. However, we do not warrant that product descriptions or other content is accurate, complete, or error-free.</p>
 
           <h2 className="font-display text-2xl text-ink mb-4 mt-8">Governing Law</h2>
-          <p className="mb-4">Your use of this website and any dispute arising out of such use is subject to the laws of the United Arab Emirates.</p>
+          <p className="mb-4">Your use of this website and any dispute arising out of such use is subject to the laws of India.</p>
         </div>
       </Reveal>
     </div>

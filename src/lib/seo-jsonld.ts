@@ -16,7 +16,7 @@ export function productJsonLd(product: Product) {
     offers: {
       "@type": "Offer",
       priceCurrency: "INR",
-      price: product.price.toFixed(2),
+      price: (product.price / 100).toFixed(2), // stored in paise
       availability: isOutOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
       url: `${SITE_URL}/products/${product.id}`,
     },
@@ -61,6 +61,32 @@ export function collectionJsonLd(products: Product[]) {
         url: `${SITE_URL}/products/${product.id}`,
         name: product.name,
       })),
+    },
+  }
+}
+
+export function organizationJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "SYRA",
+    url: SITE_URL,
+    logo: `${SITE_URL}/hero/syra_hero_1.png`,
+    description: "Anti-tarnish, waterproof fine-look jewellery made to be worn every day.",
+    sameAs: ["https://instagram.com/syrajewellery"],
+  }
+}
+
+export function websiteJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "SYRA",
+    url: SITE_URL,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${SITE_URL}/search?q={search_term_string}`,
+      "query-input": "required name=search_term_string",
     },
   }
 }
