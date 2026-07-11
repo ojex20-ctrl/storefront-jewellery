@@ -203,7 +203,7 @@ model Customer {
   id           String   @id @default(cuid()) @map("_id")
   email        String   @unique
   passwordHash String
-  authUserId   String?  @unique
+  authUserId   String?  // not @unique: unused field, and Mongo can't unique-index multiple absent/null values
   firstName    String   @default("")
   lastName     String   @default("")
   phone        String   @default("")
