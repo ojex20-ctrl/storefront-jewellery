@@ -57,7 +57,9 @@ export function OrdersListClient({ orders }: { orders: Order[] }) {
               <tbody>
                 {orders.map((o) => (
                   <tr key={o.id} className="border-t border-[#1A1A1C]/5 hover:bg-[#F5F3EF]/50">
-                    <td className="px-4 py-3 font-mono">#{o.orderNumber}</td>
+                    <td className="px-4 py-3 font-mono">
+                      <Link href={`/admin/orders/${o.id}`} className="hover:text-[#c9a36b]">#{o.orderNumber}</Link>
+                    </td>
                     <td className="px-4 py-3">
                       <p>{o.firstName} {o.lastName}</p>
                       <p className="text-[10px] text-[#1A1A1C]/40">{o.email}</p>
