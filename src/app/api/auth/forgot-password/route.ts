@@ -25,7 +25,9 @@ export async function POST(req: Request) {
   }
 
   const token = await createPasswordResetToken(customer.id)
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(req.url).origin
+  // Always use the public site URL — never the request origin (which is the
+  // internal IP/127.0.0.1 behind nginx and leaks into email links).
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://syrathelabel.com"
   const link = `${siteUrl}/account/reset-password?token=${encodeURIComponent(token)}`
   const { subject, html } = resetPasswordLinkEmail(customer.firstName, link)
   await sendEmail({ to: email, subject, html }).catch(() => {})
