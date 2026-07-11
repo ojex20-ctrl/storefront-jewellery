@@ -6,6 +6,7 @@ type State = {
   ids: string[]
   toggle: (productId: string) => void
   has: (productId: string) => boolean
+  set: (ids: string[]) => void
   clear: () => void
 }
 
@@ -18,6 +19,7 @@ export const useWishlistStore = create<State>()(
           ids: s.ids.includes(id) ? s.ids.filter((x) => x !== id) : [...s.ids, id],
         })),
       has: (id) => get().ids.includes(id),
+      set: (ids) => set({ ids: Array.from(new Set(ids)) }),
       clear: () => set({ ids: [] }),
     }),
     { name: "podium-wishlist" },

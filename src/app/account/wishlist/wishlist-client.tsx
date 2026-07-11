@@ -7,29 +7,11 @@ import { ProductCard } from "@/components/product/product-card"
 import type { Product } from "@/lib/products"
 
 export function WishlistClient({ products }: { products: Product[] }) {
+  // The store is kept in sync with the server globally by <WishlistSync/> in the
+  // layout (merge on login + save on change), so the page just renders it.
   const ids = useWishlistStore((s) => s.ids)
-  const clear = useWishlistStore((s) => s.clear)
   const [hydrated, setHydrated] = useState(false)
-  useEffect(() => {
-    setHydrated(true)
-    void fetch("/api/account/wishlist", { credentials: "include" })
-      .then((r) => r.ok ? r.json() : null)
-      .then((data) => {
-        if (!data?.ids) return
-        clear()
-        for (const id of data.ids as string[]) useWishlistStore.getState().toggle(id)
-      })
-      .catch(() => {})
-  }, [clear])
-  useEffect(() => {
-    if (!hydrated) return
-    void fetch("/api/account/wishlist", {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ ids }),
-    }).catch(() => {})
-  }, [hydrated, ids])
+  useEffect(() => setHydrated(true), [])
   const items = hydrated ? products.filter((p) => ids.includes(p.id)) : []
   return (
     <div className="mx-auto max-w-[1100px] px-4 py-14 md:px-8 md:py-20">
