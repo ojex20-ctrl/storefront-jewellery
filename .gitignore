@@ -4,6 +4,9 @@ node_modules
 .codex-backups/
 .env
 prisma/dev.db
+prisma/prisma/
+# Uploaded product images live outside the code tree (MEDIA_ROOT). Never commit uploads.
+public/uploads/
 *.tsbuildinfo
 .turbo
 *.tgz

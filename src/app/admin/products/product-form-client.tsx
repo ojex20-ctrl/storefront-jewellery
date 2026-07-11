@@ -136,6 +136,17 @@ export function ProductFormClient({ product }: { product: Product | null }) {
     }))
   }
 
+  // Uploads for a product go into products/<slug>/ so images stay grouped per
+  // product (falls back to products/_unsorted before the slug/name is filled in).
+  const productFolder = (index: number) => {
+    const item = forms[index]
+    const slug = (item?.slug || item?.name || "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "")
+    return slug ? `products/${slug}` : "products/_unsorted"
+  }
+
   const handleImagesUpload = async (index: number, files: FileList | null) => {
     if (!files || files.length === 0) return
     const currentImages = forms[index].images
@@ -144,12 +155,14 @@ export function ProductFormClient({ product }: { product: Product | null }) {
       return
     }
 
+    const folder = productFolder(index)
     const uploadedUrls: string[] = []
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
       if (!file) continue
       const formData = new FormData()
       formData.append("file", file)
+      formData.append("folder", folder)
       try {
         const res = await fetch("/api/admin/media", {
           method: "POST",
@@ -170,12 +183,14 @@ export function ProductFormClient({ product }: { product: Product | null }) {
 
   const handleGalleryUpload = async (index: number, files: FileList | null) => {
     if (!files || files.length === 0) return
+    const folder = productFolder(index)
     const uploadedUrls: string[] = []
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
       if (!file) continue
       const formData = new FormData()
       formData.append("file", file)
+      formData.append("folder", folder)
       try {
         const res = await fetch("/api/admin/media", {
           method: "POST",
