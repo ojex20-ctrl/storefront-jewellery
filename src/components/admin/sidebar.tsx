@@ -1,7 +1,7 @@
 "use client"
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
-import { LayoutDashboard, Package, ShoppingBag, FileText, Image, Settings, LogOut, Images, Tags, Ticket, Users } from "lucide-react"
+import { LayoutDashboard, Package, ShoppingBag, FileText, Image, Settings, LogOut, Images, Tags, Ticket, Users, Inbox } from "lucide-react"
 
 export function Sidebar({ userName }: { userName?: string }) {
   const router = useRouter()
@@ -20,6 +20,7 @@ export function Sidebar({ userName }: { userName?: string }) {
     { href: "/admin/orders", icon: ShoppingBag, label: "Orders" },
     { href: "/admin/customers", icon: Users, label: "Customers" },
     { href: "/admin/coupons", icon: Ticket, label: "Coupons" },
+    { href: "/admin/inbox", icon: Inbox, label: "Inbox" },
     { href: "/admin/content", icon: FileText, label: "Content" },
     { href: "/admin/banners", icon: Image, label: "Banners" },
     { href: "/admin/media", icon: Images, label: "Gallery" },

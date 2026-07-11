@@ -8,6 +8,7 @@ import { Button, Eyebrow } from "@podium/ui/primitives"
 import { LiveDot } from "@podium/ui/motion"
 import { priceFmt } from "@podium/ui/lib"
 import { useAuthStore } from "@/stores/auth-store"
+import { useRecentlyViewedStore } from "@/stores/recently-viewed-store"
 import { refreshCustomer } from "@/lib/auth"
 import { fetchOrders, type StoreOrder } from "@/lib/orders"
 
@@ -30,6 +31,7 @@ export function AccountClient() {
   const customer = useAuthStore((s) => s.customer)
   const setSession = useAuthStore((s) => s.setSession)
   const clear = useAuthStore((s) => s.clear)
+  const recentlyViewed = useRecentlyViewedStore((s) => s.items)
   const [hydrated, setHydrated] = useState(false)
   const [checkingSession, setCheckingSession] = useState(true)
   const [orders, setOrders] = useState<StoreOrder[] | null>(null)
@@ -109,14 +111,23 @@ export function AccountClient() {
             <span>Change password</span>
             <span>{"->"}</span>
           </Link>
-          <div className="border-b border-line py-3.5 text-sm text-muted">
-            <span>Recently Viewed</span>
-            <p className="mt-1 text-xs">Available from your product browsing history.</p>
-          </div>
-          <div className="border-b border-line py-3.5 text-sm text-muted">
-            <span>Saved Payment Methods</span>
-            <p className="mt-1 text-xs">Coming soon.</p>
-          </div>
+          {recentlyViewed.length > 0 && (
+            <div className="border-b border-line py-3.5">
+              <span className="text-sm text-ink">Recently viewed</span>
+              <div className="mt-3 flex flex-col gap-2">
+                {recentlyViewed.slice(0, 4).map((v) => (
+                  <Link key={v.id} href={`/products/${v.id}`} className="flex items-center gap-3 text-sm text-muted hover:text-accent">
+                    <span className="block h-10 w-8 shrink-0 overflow-hidden bg-bg-2">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      {v.image ? <img src={v.image} alt="" className="h-full w-full object-cover" /> : null}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate">{v.name}</span>
+                    <span className="font-mono text-xs">{priceFmt(v.price)}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
           <button onClick={handleSignOut} className="group flex w-full items-center justify-between border-b border-line py-3.5 text-left text-sm text-muted transition-colors hover:text-accent">
             <span>Sign out</span>
             <span>{"->"}</span>

@@ -318,3 +318,39 @@ model Review {
   @@index([productId])
   @@index([approved])
 }
+
+// ─── LEAD CAPTURE ───────────────────────────────────────────────────────────
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid()) @map("_id")
+  email     String   @unique
+  source    String?  // footer, popup, etc.
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid()) @map("_id")
+  name      String
+  email     String
+  phone     String?
+  subject   String?
+  message   String   @default("")
+  type      String   @default("contact") // contact, bespoke, atelier, rental
+  status    String   @default("new")     // new, read, archived
+  createdAt DateTime @default(now())
+
+  @@index([status])
+  @@index([type])
+}
+
+model BackInStockSubscription {
+  id        String   @id @default(cuid()) @map("_id")
+  productId String
+  email     String
+  notified  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([productId, email])
+  @@index([productId])
+}

@@ -394,38 +394,19 @@ function PriceRangeCarousel({ products }: { products: Product[] }) {
   const [progress, setProgress] = useState(0)
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  const tiers = [
-    {
-      heading: ["Gifts Under", "₹499"],
-      viewAllHref: "/collection?price_max=499",
-      items: [
-        { title: "Gold Plated Anti Tarnish Heart Themed Wraparound Bracelet", price: "₹469", oldPrice: "₹1,369", badgeLeft: "BEST SELLER", badgeRight: "66% OFF", img: products.find(p => p.kind === "Bracelet")?.image ?? "/placeholder.png" },
-        { title: "Stainless Steel Contemporary Rose Gold Love AD Bracelet", price: "₹429", oldPrice: "₹2,159", badgeLeft: "", badgeRight: "80% OFF", img: products.find(p => p.kind === "Ring")?.image ?? "/placeholder.png" },
-        { title: "Gold Plated Anti Tarnish Heart Themed Bow Necklace", price: "₹469", oldPrice: "₹1,369", badgeLeft: "", badgeRight: "66% OFF", img: products.find(p => p.kind === "Necklace")?.image ?? "/placeholder.png" },
-        { title: "Gold-Plated Anti Tarnish Pink Heart CZ Pendant", price: "₹429", oldPrice: "₹1,369", badgeLeft: "BEST SELLER", badgeRight: "69% OFF", img: products.find(p => p.kind === "Earrings")?.image ?? "/placeholder.png" },
-      ],
-    },
-    {
-      heading: ["Under", "₹899"],
-      viewAllHref: "/collection?price_max=899",
-      items: [
-        { title: "18k Gold Plated Minimalist Stacking Ring Set", price: "₹799", oldPrice: "₹1,899", badgeLeft: "TRENDING", badgeRight: "58% OFF", img: products.find(p => p.kind === "Ring")?.image ?? "/placeholder.png" },
-        { title: "Rose Gold Anti Tarnish Twisted Hoop Earrings", price: "₹699", oldPrice: "₹1,599", badgeLeft: "", badgeRight: "56% OFF", img: products.find(p => p.kind === "Earrings")?.image ?? "/placeholder.png" },
-        { title: "Surgical Steel Layered Chain Bracelet with Charm", price: "₹849", oldPrice: "₹2,499", badgeLeft: "NEW", badgeRight: "66% OFF", img: products.find(p => p.kind === "Bracelet")?.image ?? "/placeholder.png" },
-        { title: "Sterling Silver Pearl Drop Pendant Necklace", price: "₹799", oldPrice: "₹1,999", badgeLeft: "", badgeRight: "60% OFF", img: products.find(p => p.kind === "Necklace")?.image ?? "/placeholder.png" },
-      ],
-    },
-    {
-      heading: ["Premium", "₹1,000+"],
-      viewAllHref: "/collection?price_min=1000",
-      items: [
-        { title: "18k Gold Vermeil Solitaire Diamond Band", price: "₹1,299", oldPrice: "₹3,499", badgeLeft: "BEST SELLER", badgeRight: "63% OFF", img: products.find(p => p.kind === "Ring")?.image ?? "/placeholder.png" },
-        { title: "White Gold Plated Emerald Cut CZ Tennis Bracelet", price: "₹1,499", oldPrice: "₹4,299", badgeLeft: "ONE OF ONE", badgeRight: "65% OFF", img: products.find(p => p.kind === "Bracelet")?.image ?? "/placeholder.png" },
-        { title: "Rose Gold Sapphire Cluster Drop Earrings", price: "₹1,199", oldPrice: "₹3,199", badgeLeft: "", badgeRight: "63% OFF", img: products.find(p => p.kind === "Earrings")?.image ?? "/placeholder.png" },
-        { title: "22k Gold Plated Vintage Locket Pendant Necklace", price: "₹1,599", oldPrice: "₹4,999", badgeLeft: "NEW", badgeRight: "68% OFF", img: products.find(p => p.kind === "Necklace")?.image ?? "/placeholder.png" },
-      ],
-    },
+  // Real products bucketed by price (paise). Empty tiers are dropped so we never
+  // show fabricated items — everything here is a live product that links to its PDP.
+  const tierDefs = [
+    { heading: ["Gifts Under", "₹499"], viewAllHref: "/collection?price_max=499", min: 0, max: 49900 },
+    { heading: ["Under", "₹899"], viewAllHref: "/collection?price_max=899", min: 49900, max: 89900 },
+    { heading: ["Premium", "₹1,000+"], viewAllHref: "/collection?price_min=1000", min: 100000, max: Infinity },
   ]
+  let tiers = tierDefs
+    .map((t) => ({ ...t, items: products.filter((p) => p.price >= t.min && p.price < t.max).slice(0, 8) }))
+    .filter((t) => t.items.length > 0)
+  if (tiers.length === 0 && products.length > 0) {
+    tiers = [{ heading: ["Shop the", "collection"], viewAllHref: "/collection", min: 0, max: Infinity, items: products.slice(0, 8) }]
+  }
 
   useEffect(() => {
     setProgress(0)
@@ -445,7 +426,8 @@ function PriceRangeCarousel({ products }: { products: Product[] }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTier])
 
-  const tier = tiers[activeTier]!
+  if (tiers.length === 0) return null
+  const tier = tiers[Math.min(activeTier, tiers.length - 1)]!
 
   return (
     <section className="px-6 py-16 md:px-12 bg-bg-2 overflow-hidden">
@@ -477,29 +459,29 @@ function PriceRangeCarousel({ products }: { products: Product[] }) {
           <div ref={scrollRef} className="flex gap-6 overflow-x-auto no-scrollbar pb-6 snap-x snap-mandatory max-w-[1400px] mx-auto scroll-smooth">
             {tier.items.map((item, i) => (
               <motion.div
-                key={i}
+                key={item.id}
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
                 className="min-w-[280px] w-[280px] md:min-w-[320px] md:w-[320px] snap-start flex flex-col gap-4 shrink-0"
               >
-                <div className="relative aspect-square rounded-xl overflow-hidden bg-bg">
-                  <Placeholder image={item.img} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 hover:scale-105" />
-                  <div className="absolute bottom-2 left-2 right-2 flex justify-between">
-                    {item.badgeLeft ? (<span className="bg-bg/90 text-[10px] font-bold px-2 py-1 rounded-[4px] text-ink">{item.badgeLeft}</span>) : <div />}
-                    {item.badgeRight ? (<span className="bg-bg/90 text-[10px] font-bold px-2 py-1 rounded-[4px] text-ink">{item.badgeRight}</span>) : null}
-                  </div>
-                </div>
+                <Link href={`/products/${item.id}`} className="relative block aspect-square rounded-xl overflow-hidden bg-bg">
+                  <Placeholder image={item.image} className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 hover:scale-105" />
+                  {item.tag ? (
+                    <div className="absolute bottom-2 left-2">
+                      <span className="bg-bg/90 text-[10px] font-bold px-2 py-1 rounded-[4px] text-ink">{item.tag}</span>
+                    </div>
+                  ) : null}
+                </Link>
                 <div className="flex flex-col gap-1 px-1">
-                  <p className="text-sm text-ink/80 leading-tight line-clamp-2 h-10">{item.title}</p>
+                  <Link href={`/products/${item.id}`} className="text-sm text-ink/80 leading-tight line-clamp-2 h-10 hover:text-accent">{item.name}</Link>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="font-bold text-base text-ink">{item.price}</span>
-                    <span className="text-xs text-ink/50 line-through">{item.oldPrice}</span>
+                    <span className="font-bold text-base text-ink">{priceFmt(item.price)}</span>
                   </div>
                 </div>
-                <button className="w-full bg-accent text-bg py-3 rounded-md text-xs font-bold tracking-wider hover:bg-opacity-80 transition-colors mt-auto">
-                  ADD TO CART
-                </button>
+                <Link href={`/products/${item.id}`} className="w-full bg-accent text-bg py-3 rounded-md text-xs font-bold tracking-wider text-center hover:bg-opacity-80 transition-colors mt-auto">
+                  SHOP NOW
+                </Link>
               </motion.div>
             ))}
           </div>

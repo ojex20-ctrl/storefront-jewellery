@@ -54,9 +54,18 @@ function ExitIntentPopup() {
 function RecentPurchasePopup() {
   const [idx, setIdx] = useState(0)
   const [visible, setVisible] = useState(false)
-  const events = ["Aarohi bought Crystal Earrings", "Meera bought a Gold Bracelet", "Nisha saved a Rose Gold Ring"]
+  const [events, setEvents] = useState<{ name: string; item: string }[]>([])
+
+  // Load REAL recent purchases; if there are none, this popup renders nothing.
+  useEffect(() => {
+    void fetch("/api/recent-purchases")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (Array.isArray(d?.events)) setEvents(d.events) })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
+    if (events.length === 0) return
     const timer = setInterval(() => {
       setIdx((i) => (i + 1) % events.length)
       setVisible(true)
@@ -65,11 +74,12 @@ function RecentPurchasePopup() {
     return () => clearInterval(timer)
   }, [events.length])
 
-  if (!visible) return null
+  if (!visible || events.length === 0) return null
+  const e = events[idx]!
   return (
     <div className="fixed bottom-24 left-4 z-[80] border border-line bg-bg px-4 py-3 text-sm text-ink shadow-xl">
-      <p className="font-mono text-[10px] uppercase tracking-widest text-muted">Just now</p>
-      <p>{events[idx]}</p>
+      <p className="font-mono text-[10px] uppercase tracking-widest text-muted">Recently ordered</p>
+      <p>{e.name} bought {e.item}</p>
     </div>
   )
 }
