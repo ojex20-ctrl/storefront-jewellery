@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
@@ -12,7 +12,7 @@ datasource db {
 // ─── PRODUCTS ───────────────────────────────────────────────────────────────
 
 model Product {
-  id             String   @id @default(cuid())
+  id             String   @id @default(cuid()) @map("_id")
   name           String
   slug           String   @unique
   kind           String   // Ring, Necklace, Earrings, Bracelet, Nose Ring, Anklet
@@ -52,7 +52,7 @@ model Product {
 // ─── CATEGORIES ─────────────────────────────────────────────────────────────
 
 model Category {
-  id          String  @id @default(cuid())
+  id          String  @id @default(cuid()) @map("_id")
   name        String
   slug        String  @unique
   image       String?
@@ -63,7 +63,7 @@ model Category {
 // ─── ORDERS ─────────────────────────────────────────────────────────────────
 
 model Order {
-  id             String   @id @default(cuid())
+  id             String   @id @default(cuid()) @map("_id")
   orderNumber    Int      @unique
   status         String   @default("placed") // placed, confirmed, packed, shipped, out_for_delivery, delivered, cancelled
   paymentStatus  String   @default("pending") // pending, paid, failed, refunded
@@ -103,7 +103,7 @@ model Order {
 }
 
 model OrderStatusHistory {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()) @map("_id")
   orderId   String
   oldStatus String?
   newStatus String
@@ -117,7 +117,7 @@ model OrderStatusHistory {
 // ─── CMS CONTENT ────────────────────────────────────────────────────────────
 
 model SiteContent {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()) @map("_id")
   section   String   // unique key: "hero", "why_anti_tarnish", etc.
   title     String?
   subtitle  String?
@@ -138,7 +138,7 @@ model SiteContent {
 // ─── BANNERS ────────────────────────────────────────────────────────────────
 
 model Banner {
-  id          String    @id @default(cuid())
+  id          String    @id @default(cuid()) @map("_id")
   title       String
   subtitle    String?
   image       String
@@ -157,7 +157,7 @@ model Banner {
 // ─── COUPONS ────────────────────────────────────────────────────────────────
 
 model Coupon {
-  id        String    @id @default(cuid())
+  id        String    @id @default(cuid()) @map("_id")
   code      String    @unique
   type      String    // percentage, fixed
   value     Int       // discount value (% or paise)
@@ -172,7 +172,7 @@ model Coupon {
 // ─── BLOG ───────────────────────────────────────────────────────────────────
 
 model BlogPost {
-  id          String    @id @default(cuid())
+  id          String    @id @default(cuid()) @map("_id")
   title       String
   slug        String    @unique
   excerpt     String?
@@ -189,7 +189,7 @@ model BlogPost {
 // ─── ADMIN USERS ────────────────────────────────────────────────────────────
 
 model AdminUser {
-  id           String   @id @default(cuid())
+  id           String   @id @default(cuid()) @map("_id")
   email        String   @unique
   passwordHash String
   name         String
@@ -200,7 +200,7 @@ model AdminUser {
 // ─── CUSTOMERS ──────────────────────────────────────────────────────────────
 
 model Customer {
-  id           String   @id @default(cuid())
+  id           String   @id @default(cuid()) @map("_id")
   email        String   @unique
   passwordHash String
   authUserId   String?  @unique
@@ -216,7 +216,7 @@ model Customer {
 }
 
 model CustomerAddress {
-  id           String   @id @default(cuid())
+  id           String   @id @default(cuid()) @map("_id")
   customerId   String
   fullName     String
   phone        String
@@ -234,7 +234,7 @@ model CustomerAddress {
 }
 
 model Wishlist {
-  id         String   @id @default(cuid())
+  id         String   @id @default(cuid()) @map("_id")
   customerId String
   productId  String
   createdAt  DateTime @default(now())
@@ -244,7 +244,7 @@ model Wishlist {
 }
 
 model EmailVerificationToken {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()) @map("_id")
   customerId String
   tokenHash String   @unique
   expiresAt DateTime
@@ -256,7 +256,7 @@ model EmailVerificationToken {
 }
 
 model PasswordResetToken {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()) @map("_id")
   customerId String
   tokenHash String   @unique
   expiresAt DateTime
@@ -268,7 +268,7 @@ model PasswordResetToken {
 }
 
 model InstagramFeedItem {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()) @map("_id")
   imageUrl  String
   caption   String?
   postUrl   String
@@ -281,7 +281,7 @@ model InstagramFeedItem {
 }
 
 model Otp {
-  id        String   @id @default(cuid())
+  id        String   @id @default(cuid()) @map("_id")
   email     String
   code      String
   type      String   @default("register")
@@ -296,7 +296,7 @@ model Otp {
 // ─── STORE SETTINGS ─────────────────────────────────────────────────────────
 
 model Setting {
-  id    String @id @default(cuid())
+  id    String @id @default(cuid()) @map("_id")
   key   String @unique
   value String @default("")
 }

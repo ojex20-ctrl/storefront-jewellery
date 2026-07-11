@@ -24,21 +24,12 @@ export function isPaymentStatus(value: string): value is SyraPaymentStatus {
   return PAYMENT_STATUSES.includes(value as SyraPaymentStatus)
 }
 
+/**
+ * No-op on MongoDB — the OrderStatusHistory collection is created lazily by
+ * Prisma. Kept for call-site compatibility (was a CREATE TABLE on SQLite).
+ */
 export async function ensureOrderStatusHistoryTable() {
-  await prisma.$executeRawUnsafe(`
-    CREATE TABLE IF NOT EXISTS OrderStatusHistory (
-      id TEXT PRIMARY KEY,
-      orderId TEXT NOT NULL,
-      oldStatus TEXT,
-      newStatus TEXT NOT NULL,
-      changedBy TEXT,
-      note TEXT,
-      createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-    )
-  `)
-  await prisma.$executeRawUnsafe(`
-    CREATE INDEX IF NOT EXISTS OrderStatusHistory_orderId_idx ON OrderStatusHistory(orderId)
-  `)
+  // intentionally empty
 }
 
 export async function addOrderStatusHistory(input: {
@@ -48,17 +39,15 @@ export async function addOrderStatusHistory(input: {
   changedBy?: string | null
   note?: string | null
 }) {
-  await ensureOrderStatusHistoryTable()
-  await prisma.$executeRawUnsafe(
-    `INSERT INTO OrderStatusHistory (id, orderId, oldStatus, newStatus, changedBy, note)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    `osh_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-    input.orderId,
-    input.oldStatus ?? null,
-    input.newStatus,
-    input.changedBy ?? null,
-    input.note ?? null,
-  )
+  await prisma.orderStatusHistory.create({
+    data: {
+      orderId: input.orderId,
+      oldStatus: input.oldStatus ?? null,
+      newStatus: input.newStatus,
+      changedBy: input.changedBy ?? null,
+      note: input.note ?? null,
+    },
+  })
 }
 
 export async function updateOrderStatus(input: {

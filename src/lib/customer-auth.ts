@@ -77,30 +77,35 @@ export function hashToken(token: string) {
 }
 
 export async function createEmailVerificationToken(customerId: string) {
-  await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "EmailVerificationToken" ("id" TEXT NOT NULL PRIMARY KEY, "customerId" TEXT NOT NULL, "tokenHash" TEXT NOT NULL UNIQUE, "expiresAt" DATETIME NOT NULL, "usedAt" DATETIME, "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)`)
-  await prisma.$executeRawUnsafe(`UPDATE "EmailVerificationToken" SET "usedAt" = ? WHERE "customerId" = ? AND "usedAt" IS NULL`, new Date(), customerId)
+  // Invalidate any still-unused tokens for this customer, then issue a new one.
+  await prisma.emailVerificationToken.updateMany({
+    where: { customerId, usedAt: null },
+    data: { usedAt: new Date() },
+  })
   const token = createRawToken()
-  await prisma.$executeRawUnsafe(
-    `INSERT INTO "EmailVerificationToken" ("id", "customerId", "tokenHash", "expiresAt") VALUES (?, ?, ?, ?)`,
-    crypto.randomUUID(),
-    customerId,
-    hashToken(token),
-    new Date(Date.now() + 1000 * 60 * 60 * 24),
-  )
+  await prisma.emailVerificationToken.create({
+    data: {
+      customerId,
+      tokenHash: hashToken(token),
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+    },
+  })
   return token
 }
 
 export async function createPasswordResetToken(customerId: string) {
-  await prisma.$executeRawUnsafe(`CREATE TABLE IF NOT EXISTS "PasswordResetToken" ("id" TEXT NOT NULL PRIMARY KEY, "customerId" TEXT NOT NULL, "tokenHash" TEXT NOT NULL UNIQUE, "expiresAt" DATETIME NOT NULL, "usedAt" DATETIME, "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)`)
-  await prisma.$executeRawUnsafe(`UPDATE "PasswordResetToken" SET "usedAt" = ? WHERE "customerId" = ? AND "usedAt" IS NULL`, new Date(), customerId)
+  await prisma.passwordResetToken.updateMany({
+    where: { customerId, usedAt: null },
+    data: { usedAt: new Date() },
+  })
   const token = createRawToken()
-  await prisma.$executeRawUnsafe(
-    `INSERT INTO "PasswordResetToken" ("id", "customerId", "tokenHash", "expiresAt") VALUES (?, ?, ?, ?)`,
-    crypto.randomUUID(),
-    customerId,
-    hashToken(token),
-    new Date(Date.now() + 1000 * 60 * 30),
-  )
+  await prisma.passwordResetToken.create({
+    data: {
+      customerId,
+      tokenHash: hashToken(token),
+      expiresAt: new Date(Date.now() + 1000 * 60 * 30),
+    },
+  })
   return token
 }
 
