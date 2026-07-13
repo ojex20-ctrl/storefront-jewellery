@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import { verifyAdminSession } from "@/lib/admin-auth"
 import { prisma } from "@/lib/db"
 import { SettingsClient } from "./settings-client"
+import { effectivePaymentSettingsForForm, getPaymentSettings } from "@/lib/payment-settings"
 
 export default async function AdminSettingsPage() {
   const session = await verifyAdminSession()
@@ -10,13 +11,18 @@ export default async function AdminSettingsPage() {
   const raw = await prisma.setting.findMany()
   const settings: Record<string, string> = {}
   for (const s of raw) settings[s.key] = s.value
+  const payment = await getPaymentSettings(settings)
   return (
     <SettingsClient
-      settings={settings}
+      settings={effectivePaymentSettingsForForm(settings, payment)}
       user={session}
       integrationStatus={{
-        razorpayConfigured: Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET),
-        razorpayKeyId: process.env.RAZORPAY_KEY_ID ?? process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "",
+        razorpayConfigured: payment.razorpay.configured,
+        razorpayEnabled: payment.razorpay.enabled,
+        razorpayMode: payment.razorpay.mode,
+        razorpayKeyId: payment.razorpay.keyId,
+        razorpayWebhookConfigured: payment.razorpay.webhookConfigured,
+        stripeConfigured: payment.stripe.configured,
         smtpConfigured: Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS),
         supabaseConfigured: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY),
       }}

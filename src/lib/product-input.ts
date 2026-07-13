@@ -1,3 +1,5 @@
+import type { Prisma } from "@prisma/client"
+
 /**
  * Normalizes and whitelists product input coming from the admin forms / API.
  *
@@ -31,55 +33,58 @@ function coerceInt(value: unknown, field: string): number {
   return n
 }
 
-// Returns `any` so the result stays assignable to Prisma's generated
-// create/update input types (the callers previously passed the raw body as `any`).
-//
+function toArray(value: unknown): unknown[] {
+  if (Array.isArray(value)) return value
+  return value ? [value] : []
+}
+
 // `partial` (used by PUT) only transforms a group when one of its keys is
 // present, so partial updates like a Live/Draft toggle ({ published: true })
 // don't blank out media/classification columns. Create (POST) uses full mode,
 // which fills every column with its default.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function normalizeProductInput(
+  input: Record<string, unknown>,
+  options?: { partial?: false },
+): Prisma.ProductUncheckedCreateInput
+export function normalizeProductInput(
+  input: Record<string, unknown>,
+  options: { partial: true },
+): Prisma.ProductUncheckedUpdateInput
 export function normalizeProductInput(
   input: Record<string, unknown>,
   { partial = false }: { partial?: boolean } = {},
-): any {
-  // 1. Whitelist — drop any key we don't explicitly allow.
-  const data: Record<string, any> = {}
+): Prisma.ProductUncheckedCreateInput | Prisma.ProductUncheckedUpdateInput {
+  const data: Record<string, unknown> = {}
   for (const key of Object.keys(input)) {
-    if (WRITABLE_FIELDS.has(key)) data[key] = (input as Record<string, any>)[key]
+    if (WRITABLE_FIELDS.has(key)) data[key] = input[key]
   }
   const has = (...keys: string[]) => !partial || keys.some((k) => k in data)
 
-  // 2. Images (+ legacy single `image` / `gallery` mirror)
   if (has("images", "image")) {
-    const imagesArr = Array.isArray(data.images) ? data.images : (data.image ? [data.image] : [])
+    const imagesArr = Array.isArray(data.images) ? data.images : toArray(data.image)
     data.images = JSON.stringify(imagesArr)
     data.image = imagesArr[0] || ""
     data.gallery = JSON.stringify(imagesArr)
   }
 
-  // 3. Kinds
   if (has("kinds", "kind")) {
-    const kindsArr = Array.isArray(data.kinds) ? data.kinds : (data.kind ? [data.kind] : [])
+    const kindsArr = Array.isArray(data.kinds) ? data.kinds : toArray(data.kind)
     data.kinds = JSON.stringify(kindsArr)
     data.kind = kindsArr[0] || "Ring"
   }
 
-  // 4. Main hierarchies
   if (has("mainHierarchies", "mainHierarchy")) {
-    const mainArr = Array.isArray(data.mainHierarchies) ? data.mainHierarchies : (data.mainHierarchy ? [data.mainHierarchy] : [])
+    const mainArr = Array.isArray(data.mainHierarchies) ? data.mainHierarchies : toArray(data.mainHierarchy)
     data.mainHierarchies = JSON.stringify(mainArr)
     data.mainHierarchy = mainArr[0] || null
   }
 
-  // 5. Sub hierarchies
   if (has("subHierarchies", "subHierarchy")) {
-    const subArr = Array.isArray(data.subHierarchies) ? data.subHierarchies : (data.subHierarchy ? [data.subHierarchy] : [])
+    const subArr = Array.isArray(data.subHierarchies) ? data.subHierarchies : toArray(data.subHierarchy)
     data.subHierarchies = JSON.stringify(subArr)
     data.subHierarchy = subArr[0] || null
   }
 
-  // 6. Ring type (accepts `ringType` or `ringTypes`; column is `ringType`)
   if (has("ringType", "ringTypes")) {
     const ringTypeArr = Array.isArray(data.ringType)
       ? data.ringType
@@ -88,14 +93,12 @@ export function normalizeProductInput(
   }
   delete data.ringTypes
 
-  // 7. Tags (+ legacy single `tag` mirror)
   if (has("tags", "tag")) {
-    const tagsArr = Array.isArray(data.tags) ? data.tags : (data.tag ? [data.tag] : [])
+    const tagsArr = Array.isArray(data.tags) ? data.tags : toArray(data.tag)
     data.tags = JSON.stringify(tagsArr)
     data.tag = tagsArr[0] || null
   }
 
-  // 8. Remaining JSON-array columns
   for (const field of ["metals", "stones", "sizes", "modelImages", "bundleIds"]) {
     if (Array.isArray(data[field])) {
       data[field] = JSON.stringify(data[field])
@@ -104,12 +107,11 @@ export function normalizeProductInput(
     }
   }
 
-  // 9. Numeric columns — coerce and reject non-numbers before they reach Prisma.
   if (data.price !== undefined) data.price = coerceInt(data.price, "price")
   if (data.compareAtPrice !== undefined && data.compareAtPrice !== null && data.compareAtPrice !== "") {
     data.compareAtPrice = coerceInt(data.compareAtPrice, "compareAtPrice")
   }
   if (data.sortOrder !== undefined) data.sortOrder = coerceInt(data.sortOrder, "sortOrder")
 
-  return data
+  return data as Prisma.ProductUncheckedCreateInput | Prisma.ProductUncheckedUpdateInput
 }

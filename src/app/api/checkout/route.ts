@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { sendAdminNewOrderAlert, sendOrderPlacedEmail } from "@/lib/email"
 import { verifyCustomerSession, sanitizeName, sanitizePhone } from "@/lib/customer-auth"
 
 type CheckoutItem = {
@@ -28,7 +27,6 @@ export async function POST(req: Request) {
     items,
     subtotal,
     shippingCost,
-    discount,
     total,
     payment,
     giftWrap,
@@ -47,7 +45,6 @@ export async function POST(req: Request) {
     items?: CheckoutItem[]
     subtotal?: number
     shippingCost?: number
-    discount?: number
     total?: number
     payment?: string
     giftWrap?: boolean
@@ -66,7 +63,7 @@ export async function POST(req: Request) {
 
   // Recompute the discount from the coupon server-side — never trust the client value.
   let serverDiscount = 0
-  let validCoupon: { id: string; code: string } | null = null
+  let validCoupon: { code: string } | null = null
   if (couponCode) {
     const coupon = await prisma.coupon.findUnique({ where: { code: String(couponCode).toUpperCase() } })
     const usable =
@@ -79,7 +76,7 @@ export async function POST(req: Request) {
       serverDiscount =
         coupon.type === "percentage" ? Math.round((serverSubtotal * coupon.value) / 100) : coupon.value
       serverDiscount = Math.min(serverDiscount, serverSubtotal)
-      validCoupon = { id: coupon.id, code: coupon.code }
+      validCoupon = { code: coupon.code }
     }
   }
   const serverTotal = Math.max(0, serverSubtotal + serverShipping - serverDiscount)
@@ -118,10 +115,6 @@ export async function POST(req: Request) {
     },
   })
 
-  if (validCoupon) {
-    await prisma.coupon.update({ where: { id: validCoupon.id }, data: { usedCount: { increment: 1 } } }).catch(() => null)
-  }
-
   // Enrich the logged-in customer's profile with any details we just captured
   // at checkout that were missing on their account (name / phone).
   if (session) {
@@ -136,11 +129,6 @@ export async function POST(req: Request) {
       }
     }
   }
-
-  await Promise.all([
-    sendOrderPlacedEmail(order).catch(() => false),
-    sendAdminNewOrderAlert(order).catch(() => false),
-  ])
 
   return NextResponse.json({ order: { id: order.id, orderNumber: order.orderNumber } }, { status: 201 })
 }

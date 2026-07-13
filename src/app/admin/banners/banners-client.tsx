@@ -2,7 +2,7 @@
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
-import { Plus, Save, Trash2, Image } from "lucide-react"
+import { Plus, Save, Trash2, Image as ImageIcon } from "lucide-react"
 
 type Banner = {
   id: string; title: string; subtitle: string | null; image: string
@@ -70,7 +70,7 @@ export function BannersClient({ banners }: { banners: Banner[] }) {
 
         {banners.length === 0 && (
           <div className="border border-[#1A1A1C]/10 bg-white p-12 text-center">
-            <Image size={32} className="mx-auto text-[#1A1A1C]/20 mb-4" />
+            <ImageIcon size={32} className="mx-auto text-[#1A1A1C]/20 mb-4" />
             <p className="text-sm text-[#1A1A1C]/50">No banners yet. Add one to get started.</p>
           </div>
         )}

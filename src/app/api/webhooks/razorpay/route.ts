@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { verifyRazorpayWebhookSignature } from "@/lib/razorpay-server"
 import { sendOrderStatusUpdateEmail } from "@/lib/email"
+import { finalizePaidOrder } from "@/lib/payment-finalization"
 
 export const dynamic = "force-dynamic"
 
@@ -21,7 +22,7 @@ type RazorpayWebhook = {
 export async function POST(req: Request) {
   const raw = await req.text()
   const signature = req.headers.get("x-razorpay-signature")
-  if (!verifyRazorpayWebhookSignature(raw, signature)) {
+  if (!(await verifyRazorpayWebhookSignature(raw, signature))) {
     return NextResponse.json({ error: "Invalid webhook signature" }, { status: 400 })
   }
 
@@ -43,9 +44,7 @@ export async function POST(req: Request) {
         notes: JSON.stringify({ razorpay_order_id: payment?.order_id, razorpay_payment_id: payment?.id }),
       },
     })
-    if (before?.paymentStatus !== "paid") {
-      await sendOrderStatusUpdateEmail(order).catch(() => false)
-    }
+    await finalizePaidOrder(order, before?.paymentStatus === "paid")
   }
 
   if (event.event === "payment.failed") {

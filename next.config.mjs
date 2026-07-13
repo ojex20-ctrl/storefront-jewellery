@@ -2,8 +2,6 @@
 const nextConfig = {
   // output: 'standalone',
   reactStrictMode: true,
-  eslint: { ignoreDuringBuilds: true },
-  typescript: { ignoreBuildErrors: true },
   transpilePackages: ["@podium/ui"],
   experimental: {
     optimizePackageImports: ["framer-motion", "@react-three/drei", "@react-three/fiber"],

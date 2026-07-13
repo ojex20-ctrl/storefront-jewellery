@@ -102,6 +102,7 @@ export function BulkUploadClient() {
               const newUrls: string[] = []
               for (let i = 0; i < files.length; i++) {
                 const file = files[i]
+                if (!file) continue
                 const formData = new FormData()
                 formData.append("file", file)
                 try {

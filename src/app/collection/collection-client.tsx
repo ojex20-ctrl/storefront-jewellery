@@ -35,24 +35,22 @@ export function CollectionClient({ products }: { products: Product[] }) {
     return [Math.floor(Math.min(...prices)), Math.ceil(Math.max(...prices))]
   }, [products])
 
-  const accessors: Record<string, AxisAccessor<Product>> = {
-    kind: (p) => p.kind,
-    subcategory: (p) => p.subcategory ? [p.subcategory] : [],
-    metal: (p) => p.metals,
-    stone: (p) => p.stones,
-    collection: (p) => p.subHierarchies ?? [],
-    rentable: (p) => (p.rental?.enabled ? ["yes"] : []),
-  }
+  const filtered = useMemo(() => {
+    const accessors: Record<string, AxisAccessor<Product>> = {
+      kind: (p) => p.kind,
+      subcategory: (p) => p.subcategory ? [p.subcategory] : [],
+      metal: (p) => p.metals,
+      stone: (p) => p.stones,
+      collection: (p) => p.subHierarchies ?? [],
+      rentable: (p) => (p.rental?.enabled ? ["yes"] : []),
+    }
 
-  const filtered = useMemo(
-    () =>
-      applyFilters(products, filters, {
-        accessors,
-        searchText: (p) =>
-          `${p.name} ${p.kind} ${p.metals.join(" ")} ${p.stones.join(" ")}`,
-      }),
-    [products, filters, accessors],
-  )
+    return applyFilters(products, filters, {
+      accessors,
+      searchText: (p) =>
+        `${p.name} ${p.kind} ${p.metals.join(" ")} ${p.stones.join(" ")}`,
+    })
+  }, [products, filters])
 
   const counts = useMemo(() => {
     const kind: Record<string, number> = {}

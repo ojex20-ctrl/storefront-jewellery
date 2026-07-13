@@ -39,7 +39,7 @@ export function OrdersListClient({ orders }: { orders: Order[] }) {
         {orders.length === 0 ? (
           <div className="border border-[#1A1A1C]/10 bg-white p-12 text-center">
             <ShoppingBag size={32} className="mx-auto text-[#1A1A1C]/20 mb-4" />
-            <p className="text-sm text-[#1A1A1C]/50">No orders yet. They'll appear here when customers place orders.</p>
+            <p className="text-sm text-[#1A1A1C]/50">No orders yet. They&apos;ll appear here when customers place orders.</p>
           </div>
         ) : (
           <div className="border border-[#1A1A1C]/10 bg-white overflow-hidden">

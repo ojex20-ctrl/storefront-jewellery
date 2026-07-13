@@ -3,6 +3,8 @@
  * different fallback values.
  */
 
+import { resolveEnabledPaymentProviders } from "./payment-settings"
+
 export type NavLink = { href: string; label: string }
 export type FooterGroup = { title: string; links: NavLink[] }
 export type AnnouncementBar = { enabled: boolean; message: string; href: string | null }
@@ -14,6 +16,7 @@ export type SocialLinks = Partial<{
   pinterest: string | null
   youtube: string | null
 }>
+
 export type FeatureFlags = Partial<{
   enable_3d_viewer: boolean
   enable_wishlist: boolean
@@ -58,6 +61,7 @@ export type BrandConfig = {
   shop_hours: string | null
   shop_map_url: string | null
   shop_whatsapp: string | null
+  shop_whatsapp_message: string | null
   chrome_strings: Record<string, string> | null
 }
 
@@ -98,6 +102,7 @@ const FALLBACK: BrandConfig = {
   shop_hours: null,
   shop_map_url: null,
   shop_whatsapp: null,
+  shop_whatsapp_message: null,
   chrome_strings: null,
 }
 
@@ -116,6 +121,9 @@ export async function getBrandConfig(): Promise<BrandConfig> {
       brand_name: settings.brand_name || FALLBACK.brand_name,
       tagline: settings.tagline || FALLBACK.tagline,
       logo_url: settings.logo_url || FALLBACK.logo_url,
+      accent_hex: settings.accent_hex || FALLBACK.accent_hex,
+      enabled_payment_providers: resolveEnabledPaymentProviders(settings),
+      default_currency: (settings.default_currency || FALLBACK.default_currency).toUpperCase(),
       free_shipping_threshold: num(settings.free_shipping_threshold, FALLBACK.free_shipping_threshold),
       shipping_standard_rate: num(settings.shipping_standard_rate, FALLBACK.shipping_standard_rate),
       shipping_express_rate: num(settings.shipping_express_rate, FALLBACK.shipping_express_rate),
@@ -141,6 +149,10 @@ export async function getBrandConfig(): Promise<BrandConfig> {
       shop_address: settings.shop_address || null,
       shop_hours: settings.shop_hours || null,
       shop_whatsapp: settings.whatsapp_number || null,
+      shop_whatsapp_message: settings.whatsapp_message || null,
+      chrome_strings: {
+        whatsapp_message: settings.whatsapp_message || "",
+      },
       feature_flags: {
         enable_search: true,
         enable_route_transitions: true,

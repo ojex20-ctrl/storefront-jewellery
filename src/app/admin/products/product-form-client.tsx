@@ -5,6 +5,8 @@ import { useState, type FormEvent } from "react"
 import { Save, ArrowLeft, X } from "lucide-react"
 import { Sidebar } from "@/components/admin/sidebar"
 
+type JsonList = string | string[] | null | undefined
+
 type Product = {
   id: string; name: string; slug: string; kind: string; caption: string; description: string
   price: number; compareAtPrice: number | null; metals: string; stones: string; sizes: string
@@ -12,12 +14,13 @@ type Product = {
   weight: number | null; material: string | null; warranty: string | null
   seoTitle: string | null; seoDescription: string | null; published: boolean; featured: boolean
   mainHierarchy: string | null; subHierarchy: string | null
-  images?: string[]
-  mainHierarchies?: string[]
-  subHierarchies?: string[]
-  kinds?: string[]
-  ringTypes?: string[]
-  tags?: string[]
+  images?: JsonList
+  mainHierarchies?: JsonList
+  subHierarchies?: JsonList
+  kinds?: JsonList
+  ringType?: JsonList
+  ringTypes?: JsonList
+  tags?: JsonList
 }
 
 const MAIN_HIERARCHIES = ["Best Sellers", "Earrings", "Necklace", "Bracelets", "Rings", "Pendants"]
@@ -63,6 +66,17 @@ interface FormState {
   featured: boolean
 }
 
+function parseList(value: JsonList): string[] {
+  if (Array.isArray(value)) return value.filter((item): item is string => Boolean(item))
+  if (!value) return []
+  try {
+    const parsed = JSON.parse(value) as unknown
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string" && item.length > 0) : []
+  } catch {
+    return value.split(/[;,]/).map((item) => item.trim()).filter(Boolean)
+  }
+}
+
 const createEmptyForm = (): FormState => ({
   name: "",
   slug: "",
@@ -94,6 +108,10 @@ export function ProductFormClient({ product }: { product: Product | null }) {
   const isEdit = !!product
   const [saving, setSaving] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState<Record<number, boolean>>({})
+  const initialImages = (() => {
+    const parsed = parseList(product?.images)
+    return parsed.length > 0 ? parsed : (product?.image ? [product.image] : [])
+  })()
 
   const [forms, setForms] = useState<FormState[]>([
     {
@@ -101,16 +119,16 @@ export function ProductFormClient({ product }: { product: Product | null }) {
       slug: product?.slug ?? "",
       price: product ? String(product.price) : "",
       compareAtPrice: product?.compareAtPrice ? String(product.compareAtPrice) : "",
-      metals: product ? JSON.parse(product.metals).join("; ") : "18k Gold",
-      stones: product ? JSON.parse(product.stones).join("; ") : "None",
-      sizes: product ? JSON.parse(product.sizes).join("; ") : "",
-      images: product?.images ? (typeof product.images === "string" ? JSON.parse(product.images) : product.images) : (product?.image ? [product.image] : []),
-      imageUrlInput: product?.images ? (typeof product.images === "string" ? JSON.parse(product.images) : product.images).join(", ") : (product?.image ? product.image : ""),
-      mainHierarchies: product?.mainHierarchies ? (typeof product.mainHierarchies === "string" ? JSON.parse(product.mainHierarchies) : product.mainHierarchies) : (product?.mainHierarchy ? [product.mainHierarchy] : []),
-      subHierarchies: product?.subHierarchies ? (typeof product.subHierarchies === "string" ? JSON.parse(product.subHierarchies) : product.subHierarchies) : (product?.subHierarchy ? [product.subHierarchy] : []),
-      kinds: product?.kinds ? (typeof product.kinds === "string" ? JSON.parse(product.kinds) : product.kinds) : (product?.kind ? [product.kind] : ["Ring"]),
-      ringTypes: product?.ringTypes ? (typeof product.ringTypes === "string" ? JSON.parse(product.ringTypes) : product.ringTypes) : [],
-      tags: product?.tags ? (typeof product.tags === "string" ? JSON.parse(product.tags) : product.tags) : (product?.tag ? [product.tag] : []),
+      metals: product ? parseList(product.metals).join("; ") : "18k Gold",
+      stones: product ? parseList(product.stones).join("; ") : "None",
+      sizes: product ? parseList(product.sizes).join("; ") : "",
+      images: initialImages,
+      imageUrlInput: initialImages.join(", "),
+      mainHierarchies: parseList(product?.mainHierarchies).length > 0 ? parseList(product?.mainHierarchies) : (product?.mainHierarchy ? [product.mainHierarchy] : []),
+      subHierarchies: parseList(product?.subHierarchies).length > 0 ? parseList(product?.subHierarchies) : (product?.subHierarchy ? [product.subHierarchy] : []),
+      kinds: parseList(product?.kinds).length > 0 ? parseList(product?.kinds) : (product?.kind ? [product.kind] : ["Ring"]),
+      ringTypes: parseList(product?.ringType ?? product?.ringTypes),
+      tags: parseList(product?.tags).length > 0 ? parseList(product?.tags) : (product?.tag ? [product.tag] : []),
       caption: product?.caption ?? "",
       description: product?.description ?? "",
       weight: product?.weight ? String(product.weight) : "",
@@ -123,7 +141,7 @@ export function ProductFormClient({ product }: { product: Product | null }) {
     }
   ])
 
-  const setFormField = (index: number, key: keyof FormState, value: any) => {
+  const setFormField = <K extends keyof FormState>(index: number, key: K, value: FormState[K]) => {
     setForms((prev) => prev.map((f, i) => {
       if (i === index) {
         const updated = { ...f, [key]: value }
@@ -149,7 +167,8 @@ export function ProductFormClient({ product }: { product: Product | null }) {
 
   const handleImagesUpload = async (index: number, files: FileList | null) => {
     if (!files || files.length === 0) return
-    const currentImages = forms[index].images
+    const currentImages = forms[index]?.images
+    if (!currentImages) return
     if (currentImages.length + files.length > 6) {
       alert("Maximum 6 images allowed per product.")
       return
@@ -181,43 +200,13 @@ export function ProductFormClient({ product }: { product: Product | null }) {
     }
   }
 
-  const handleGalleryUpload = async (index: number, files: FileList | null) => {
-    if (!files || files.length === 0) return
-    const folder = productFolder(index)
-    const uploadedUrls: string[] = []
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      if (!file) continue
-      const formData = new FormData()
-      formData.append("file", file)
-      formData.append("folder", folder)
-      try {
-        const res = await fetch("/api/admin/media", {
-          method: "POST",
-          body: formData,
-        })
-        const data = await res.json()
-        if (data.url) {
-          uploadedUrls.push(data.url)
-        }
-      } catch (err) {
-        console.error("Upload error", err)
-      }
-    }
-    if (uploadedUrls.length > 0) {
-      const currentGallery = forms[index].gallery ? forms[index].gallery.split("\n").filter(Boolean) : []
-      const updatedGallery = [...currentGallery, ...uploadedUrls]
-      // Set to advanced gallery field
-      // We don't store gallery separately since images acts as the product gallery, but let's sync with it if they use it.
-    }
-  }
-
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
 
     // Validation
     for (let i = 0; i < forms.length; i++) {
       const f = forms[i]
+      if (!f) continue
       const prefix = forms.length > 1 ? `Product ${i + 1}: ` : ""
 
       if (!f.name.trim()) {

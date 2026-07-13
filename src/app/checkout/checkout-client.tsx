@@ -35,6 +35,8 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
   const FREE_SHIPPING_OVER = brand.free_shipping_threshold
   const STANDARD_RATE = brand.shipping_standard_rate
   const EXPRESS_RATE = brand.shipping_express_rate
+  const enabledPayments = brand.enabled_payment_providers ?? ["razorpay"]
+  const razorpayEnabled = enabledPayments.includes("razorpay")
 
   const items = useCartStore((s) => s.items)
   const clearCart = useCartStore((s) => s.clear)
@@ -86,6 +88,10 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
   }
 
   const handlePlace = async () => {
+    if (!razorpayEnabled) {
+      toast.error("No active payment gateway is configured")
+      return
+    }
     setPlacing(true)
     try {
       const res = await fetch("/api/checkout", {
@@ -238,18 +244,27 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
 
             {step === 3 && (
               <div className="flex flex-col gap-4">
-                <div className="flex items-center justify-between border border-accent bg-accent-soft p-6">
-                  <div>
-                    <p className="font-display text-2xl">Razorpay</p>
-                    <Eyebrow className="mt-1 block">Cards · UPI · Netbanking · Wallets</Eyebrow>
+                {razorpayEnabled ? (
+                  <>
+                    <div className="flex items-center justify-between border border-accent bg-accent-soft p-6">
+                      <div>
+                        <p className="font-display text-2xl">Razorpay</p>
+                        <Eyebrow className="mt-1 block">Cards · UPI · Netbanking · Wallets</Eyebrow>
+                      </div>
+                      <span className="border border-line px-2 py-1 font-mono text-[9px] uppercase tracking-widest text-muted">
+                        Secure
+                      </span>
+                    </div>
+                    <p className="text-[13px] text-muted">
+                      You&apos;ll complete payment securely via Razorpay. Your card details never touch our servers.
+                    </p>
+                  </>
+                ) : (
+                  <div className="border border-line bg-bg-2 p-6">
+                    <p className="font-display text-2xl">Payment unavailable</p>
+                    <p className="mt-2 text-[13px] text-muted">Enable a payment gateway in admin settings before accepting checkout payments.</p>
                   </div>
-                  <span className="border border-line px-2 py-1 font-mono text-[9px] uppercase tracking-widest text-muted">
-                    Secure
-                  </span>
-                </div>
-                <p className="text-[13px] text-muted">
-                  You&apos;ll complete payment securely via Razorpay. Your card details never touch our servers.
-                </p>
+                )}
               </div>
             )}
           </motion.div>
@@ -271,7 +286,7 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
             </Magnetic>
           ) : (
             <Magnetic strength={0.15}>
-              <Button onClick={handlePlace}>Place order — {priceFmt(total)}</Button>
+              <Button onClick={handlePlace} disabled={!razorpayEnabled}>Place order — {priceFmt(total)}</Button>
             </Magnetic>
           )}
         </div>

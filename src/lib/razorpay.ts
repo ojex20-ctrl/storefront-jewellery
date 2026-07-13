@@ -32,19 +32,22 @@ type RazorpayOptions = {
 }
 
 let scriptPromise: Promise<void> | null = null
+let scriptSrc: string | null = null
 
-function loadScript(): Promise<void> {
+function loadScript(src = "https://checkout.razorpay.com/v1/checkout.js"): Promise<void> {
   if (typeof window === "undefined") return Promise.reject(new Error("Razorpay needs the browser"))
-  if (window.Razorpay) return Promise.resolve()
-  if (scriptPromise) return scriptPromise
+  if (window.Razorpay && scriptSrc === src) return Promise.resolve()
+  if (scriptPromise && scriptSrc === src) return scriptPromise
 
+  scriptSrc = src
   scriptPromise = new Promise((resolve, reject) => {
     const s = document.createElement("script")
-    s.src = "https://checkout.razorpay.com/v1/checkout.js"
+    s.src = src
     s.async = true
     s.onload = () => resolve()
     s.onerror = () => {
       scriptPromise = null
+      scriptSrc = null
       reject(new Error("Failed to load Razorpay"))
     }
     document.body.appendChild(s)
@@ -58,17 +61,17 @@ export async function openRazorpayCheckout(args: CheckoutArgs): Promise<void> {
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ orderId: args.internalOrderId }),
   })
-  const orderData = await orderResp.json()
+  const orderData = await orderResp.json() as { error?: string; keyId: string; amount: number; currency: string; orderId: string; brandName?: string; themeColor?: string; checkoutScriptUrl?: string }
   if (!orderResp.ok) throw new Error(orderData.error || "Failed to create Razorpay order")
 
-  await loadScript()
+  await loadScript(orderData.checkoutScriptUrl)
 
   return new Promise<void>((resolve, reject) => {
     const rzp = new window.Razorpay!({
       key: orderData.keyId,
       amount: orderData.amount,
       currency: orderData.currency,
-      name: process.env.NEXT_PUBLIC_BRAND ?? "SYRA",
+      name: orderData.brandName ?? "SYRA",
       description: `Order #${args.orderNumber}`,
       order_id: orderData.orderId,
       prefill: {
@@ -77,7 +80,7 @@ export async function openRazorpayCheckout(args: CheckoutArgs): Promise<void> {
         contact: args.customer.phone,
       },
       notes: { internalOrderId: args.internalOrderId },
-      theme: { color: "#c9a36b" },
+      theme: { color: orderData.themeColor ?? "#c9a36b" },
       handler: async (resp) => {
         const verifyResp = await fetch("/api/payments/razorpay/verify", {
           method: "POST",

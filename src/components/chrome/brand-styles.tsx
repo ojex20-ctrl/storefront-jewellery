@@ -1,14 +1,12 @@
 import type { BrandConfig } from "@/lib/brand-config"
 
 /**
- * Injects per-storefront CSS-variable overrides. Uses the black/white/sand
- * palette as the base, with brand config able to override accent.
+ * Injects per-storefront CSS-variable overrides. Theme surfaces come from
+ * globals.css; brand config only customizes the accent token.
  */
 export function BrandStyles({ brand }: { brand: BrandConfig }) {
   const css = `
     :root {
-      --bg: #0A0A0A;
-      --ink: #FFFFFF;
       --accent: ${brand.accent_hex ?? '#C2B9A7'};
     }
   `

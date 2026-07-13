@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { verifyRazorpayPaymentSignature } from "@/lib/razorpay-server"
-import { sendOrderStatusUpdateEmail } from "@/lib/email"
+import { finalizePaidOrder } from "@/lib/payment-finalization"
 
 export async function POST(req: Request) {
   const body = await req.json()
@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing Razorpay verification fields" }, { status: 400 })
   }
 
-  const valid = verifyRazorpayPaymentSignature({
+  const valid = await verifyRazorpayPaymentSignature({
     razorpayOrderId: razorpay_order_id,
     razorpayPaymentId: razorpay_payment_id,
     razorpaySignature: razorpay_signature,
@@ -51,8 +51,6 @@ export async function POST(req: Request) {
     },
   })
 
-  if (before?.paymentStatus !== "paid") {
-    await sendOrderStatusUpdateEmail(order).catch(() => false)
-  }
+  await finalizePaidOrder(order, before?.paymentStatus === "paid")
   return NextResponse.json({ order: { id: order.id, orderNumber: order.orderNumber, paymentStatus: order.paymentStatus } })
 }

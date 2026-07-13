@@ -268,7 +268,7 @@ export function HomeClient({ products }: { products: Product[] }) {
       <section className="px-6 py-24 md:px-12 bg-bg">
         <div className="flex items-center gap-6 mb-16 max-w-[1400px] mx-auto w-full">
            <h2 className="font-display text-4xl md:text-5xl text-ink">Collection</h2>
-           <div className="flex-1 h-[1px] bg-white/20 relative flex items-center justify-between">
+           <div className="flex-1 h-[1px] bg-line relative flex items-center justify-between">
               <svg className="absolute left-0 -translate-x-1/2 text-accent w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0L13.5 10.5L24 12L13.5 13.5L12 24L10.5 13.5L0 12L10.5 10.5L12 0Z" /></svg>
               <svg className="absolute left-1/2 -translate-x-1/2 text-accent w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0L13.5 10.5L24 12L13.5 13.5L12 24L10.5 13.5L0 12L10.5 10.5L12 0Z" /></svg>
               <svg className="absolute right-0 translate-x-1/2 text-accent w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0L13.5 10.5L24 12L13.5 13.5L12 24L10.5 13.5L0 12L10.5 10.5L12 0Z" /></svg>
@@ -290,7 +290,7 @@ export function HomeClient({ products }: { products: Product[] }) {
         >
            <div className="collection-mobile-track flex gap-6 w-max mx-auto [--card-w:280px] md:[--card-w:340px] [--gap:24px]">
              {windows.map((shape, i) => (
-                <div key={i} className={`collection-window w-[var(--card-w)] h-[420px] shrink-0 overflow-hidden relative ${shape} bg-bg shadow-lg border border-white/10 pointer-events-none`}>
+                <div key={i} className={`collection-window w-[var(--card-w)] h-[420px] shrink-0 overflow-hidden relative ${shape} bg-bg shadow-lg border border-line pointer-events-none`}>
                    <div 
                       className="absolute top-0 flex gap-[var(--gap)] transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] pointer-events-auto"
                       style={{
@@ -310,7 +310,7 @@ export function HomeClient({ products }: { products: Product[] }) {
                                 alt={cat.name}
                               />
                             </div>
-                            <div className="bg-bg-2 text-ink p-6 flex justify-between items-center shrink-0 border-t border-white/5">
+                            <div className="bg-bg-2 text-ink p-6 flex justify-between items-center shrink-0 border-t border-line">
                                <span className="font-display text-2xl tracking-wide">{cat.name}</span>
                                <div className="w-8 h-8 rounded-full bg-accent text-bg flex items-center justify-center transition-transform duration-500 group-hover:rotate-90">
                                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -328,7 +328,7 @@ export function HomeClient({ products }: { products: Product[] }) {
 
         {/* Carousel Controls */}
         <div className="flex justify-center items-center gap-6 mt-8 max-w-[1400px] mx-auto">
-          <div className="h-[2px] w-64 bg-white/20 relative overflow-hidden rounded-full">
+          <div className="h-[2px] w-64 bg-line relative overflow-hidden rounded-full">
             <div 
               className="absolute top-0 left-0 h-full bg-accent rounded-full transition-all duration-300 ease-out"
               style={{ width: '33.33%', left: `${(carouselIndex / (extendedCategories.length - windows.length)) * 66.66}%` }}
@@ -338,7 +338,7 @@ export function HomeClient({ products }: { products: Product[] }) {
             <button 
               onClick={handlePrev}
               disabled={carouselIndex === 0}
-              className="w-8 h-8 rounded-full border border-white/30 flex items-center justify-center text-ink hover:bg-accent hover:text-bg hover:border-accent transition-colors shrink-0 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-ink disabled:hover:border-white/30"
+              className="w-8 h-8 rounded-full border border-line flex items-center justify-center text-ink hover:bg-accent hover:text-bg hover:border-accent transition-colors shrink-0 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-ink disabled:hover:border-line"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
             </button>
@@ -447,9 +447,9 @@ function PriceRangeCarousel({ products }: { products: Product[] }) {
               <svg className="absolute left-0 -translate-x-1/2 text-accent w-8 h-8 z-10 bg-bg-2" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 0L13.5 10.5L24 12L13.5 13.5L12 24L10.5 13.5L0 12L10.5 10.5L12 0Z" />
               </svg>
-              <div className="h-[1px] w-full bg-white/20" />
+              <div className="h-[1px] w-full bg-line" />
               <Link href={tier.viewAllHref}>
-                <button className="absolute right-0 top-1/2 -translate-y-1/2 bg-bg-2 px-6 py-2 border border-white/20 rounded-[50px] text-xs text-ink hover:bg-accent hover:text-bg transition-colors whitespace-nowrap">
+                <button className="absolute right-0 top-1/2 -translate-y-1/2 bg-bg-2 px-6 py-2 border border-line rounded-[50px] text-xs text-ink hover:bg-accent hover:text-bg transition-colors whitespace-nowrap">
                   View all
                 </button>
               </Link>
@@ -489,12 +489,12 @@ function PriceRangeCarousel({ products }: { products: Product[] }) {
       </AnimatePresence>
 
       <div className="flex justify-center items-center gap-6 mt-8 max-w-[1400px] mx-auto">
-        <div className="h-[2px] w-64 bg-white/10 relative overflow-hidden rounded-full">
+        <div className="h-[2px] w-64 bg-line relative overflow-hidden rounded-full">
           <motion.div className="absolute top-0 left-0 h-full bg-accent rounded-full" style={{ width: `${progress}%` }} transition={{ duration: 0.1 }} />
         </div>
         <div className="flex gap-3">
           {tiers.map((_, i) => (
-            <button key={i} onClick={() => setActiveTier(i)} className={`transition-all duration-500 rounded-full ${activeTier === i ? "w-8 h-2 bg-accent" : "w-2 h-2 bg-white/30 hover:bg-white/50"}`} />
+            <button key={i} onClick={() => setActiveTier(i)} className={`transition-all duration-500 rounded-full ${activeTier === i ? "w-8 h-2 bg-accent" : "w-2 h-2 bg-muted/40 hover:bg-muted"}`} />
           ))}
         </div>
       </div>

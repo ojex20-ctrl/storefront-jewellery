@@ -61,7 +61,14 @@ export async function POST(req: Request) {
   if (session) {
     customerId = session.id
     const purchased = await prisma.order
-      .findFirst({ where: { email: session.email, items: { contains: `"productId":"${productId}"` } }, select: { id: true } })
+      .findFirst({
+        where: {
+          paymentStatus: "paid",
+          items: { contains: `"productId":"${productId}"` },
+          OR: [{ customerId: session.id }, { email: session.email }],
+        },
+        select: { id: true },
+      })
       .catch(() => null)
     verified = Boolean(purchased)
   }

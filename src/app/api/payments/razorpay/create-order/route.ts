@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { createRazorpayOrder, publicRazorpayKey, RAZORPAY_SETUP_MESSAGE } from "@/lib/razorpay-server"
+import { getBrandConfig } from "@/lib/brand-config"
+import { getPaymentSettings } from "@/lib/payment-settings"
 
 export async function POST(req: Request) {
   const body = await req.json()
@@ -12,9 +14,10 @@ export async function POST(req: Request) {
   if (order.paymentStatus === "paid") return NextResponse.json({ error: "Order is already paid" }, { status: 409 })
 
   try {
+    const [brand, payment] = await Promise.all([getBrandConfig(), getPaymentSettings()])
     const razorpayOrder = await createRazorpayOrder({
       amount: order.total,
-      currency: "INR",
+      currency: payment.razorpay.currency,
       receipt: String(order.orderNumber),
       notes: { orderId: order.id, orderNumber: String(order.orderNumber) },
     })
@@ -22,8 +25,11 @@ export async function POST(req: Request) {
       orderId: razorpayOrder.id,
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency,
-      keyId: publicRazorpayKey(),
+      keyId: await publicRazorpayKey(),
       internalOrderId: order.id,
+      brandName: brand.brand_name,
+      themeColor: payment.razorpay.checkoutThemeColor,
+      checkoutScriptUrl: payment.razorpay.checkoutScriptUrl,
     })
   } catch (err) {
     const message = err instanceof Error ? err.message : RAZORPAY_SETUP_MESSAGE

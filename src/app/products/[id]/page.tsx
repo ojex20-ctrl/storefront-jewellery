@@ -11,19 +11,18 @@ type Params = Promise<{ id: string }>
 export async function generateMetadata({ params }: { params: Params }) {
   const { id } = await params
   const p = await fetchProduct(id)
-  const description = p?.seoDescription || p?.desc || p?.caption || "Premium anti-tarnish jewellery by SYRA."
+  if (!p) notFound()
+  const description = p.seoDescription || p.desc || p.caption || "Premium anti-tarnish jewellery by SYRA."
   return {
-    title: p?.seoTitle || (p?.name ? `${p.name} - SYRA` : id.toUpperCase()),
+    title: p.seoTitle || `${p.name} - SYRA`,
     description,
     alternates: { canonical: `/products/${id}` },
-    openGraph: p
-      ? {
-          title: p.name,
-          description,
-          images: p.image ? [p.image] : undefined,
-          type: "website" as const,
-        }
-      : undefined,
+    openGraph: {
+      title: p.name,
+      description,
+      images: p.image ? [p.image] : undefined,
+      type: "website" as const,
+    },
   }
 }
 

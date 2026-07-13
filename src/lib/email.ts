@@ -1,5 +1,6 @@
 import * as net from "node:net"
 import * as tls from "node:tls"
+import { getBrandConfig } from "./brand-config"
 
 type EmailPayload = { to: string; subject: string; html: string }
 
@@ -204,10 +205,11 @@ function otpBox(code: string): string {
   </div>`
 }
 
-function supportLink(): string {
-  const phone = process.env.PUBLIC_WHATSAPP_NUMBER || process.env.NEXT_PUBLIC_WHATSAPP_NUMBER
+function supportLink(phone: string | null | undefined, message: string | null | undefined): string {
   if (!phone) return ""
-  return `<p ${MUTED}>Need help? <a href="https://wa.me/${phone}?text=${encodeURIComponent("Hi, I need help with my order")}" style="color:#0b0b0c;">Message us on WhatsApp</a>.</p>`
+  const cleanPhone = phone.replace(/[^0-9]/g, "")
+  if (!cleanPhone) return ""
+  return `<p ${MUTED}>Need help? <a href="https://wa.me/${cleanPhone}?text=${encodeURIComponent(message || "Hi, I need help with my order")}" style="color:#0b0b0c;">Message us on WhatsApp</a>.</p>`
 }
 
 function orderItemsTable(raw: string): string {
@@ -224,7 +226,7 @@ function orderItemsTable(raw: string): string {
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;border-top:1px solid #f1ede5;">${rows}</table>`
 }
 
-function orderHtml(order: MailOrder, title: string, message: string): string {
+function orderHtml(order: MailOrder, title: string, message: string, support?: { phone?: string | null; message?: string | null }): string {
   const name = `${order.firstName} ${order.lastName ?? ""}`.trim()
   const paid = order.paymentStatus === "paid"
   const body = `
@@ -238,24 +240,26 @@ function orderHtml(order: MailOrder, title: string, message: string): string {
     </table>
     ${button(`${SITE}/order-track`, "Track your order")}
     <p ${MUTED}>Shipping to: ${order.address}, ${order.city}, ${order.state ?? ""} ${order.pincode}, ${order.country}</p>
-    ${supportLink()}`
+    ${supportLink(support?.phone, support?.message)}`
   return emailShell(title, body, `Order #${order.orderNumber} — ${order.status.replace(/_/g, " ")}`)
 }
 
 export async function sendOrderPlacedEmail(order: MailOrder) {
+  const brand = await getBrandConfig()
   return sendEmail({
     to: order.email,
     subject: `Your SYRA order #${order.orderNumber} is confirmed`,
-    html: orderHtml(order, "Thank you for your order", "we've received it and we're getting it ready. Here's a summary:"),
+    html: orderHtml(order, "Thank you for your order", "we've received it and we're getting it ready. Here's a summary:", { phone: brand.shop_whatsapp, message: brand.shop_whatsapp_message }),
   })
 }
 
 export async function sendOrderStatusUpdateEmail(order: MailOrder) {
+  const [brand] = await Promise.all([getBrandConfig()])
   const nice = order.status.replace(/_/g, " ")
   return sendEmail({
     to: order.email,
     subject: `SYRA order #${order.orderNumber}: ${nice}`,
-    html: orderHtml(order, `Your order is ${nice}`, `there's an update on your order — it's now ${nice}.`),
+    html: orderHtml(order, `Your order is ${nice}`, `there's an update on your order — it's now ${nice}.`, { phone: brand.shop_whatsapp, message: brand.shop_whatsapp_message }),
   })
 }
 

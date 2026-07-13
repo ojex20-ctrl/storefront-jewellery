@@ -1,5 +1,5 @@
 /**
- * Product fetchers — reads from local SQLite database via Prisma.
+ * Product fetchers — reads from the local product database via Prisma.
  * Falls back to mock data if database is empty.
  */
 
@@ -9,6 +9,8 @@ import { prisma } from "./db"
 import { MOCK_PRODUCTS } from "./mock-data"
 
 import { Product as DbProduct } from "@prisma/client"
+
+const USE_MOCK_PRODUCTS = process.env.NODE_ENV !== "production"
 
 const FALLBACK_IMAGES: Record<string, string> = {
   Ring: "/jewellery/gen-diamond-ring.png",
@@ -37,7 +39,7 @@ function dbToProduct(p: DbProduct): Product {
   const ringTypes = parseJsonArray<string>(p.ringType)
   const tags = parseJsonArray<string>(p.tags).length > 0 ? parseJsonArray<string>(p.tags) : (p.tag ? [p.tag] : [])
   const kind = (kinds[0] as Product["kind"]) || (p.kind as Product["kind"]) || "Ring"
-  const fallbackImage = FALLBACK_IMAGES[kind] ?? FALLBACK_IMAGES.Ring
+  const fallbackImage = FALLBACK_IMAGES[kind] ?? FALLBACK_IMAGES.Ring ?? "/jewellery/gen-diamond-ring.png"
   const primaryImage = images[0] || p.image || galleryImages[0] || fallbackImage
 
   return {
@@ -83,17 +85,20 @@ export async function fetchProducts(): Promise<Product[]> {
   } catch {
     // DB not available — fall through to mock
   }
-  return MOCK_PRODUCTS
+  return USE_MOCK_PRODUCTS ? MOCK_PRODUCTS : []
 }
 
 export async function fetchProduct(handle: string): Promise<Product | null> {
   try {
     const p = await prisma.product.findUnique({ where: { slug: handle } })
-    if (p && p.published) return dbToProduct(p)
+    if (p) return p.published ? dbToProduct(p) : null
+
+    const productCount = await prisma.product.count()
+    if (productCount > 0) return null
   } catch {
     // DB not available
   }
-  return MOCK_PRODUCTS.find((m) => m.id === handle) ?? MOCK_PRODUCTS[0] ?? null
+  return USE_MOCK_PRODUCTS ? MOCK_PRODUCTS.find((m) => m.id === handle) ?? null : null
 }
 
 export async function fetchFeatured(n = 6): Promise<Product[]> {
@@ -107,5 +112,5 @@ export async function fetchFeatured(n = 6): Promise<Product[]> {
   } catch {
     // fall through
   }
-  return MOCK_PRODUCTS.slice(0, n)
+  return USE_MOCK_PRODUCTS ? MOCK_PRODUCTS.slice(0, n) : []
 }

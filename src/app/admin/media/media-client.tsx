@@ -46,6 +46,7 @@ export function MediaClient({ user }: { user: { name: string } }) {
     setUploading(true)
     for (let i = 0; i < selectedFiles.length; i++) {
       const file = selectedFiles[i]
+      if (!file) continue
       const formData = new FormData()
       formData.append("file", file)
 

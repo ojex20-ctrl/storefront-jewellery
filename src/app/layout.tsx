@@ -53,7 +53,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html
       lang="en"
-      data-theme="dark"
+      data-theme="light"
       suppressHydrationWarning
     >
       <head>
@@ -72,8 +72,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <MarketingWidgets />
         <WishlistSync />
         <WhatsAppButton
-          phone={process.env.PUBLIC_WHATSAPP_NUMBER ?? process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? brand.shop_whatsapp}
-          message={process.env.NEXT_PUBLIC_WHATSAPP_MESSAGE ?? "Hi, I need help with my order"}
+          phone={brand.shop_whatsapp ?? process.env.PUBLIC_WHATSAPP_NUMBER ?? process.env.NEXT_PUBLIC_WHATSAPP_NUMBER}
+          message={brand.shop_whatsapp_message ?? process.env.NEXT_PUBLIC_WHATSAPP_MESSAGE ?? "Hi, I need help with my order"}
         />
         <Toaster
           position="bottom-right"
