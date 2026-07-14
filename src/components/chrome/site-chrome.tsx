@@ -5,6 +5,7 @@ import { Nav, Footer } from "@podium/ui/chrome"
 import { priceFmt } from "@podium/ui/lib"
 import { useCartStore } from "@/stores/cart-store"
 import { SearchTrigger } from "./search-trigger"
+import { ThemeToggle } from "./theme-toggle"
 import type { BrandConfig } from "@/lib/brand-config"
 
 /**
@@ -42,7 +43,6 @@ export function SiteChrome({
     ...configuredNavLinks.filter((link) => link.href !== "/"),
   ]
   for (const link of [
-    { href: "/search", label: "Search" },
     { href: "/order-track", label: "Track Order" },
   ]) {
     if (!navLinks.some((item) => item.href === link.href)) navLinks.push(link)
@@ -118,11 +118,10 @@ export function SiteChrome({
         cartBumping={cartBumping}
         onCartClick={() => setCartOpen(true)}
       />
-      {enableSearch && (
-        <div className="fixed right-[5.25rem] top-4 z-[120] hidden border border-line bg-bg/90 px-3 py-2 text-ink shadow-xl backdrop-blur md:block">
-          <SearchTrigger />
-        </div>
-      )}
+      <div className="fixed right-[4.75rem] top-4 z-[120] flex items-center gap-1 border border-line bg-bg/92 p-1 text-ink shadow-xl backdrop-blur md:right-[5.25rem]">
+        {enableSearch && <SearchTrigger />}
+        <ThemeToggle />
+      </div>
 
       {enableTransitions ? (
         <AnimatePresence mode="wait">

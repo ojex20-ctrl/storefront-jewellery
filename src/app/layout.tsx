@@ -10,7 +10,6 @@ import { ThemeBootstrap } from "@/providers/theme-bootstrap"
 import { BrandStyles } from "@/components/chrome/brand-styles"
 import { BrandProvider } from "@/providers/brand-provider"
 import { WhatsAppButton } from "@/components/chrome/whatsapp-button"
-import { ThemeToggle } from "@/components/chrome/theme-toggle"
 import { MarketingWidgets } from "@/components/marketing/marketing-widgets"
 import { WishlistSync } from "@/components/commerce/wishlist-sync"
 import { cookies, headers } from "next/headers"
@@ -54,7 +53,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html
       lang="en"
-      data-theme="light"
+      data-theme="dark"
       suppressHydrationWarning
     >
       <head>
@@ -72,7 +71,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </BrandProvider>
         <MarketingWidgets />
         <WishlistSync />
-        <ThemeToggle />
         <WhatsAppButton
           phone={brand.shop_whatsapp ?? process.env.PUBLIC_WHATSAPP_NUMBER ?? process.env.NEXT_PUBLIC_WHATSAPP_NUMBER}
           message={brand.shop_whatsapp_message ?? process.env.NEXT_PUBLIC_WHATSAPP_MESSAGE ?? "Hi, I need help with my order"}

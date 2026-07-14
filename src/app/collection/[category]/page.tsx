@@ -93,7 +93,7 @@ export default async function CategoryPage({ params }: { params: Params }) {
       </section>
 
       {products.length > 0 ? (
-        <CollectionClient products={products} />
+        <CollectionClient products={products} showHero={false} />
       ) : (
         <div className="px-4 py-24 text-center text-muted">
           <p className="mb-4 font-display text-3xl text-ink">Nothing here yet.</p>

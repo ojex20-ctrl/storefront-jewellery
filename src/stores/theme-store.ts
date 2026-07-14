@@ -13,10 +13,10 @@ type State = {
 export const useThemeStore = create<State>()(
   persist(
     (set) => ({
-      theme: "light",
+      theme: "dark",
       toggle: () => set((s) => ({ theme: s.theme === "light" ? "dark" : "light" })),
       set: (t) => set({ theme: t }),
     }),
-    { name: "syra-theme" },
+    { name: "syra-theme-v2" },
   ),
 )
