@@ -607,6 +607,34 @@ function ScatterSection({ products: _products }: { products: Product[] }) {
     setScatterMode("spread")
   }
 
+  useEffect(() => {
+    if (!focused) return
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setFocused(null)
+    }
+    window.addEventListener("keydown", closeOnEscape)
+    return () => window.removeEventListener("keydown", closeOnEscape)
+  }, [focused])
+
+  const handleStageTap = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (!stageRef.current) return
+    const target = event.target instanceof Element ? event.target : null
+    if (target?.closest("[data-jewel-control='true']")) return
+
+    const rect = stageRef.current.getBoundingClientRect()
+    const tapX = event.clientX - rect.left
+    const tapY = event.clientY - rect.top
+    const nearest = jewelleryPieces.reduce<{ piece: JewelPiece; dist: number } | null>((best, piece) => {
+      const px = ((isSpread ? piece.sx : piece.x) / 100) * rect.width
+      const py = ((isSpread ? piece.sy : piece.y) / 100) * rect.height
+      const dist = Math.hypot(px - tapX, py - tapY)
+      if (!best || dist < best.dist) return { piece, dist }
+      return best
+    }, null)
+
+    if (nearest && nearest.dist <= 180) focusPiece(nearest.piece)
+  }
+
   return (
     <section
       onPointerMove={handlePointerMove}
@@ -650,7 +678,7 @@ function ScatterSection({ products: _products }: { products: Product[] }) {
         </div>
       </div>
 
-      <div ref={stageRef} className="relative z-10 h-[510px] w-full max-w-[1250px] md:h-[610px]">
+      <div ref={stageRef} onClick={handleStageTap} className="relative z-10 h-[510px] w-full max-w-[1250px] touch-pan-y md:h-[610px]">
         {gemstones.map((gem, i) => (
           <RepulsionItem
             key={`g-${i}`}
@@ -662,6 +690,7 @@ function ScatterSection({ products: _products }: { products: Product[] }) {
             mass={0.45 + gem.sz / 180}
             idx={i}
             spread={isSpread}
+            hitSize={gem.sz * 1.35}
           >
             <DiamondCut size={gem.sz} glow={gem.glow} variant={gem.label} />
           </RepulsionItem>
@@ -679,14 +708,16 @@ function ScatterSection({ products: _products }: { products: Product[] }) {
             spread={isSpread}
             active={focused?.label === piece.label}
             onSelect={() => focusPiece(piece)}
+            hitSize={piece.w + 54}
+            ariaLabel={`Preview ${piece.label}`}
           >
             <div className="relative drop-shadow-[0_16px_35px_rgba(0,0,0,0.45)]" style={{ width: piece.w, height: piece.w }}>
-              <div className="absolute inset-[-18%] rounded-full bg-accent/10 blur-2xl" />
+              <div className="pointer-events-none absolute inset-[-18%] rounded-full bg-accent/10 blur-2xl" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={piece.src}
                 alt={piece.label}
-                className="relative h-full w-full select-none object-contain transition-transform duration-500 hover:scale-110"
+                className="pointer-events-none relative h-full w-full select-none object-contain transition-transform duration-500 hover:scale-110"
                 style={{ filter: "contrast(1.08) saturate(1.18)" }}
                 draggable={false}
               />
@@ -813,7 +844,7 @@ function DiamondCut({ size, glow, variant }: { size: number; glow: string; varia
 }
 
 function RepulsionItem({
-  restX, restY, cursorPx, stageRef, repulseRadius, mass, idx, spread, active = false, onSelect, children,
+  restX, restY, cursorPx, stageRef, repulseRadius, mass, idx, spread, active = false, onSelect, hitSize = 1, ariaLabel, children,
 }: {
   restX: number
   restY: number
@@ -825,6 +856,8 @@ function RepulsionItem({
   spread: boolean
   active?: boolean
   onSelect?: () => void
+  hitSize?: number
+  ariaLabel?: string
   children: React.ReactNode
 }) {
   const rect = stageRef.current?.getBoundingClientRect()
@@ -850,25 +883,49 @@ function RepulsionItem({
     rotateZ += (dx / dist) * force * 0.22
   }
 
+  const selectable = Boolean(onSelect)
+
   return (
     <motion.div
-      className={`absolute ${onSelect ? "pointer-events-auto cursor-pointer" : "pointer-events-none"}`}
-      style={{ left: `${restX}%`, top: `${restY}%`, zIndex: active ? 34 : dist < repulseRadius ? 24 : 12 }}
+      role={selectable ? "button" : undefined}
+      tabIndex={selectable ? 0 : undefined}
+      aria-label={selectable ? ariaLabel : undefined}
+      data-jewel-control={selectable ? "true" : undefined}
+      className={`absolute flex items-center justify-center ${
+        selectable
+          ? "pointer-events-auto cursor-pointer touch-manipulation select-none rounded-full outline-none focus-visible:ring-2 focus-visible:ring-accent/70"
+          : "pointer-events-none"
+      }`}
+      style={{
+        left: `calc(${restX}% - ${hitSize / 2}px)`,
+        top: `calc(${restY}% - ${hitSize / 2}px)`,
+        width: hitSize,
+        height: hitSize,
+        zIndex: active ? 34 : dist < repulseRadius ? 24 : selectable ? 16 : 12,
+      }}
       animate={{
         x: offsetX,
         y: offsetY,
         rotate: rotateZ,
-        scale: active ? 1.25 : dist < repulseRadius && dist > 0 ? 1.06 + 0.12 * ((repulseRadius - dist) / repulseRadius) : spread ? 1.03 : 1,
+        scale: active ? 1.22 : dist < repulseRadius && dist > 0 ? 1.06 + 0.12 * ((repulseRadius - dist) / repulseRadius) : spread ? 1.03 : 1,
       }}
+      whileTap={selectable ? { scale: active ? 1.12 : 0.96 } : undefined}
       transition={{ type: "spring", damping: 34, stiffness: 64, mass: mass * 0.58 }}
       onClick={(event) => {
         if (!onSelect) return
-        event.preventDefault()
         event.stopPropagation()
         onSelect()
       }}
+      onKeyDown={(event) => {
+        if (!onSelect) return
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault()
+          onSelect()
+        }
+      }}
     >
       <motion.div
+        className="flex h-full w-full items-center justify-center"
         animate={{
           y: [0, -5 - (idx % 4) * 1.6, 0],
           rotate: [0, (idx % 2 === 0 ? 1.8 : -1.8), 0],
