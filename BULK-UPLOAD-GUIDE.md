@@ -8,8 +8,8 @@ Your admin panel at `/admin` has a built-in bulk upload system. You can upload p
 
 ## Method 1: Admin Panel (Recommended)
 
-1. Go to `http://localhost:3002/admin` (or your live URL `/admin`)
-2. Login with `admin@syra.com` / `admin123`
+1. Go to `http://localhost:3002/admin/login` (or your live URL `/admin/login`)
+2. Login with an active admin account provided through a secure channel.
 3. Navigate to **Products** section
 4. Use the "Add Product" form for individual products
 5. For bulk: use the API method below
@@ -30,7 +30,7 @@ You must be logged in as admin (cookie-based auth). Use the login endpoint first
 # Step 1: Login and get cookie
 curl -X POST http://localhost:3002/api/admin/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@syra.com","password":"admin123"}' \
+  -d '{"email":"ADMIN_EMAIL","password":"ADMIN_PASSWORD"}' \
   -c cookies.txt
 
 # Step 2: Bulk upload products

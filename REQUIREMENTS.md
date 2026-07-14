@@ -1,5 +1,7 @@
 # SYRA — Anti-Tarnish Jewellery E-Commerce | Full Requirements
 
+> Maintenance note: this is the original requirements brief. The current implementation uses Next.js 14, Prisma, MongoDB, admin-configurable settings, uploaded media via `MEDIA_ROOT`, and Razorpay webhooks. For current developer, deployment, AI, and business handoff documentation, start with `README.md` and the files in `docs/`.
+
 ## 1. Project Overview
 
 **Brand:** SYRA  
