@@ -20,18 +20,52 @@ import { verifyAdminSession } from "@/lib/admin-auth"
 import { JsonLd } from "@/components/seo/json-ld"
 import { organizationJsonLd, websiteJsonLd } from "@/lib/seo-jsonld"
 import { fetchProducts } from "@/lib/medusa-products"
+import {
+  DEFAULT_OG_IMAGE,
+  DEFAULT_SEO_DESCRIPTION,
+  DEFAULT_SEO_TITLE,
+  INDEXABLE_ROBOTS,
+  SEO_KEYWORDS,
+  SITE_NAME,
+  SITE_URL,
+  absoluteImage,
+  trimDescription,
+} from "@/lib/seo"
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await getBrandConfig()
+  const title = brand.seo_title || `${brand.brand_name} - Anti-Tarnish Jewellery`
+  const description = trimDescription(brand.seo_description || brand.hero_copy || DEFAULT_SEO_DESCRIPTION)
+  const image = absoluteImage(brand.logo_url || DEFAULT_OG_IMAGE)
+
   return {
-    title: { default: brand.seo_title || `${brand.brand_name} — Anti-Tarnish Jewellery`, template: `%s · ${brand.brand_name}` },
-    description: brand.seo_description || brand.hero_copy || "SYRA — Premium anti-tarnish jewellery and editorial pieces.",
-    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3002"),
+    metadataBase: new URL(SITE_URL),
+    applicationName: SITE_NAME,
+    title: { default: title || DEFAULT_SEO_TITLE, template: `%s · ${brand.brand_name}` },
+    description,
+    keywords: SEO_KEYWORDS,
+    authors: [{ name: brand.brand_name, url: SITE_URL }],
+    creator: brand.brand_name,
+    publisher: brand.brand_name,
+    category: "jewellery",
+    alternates: { canonical: "/" },
+    robots: INDEXABLE_ROBOTS,
     openGraph: {
-      title: brand.brand_name,
-      description: (brand.tagline ?? "Rentals and Jewels,|worn for the moment.").replace("|", " "),
+      title,
+      description,
+      url: "/",
+      siteName: brand.brand_name,
+      locale: "en_IN",
       type: "website",
+      images: [{ url: image, width: 1200, height: 630, alt: brand.brand_name }],
     },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [image],
+    },
+    formatDetection: { telephone: false, address: false, email: false },
   }
 }
 

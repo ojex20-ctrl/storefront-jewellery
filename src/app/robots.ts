@@ -1,14 +1,22 @@
 import type { MetadataRoute } from "next"
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3002"
+import { absoluteUrl } from "@/lib/seo"
 
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/admin", "/api", "/checkout"],
+      disallow: [
+        "/admin/",
+        "/api/",
+        "/account/",
+        "/cart",
+        "/checkout",
+        "/confirmation/",
+        "/payment-failed/",
+      ],
     },
-    sitemap: `${SITE_URL}/sitemap.xml`,
+    sitemap: absoluteUrl("/sitemap.xml"),
+    host: absoluteUrl("/"),
   }
 }

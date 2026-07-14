@@ -37,6 +37,26 @@ export async function middleware(req: NextRequest) {
     }
   }
 
+  if (req.method === "GET" && pathname.startsWith("/campaigns/")) {
+    const [, section, rawSlug, extra] = pathname.split("/")
+    if (section === "campaigns" && rawSlug && !extra) {
+      const existsUrl = new URL("/api/campaigns/exists", "http://127.0.0.1:3002")
+      existsUrl.searchParams.set("slug", decodeURIComponent(rawSlug))
+
+      try {
+        const response = await fetch(existsUrl, { cache: "no-store" })
+        if (response.status === 404) {
+          return new NextResponse(
+            '<!doctype html><html><head><title>Campaign not found</title><meta name="robots" content="noindex"></head><body><h1>Campaign not found</h1></body></html>',
+            { status: 404, headers: { "content-type": "text/html; charset=utf-8" } },
+          )
+        }
+      } catch {
+        return NextResponse.next()
+      }
+    }
+  }
+
   if (pathname.startsWith("/admin")) {
     const hasAdmin = Boolean(req.cookies.get(ADMIN_COOKIE)?.value || req.cookies.get(LEGACY_ADMIN_COOKIE)?.value)
     if (!hasAdmin) return NextResponse.redirect(redirectTarget(req, `/admin/login?next=${encodeURIComponent(pathname + search)}`))
@@ -48,5 +68,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/account/:path*", "/products/:path*", "/login", "/register", "/forgot-password", "/reset-password", "/api/auth/:path*"],
+  matcher: ["/admin/:path*", "/account/:path*", "/products/:path*", "/campaigns/:path*", "/login", "/register", "/forgot-password", "/reset-password", "/api/auth/:path*"],
 }

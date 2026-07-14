@@ -3,6 +3,9 @@ import Link from "next/link"
 import { Reveal } from "@podium/ui/motion"
 import { Eyebrow, Placeholder } from "@podium/ui/primitives"
 import { prisma } from "@/lib/db"
+import { JsonLd } from "@/components/seo/json-ld"
+import { articleJsonLd, breadcrumbJsonLd } from "@/lib/seo-jsonld"
+import { absoluteImage, absoluteUrl, trimDescription } from "@/lib/seo"
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -10,14 +13,33 @@ export async function generateMetadata({ params }: Props) {
   const { slug } = await params
   try {
     const post = await prisma.blogPost.findUnique({ where: { slug } })
-    if (post) return { title: `${post.title} — SYRA Journal` }
+    if (post) {
+      const description = trimDescription(post.excerpt || post.content || "SYRA jewellery journal story.")
+      const title = `${post.title} | SYRA Journal`
+      const image = absoluteImage(post.coverImage || "/hero/syra_hero_1.png")
+      const canonical = absoluteUrl(`/journal/${slug}`)
+      return {
+        title,
+        description,
+        alternates: { canonical },
+        openGraph: {
+          title,
+          description,
+          url: canonical,
+          type: "article" as const,
+          siteName: "SYRA",
+          images: [{ url: image, width: 1200, height: 630, alt: post.title }],
+        },
+        twitter: { card: "summary_large_image" as const, title, description, images: [image] },
+      }
+    }
   } catch {}
   return { title: "Journal — SYRA" }
 }
 
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params
-  let post: { title: string; content: string; coverImage: string | null; author: string; publishedAt: Date | null; tags: string } | null = null
+  let post: { title: string; slug: string; excerpt: string | null; content: string; coverImage: string | null; author: string; publishedAt: Date | null; updatedAt: Date; tags: string } | null = null
   try {
     post = await prisma.blogPost.findUnique({ where: { slug } })
   } catch {}
@@ -25,6 +47,16 @@ export default async function BlogPostPage({ params }: Props) {
 
   return (
     <article className="px-4 py-20 md:px-12 md:py-32 max-w-3xl mx-auto">
+      <JsonLd
+        data={[
+          breadcrumbJsonLd([
+            { name: "Home", url: "/" },
+            { name: "Journal", url: "/journal" },
+            { name: post.title, url: `/journal/${post.slug}` },
+          ]),
+          articleJsonLd(post),
+        ]}
+      />
       <Reveal>
         <Link href="/journal" className="font-mono text-[11px] uppercase tracking-widest text-muted hover:text-accent mb-6 inline-block">
           ← Back to Journal

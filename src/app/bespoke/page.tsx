@@ -3,8 +3,14 @@ import { Reveal, Sparkles, Magnetic, Marquee } from "@podium/ui/motion"
 import { Eyebrow, Button } from "@podium/ui/primitives"
 import { PageBlocks } from "@podium/ui/chrome"
 import { getPageContent } from "@/lib/page-content"
+import { buildPageMetadata } from "@/lib/seo"
 
-export const metadata = { title: "Bespoke — SYRA" }
+export const metadata = buildPageMetadata({
+  title: "Bespoke Jewellery",
+  description: "Book a SYRA bespoke jewellery brief for engagement rings, bridal sets and one-of-one pieces designed from sketch to setting.",
+  path: "/bespoke",
+  image: "/hero/syra_hero_2.png",
+})
 
 const STAGES = [
   { num: "01", title: "Brief", copy: "We meet at the atelier in Marampally — sketches, reference pieces, conversation. 1 hour, free of cost." },

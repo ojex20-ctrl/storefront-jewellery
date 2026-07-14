@@ -1,6 +1,13 @@
-"use client"
 import { Reveal } from "@podium/ui/motion"
 import { Eyebrow } from "@podium/ui/primitives"
+import { buildPageMetadata } from "@/lib/seo"
+
+export const metadata = buildPageMetadata({
+  title: "Jewellery Size Guide",
+  description: "Find ring, bracelet and necklace sizing for SYRA jewellery, including measurement tips and size tables.",
+  path: "/size-guide",
+  image: "/hero/syra_banner_rings.png",
+})
 
 const RING_SIZES = [
   { size: "5", diameter: "15.7mm", circumference: "49.3mm" },

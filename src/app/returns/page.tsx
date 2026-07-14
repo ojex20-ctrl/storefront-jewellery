@@ -1,6 +1,13 @@
-"use client"
 import { Reveal } from "@podium/ui/motion"
 import { Eyebrow } from "@podium/ui/primitives"
+import { buildPageMetadata } from "@/lib/seo"
+
+export const metadata = buildPageMetadata({
+  title: "Returns and Refunds",
+  description: "Read the SYRA returns and refunds policy for unworn jewellery, exchanges, exclusions and support instructions.",
+  path: "/returns",
+  image: "/hero/syra_hero_3.png",
+})
 
 export default function ReturnsPage() {
   return (

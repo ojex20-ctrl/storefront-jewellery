@@ -1,6 +1,13 @@
-"use client"
 import { Reveal } from "@podium/ui/motion"
 import { Eyebrow } from "@podium/ui/primitives"
+import { buildPageMetadata } from "@/lib/seo"
+
+export const metadata = buildPageMetadata({
+  title: "Privacy Policy",
+  description: "Review how SYRA handles customer information, order data, payment security and privacy for online jewellery purchases.",
+  path: "/privacy",
+  image: "/hero/syra_hero_1.png",
+})
 
 export default function PrivacyPage() {
   return (

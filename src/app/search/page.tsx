@@ -1,8 +1,14 @@
 import { Suspense } from "react"
 import { fetchProducts } from "@/lib/medusa-products"
 import { SearchClient } from "./search-client"
+import { buildPageMetadata } from "@/lib/seo"
 
-export const metadata = { title: "Search — SYRA" }
+export const metadata = buildPageMetadata({
+  title: "Search SYRA Jewellery",
+  description: "Search SYRA anti-tarnish rings, earrings, necklaces and bracelets.",
+  path: "/search",
+  noIndex: true,
+})
 
 export default async function SearchPage({
   searchParams,

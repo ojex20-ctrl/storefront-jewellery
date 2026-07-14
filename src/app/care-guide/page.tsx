@@ -1,4 +1,12 @@
 import { Reveal } from "@podium/ui/motion"
+import { buildPageMetadata } from "@/lib/seo"
+
+export const metadata = buildPageMetadata({
+  title: "Jewellery Care Guide",
+  description: "Learn how to care for SYRA anti-tarnish jewellery, including PVD coating, cleaning, storage and daily wear tips.",
+  path: "/care-guide",
+  image: "/jewellery/gen-gold-necklace.png",
+})
 
 export default function CareGuidePage() {
   return (

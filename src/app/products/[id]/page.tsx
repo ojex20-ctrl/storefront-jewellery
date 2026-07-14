@@ -5,7 +5,8 @@ import { Reviews } from "@/components/product/reviews"
 import { fetchProduct, fetchProducts } from "@/lib/medusa-products"
 import { JsonLd } from "@/components/seo/json-ld"
 import { getBrandConfig } from "@/lib/brand-config"
-import { productFaqJsonLd, productJsonLd } from "@/lib/seo-jsonld"
+import { breadcrumbJsonLd, productFaqJsonLd, productJsonLd } from "@/lib/seo-jsonld"
+import { absoluteImage, absoluteUrl, trimDescription } from "@/lib/seo"
 
 type Params = Promise<{ id: string }>
 
@@ -13,16 +14,29 @@ export async function generateMetadata({ params }: { params: Params }) {
   const { id } = await params
   const p = await fetchProduct(id)
   if (!p) notFound()
-  const description = p.seoDescription || p.desc || p.caption || "Premium anti-tarnish jewellery by SYRA."
+  const description = trimDescription(p.seoDescription || p.desc || p.caption || "Premium anti-tarnish jewellery by SYRA.")
+  const title = p.seoTitle || `${p.name} | Anti-Tarnish ${p.kind}`
+  const image = absoluteImage(p.image)
+  const canonical = absoluteUrl(`/products/${id}`)
+
   return {
-    title: p.seoTitle || `${p.name} - SYRA`,
+    title,
     description,
-    alternates: { canonical: `/products/${id}` },
+    alternates: { canonical },
     openGraph: {
-      title: p.name,
+      title,
       description,
-      images: p.image ? [p.image] : undefined,
+      url: canonical,
+      siteName: "SYRA",
+      images: [{ url: image, width: 1200, height: 630, alt: p.name }],
       type: "website" as const,
+      locale: "en_IN",
+    },
+    twitter: {
+      card: "summary_large_image" as const,
+      title,
+      description,
+      images: [image],
     },
   }
 }
@@ -46,7 +60,18 @@ export default async function ProductPage({ params }: { params: Params }) {
     .slice(0, 8)
   return (
     <Suspense>
-      <JsonLd data={[productJsonLd(product), productFaqJsonLd()]} />
+      <JsonLd
+        data={[
+          breadcrumbJsonLd([
+            { name: "Home", url: "/" },
+            { name: "Collection", url: "/collection" },
+            { name: product.kind, url: `/collection?kind=${encodeURIComponent(product.kind)}` },
+            { name: product.name, url: `/products/${product.id}` },
+          ]),
+          productJsonLd(product),
+          productFaqJsonLd(),
+        ]}
+      />
       <ProductDetailClient product={product} related={related} freeShippingThreshold={brand.free_shipping_threshold} />
       <Reviews productId={product.id} />
     </Suspense>

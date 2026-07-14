@@ -1,6 +1,7 @@
 import { ConfirmationClient } from "./confirmation-client"
+import { privatePageMetadata } from "@/lib/seo"
 
-export const metadata = { title: "Order confirmed" }
+export const metadata = privatePageMetadata("Order confirmed")
 
 type Params = Promise<{ orderId: string }>
 

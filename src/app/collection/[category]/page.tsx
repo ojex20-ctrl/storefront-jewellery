@@ -3,6 +3,9 @@ import Link from "next/link"
 import { CollectionClient } from "../collection-client"
 import { fetchProducts } from "@/lib/medusa-products"
 import type { Product } from "@/lib/products"
+import { JsonLd } from "@/components/seo/json-ld"
+import { breadcrumbJsonLd, collectionJsonLd } from "@/lib/seo-jsonld"
+import { buildPageMetadata } from "@/lib/seo"
 
 type Params = Promise<{ category: string }>
 
@@ -52,12 +55,11 @@ export async function generateMetadata({ params }: { params: Params }) {
   const { category } = await params
   const def = CATEGORIES[category]
   if (!def) return { title: "Collection" }
-  return {
-    title: `${def.title} — SYRA`,
+  return buildPageMetadata({
+    title: `${def.title} | SYRA Collection`,
     description: def.tagline,
-    alternates: { canonical: `/collection/${category}` },
-    openGraph: { title: `${def.title} — SYRA`, description: def.tagline, type: "website" as const },
-  }
+    path: `/collection/${category}`,
+  })
 }
 
 export default async function CategoryPage({ params }: { params: Params }) {
@@ -70,6 +72,16 @@ export default async function CategoryPage({ params }: { params: Params }) {
 
   return (
     <div>
+      <JsonLd
+        data={[
+          breadcrumbJsonLd([
+            { name: "Home", url: "/" },
+            { name: "Collection", url: "/collection" },
+            { name: def.title, url: `/collection/${category}` },
+          ]),
+          collectionJsonLd(products, { name: `${def.title} | SYRA Collection`, url: `/collection/${category}` }),
+        ]}
+      />
       {/* Category hero */}
       <section className="relative overflow-hidden border-b border-line px-4 py-20 text-center md:px-8 md:py-28">
         <div

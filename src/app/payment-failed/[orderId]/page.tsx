@@ -3,9 +3,10 @@ import { notFound } from "next/navigation"
 import { Button, Eyebrow } from "@podium/ui/primitives"
 import { priceFmt } from "@podium/ui/lib"
 import { prisma } from "@/lib/db"
+import { privatePageMetadata } from "@/lib/seo"
 
 export const dynamic = "force-dynamic"
-export const metadata = { title: "Payment not completed" }
+export const metadata = privatePageMetadata("Payment not completed")
 
 type Params = Promise<{ orderId: string }>
 type SearchParams = Promise<{ reason?: string | string[] }>

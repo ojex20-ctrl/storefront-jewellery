@@ -2,8 +2,14 @@ import Link from "next/link"
 import { Reveal } from "@podium/ui/motion"
 import { Eyebrow, Placeholder } from "@podium/ui/primitives"
 import { prisma } from "@/lib/db"
+import { buildPageMetadata } from "@/lib/seo"
 
-export const metadata = { title: "Journal — SYRA" }
+export const metadata = buildPageMetadata({
+  title: "SYRA Journal",
+  description: "Read SYRA jewellery styling tips, anti-tarnish care guides, collection stories and behind-the-scenes notes.",
+  path: "/journal",
+  image: "/hero/syra_hero_1.png",
+})
 
 export default async function JournalPage() {
   let posts: { id: string; title: string; slug: string; excerpt: string | null; coverImage: string | null; author: string; publishedAt: Date | null; tags: string }[] = []

@@ -1,7 +1,14 @@
-"use client"
 import Link from "next/link"
 import { Reveal, Sparkles, Magnetic, Marquee } from "@podium/ui/motion"
 import { Eyebrow } from "@podium/ui/primitives"
+import { buildPageMetadata } from "@/lib/seo"
+
+export const metadata = buildPageMetadata({
+  title: "SYRA Atelier",
+  description: "Discover the SYRA atelier process for hand-sketched, anti-tarnish jewellery and bespoke commissions.",
+  path: "/atelier",
+  image: "/hero/syra_hero_2.png",
+})
 
 export default function AtelierPage() {
   return (

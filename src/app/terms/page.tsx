@@ -1,6 +1,13 @@
-"use client"
 import { Reveal } from "@podium/ui/motion"
 import { Eyebrow } from "@podium/ui/primitives"
+import { buildPageMetadata } from "@/lib/seo"
+
+export const metadata = buildPageMetadata({
+  title: "Terms and Conditions",
+  description: "Read SYRA terms and conditions covering website use, product information, purchases and governing law.",
+  path: "/terms",
+  image: "/hero/syra_hero_1.png",
+})
 
 export default function TermsPage() {
   return (

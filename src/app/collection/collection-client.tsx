@@ -14,8 +14,6 @@ import type { Kind, Metal, Stone, Product } from "@/lib/products"
 import { STONE_HEX } from "@/lib/products"
 import { ProductCard } from "@/components/product/product-card"
 import { OptimizedImage } from "@/components/media/optimized-image"
-import { JsonLd } from "@/components/seo/json-ld"
-import { collectionJsonLd } from "@/lib/seo-jsonld"
 
 const KINDS: Kind[] = ["Ring", "Necklace", "Earrings", "Bracelet", "Nose ring"]
 const METALS: Metal[] = ["18k Gold", "Sterling", "Rose Gold", "White Gold"]
@@ -130,8 +128,6 @@ export function CollectionClient({ products, showHero = true }: CollectionClient
 
   return (
     <div className="overflow-x-hidden bg-bg text-ink">
-      <JsonLd data={collectionJsonLd(products)} />
-
       {showHero && (
         <section className="relative overflow-hidden border-b border-line px-4 py-16 md:px-12 md:py-24">
           <div

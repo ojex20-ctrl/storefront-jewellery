@@ -1,10 +1,8 @@
 import { CartClient } from "./cart-client"
 import { getBrandConfig } from "@/lib/brand-config"
+import { privatePageMetadata } from "@/lib/seo"
 
-export const metadata = {
-  title: "Your Bag",
-  description: "Review the pieces in your bag before checkout.",
-}
+export const metadata = privatePageMetadata("Your Bag")
 
 export default async function CartPage() {
   const brand = await getBrandConfig()

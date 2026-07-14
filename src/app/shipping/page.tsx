@@ -1,7 +1,14 @@
-"use client"
 import { Reveal } from "@podium/ui/motion"
 import { Eyebrow } from "@podium/ui/primitives"
 import { Truck, Clock, MapPin, Package } from "lucide-react"
+import { buildPageMetadata } from "@/lib/seo"
+
+export const metadata = buildPageMetadata({
+  title: "Shipping and Delivery",
+  description: "Find SYRA shipping timelines, delivery coverage, packaging details and order tracking support for jewellery orders in India.",
+  path: "/shipping",
+  image: "/hero/syra_banner_bracelets.png",
+})
 
 export default function ShippingPage() {
   return (

@@ -1,8 +1,15 @@
-"use client"
 import Link from "next/link"
 import { Reveal } from "@podium/ui/motion"
 import { Eyebrow, Button } from "@podium/ui/primitives"
 import { Shield, Droplets, Heart, Clock } from "lucide-react"
+import { buildPageMetadata } from "@/lib/seo"
+
+export const metadata = buildPageMetadata({
+  title: "2-Year Anti-Tarnish Warranty",
+  description: "SYRA jewellery includes a 2-year anti-tarnish guarantee for eligible coating, clasp and material defects.",
+  path: "/warranty",
+  image: "/hero/syra_banner_rings.png",
+})
 
 const BADGES = [
   { icon: Shield, label: "Anti-Tarnish", desc: "PVD coating guaranteed for 2 years" },

@@ -1,6 +1,6 @@
 "use client"
 import Link from "next/link"
-import { FileText, Package, Upload } from "lucide-react"
+import { FileText, Megaphone, Package, Upload } from "lucide-react"
 import { Sidebar } from "@/components/admin/sidebar"
 
 type Props = {
@@ -34,6 +34,9 @@ export function AdminDashboard({ user, stats, recentOrders }: Props) {
           </Link>
           <Link href="/admin/content" className="inline-flex items-center gap-2 border border-[#1A1A1C]/20 px-5 py-2.5 text-xs uppercase tracking-widest hover:border-[#c9a36b] transition-colors">
             <FileText size={14} /> Edit Content
+          </Link>
+          <Link href="/admin/campaigns" className="inline-flex items-center gap-2 border border-[#1A1A1C]/20 px-5 py-2.5 text-xs uppercase tracking-widest hover:border-[#c9a36b] transition-colors">
+            <Megaphone size={14} /> Campaigns
           </Link>
           <Link href="/" target="_blank" className="inline-flex items-center gap-2 border border-[#1A1A1C]/20 px-5 py-2.5 text-xs uppercase tracking-widest hover:border-[#c9a36b] transition-colors">
             View Store →

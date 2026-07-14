@@ -1,6 +1,13 @@
-"use client"
 import { Reveal } from "@podium/ui/motion"
 import { Eyebrow } from "@podium/ui/primitives"
+import { buildPageMetadata } from "@/lib/seo"
+
+export const metadata = buildPageMetadata({
+  title: "About SYRA Anti-Tarnish Jewellery",
+  description: "Learn about SYRA anti-tarnish jewellery, waterproof PVD finishes, hypoallergenic materials and everyday luxury design.",
+  path: "/about",
+  image: "/hero/syra_hero_2.png",
+})
 
 export default function AboutPage() {
   return (
