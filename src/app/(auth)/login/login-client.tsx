@@ -8,7 +8,7 @@ import { useAuthStore } from "@/stores/auth-store"
 import { GoogleButton, OrDivider } from "@/components/auth/google-button"
 import { isValidEmail } from "@/lib/validation"
 
-export function LoginClient({ googleEnabled = false }: { googleEnabled?: boolean }) {
+export function LoginClient({ googleEnabled = false, embedded = false, showRegisterLink = true }: { googleEnabled?: boolean; embedded?: boolean; showRegisterLink?: boolean }) {
   const router = useRouter()
   const setSession = useAuthStore((s) => s.setSession)
   const [email, setEmail] = useState("")
@@ -57,11 +57,13 @@ export function LoginClient({ googleEnabled = false }: { googleEnabled?: boolean
   }
 
   return (
-    <div className="mx-auto max-w-md px-4 py-24 md:py-32">
-      <h1 className="font-display text-3xl mb-2">Sign In</h1>
-      <p className="text-sm text-muted mb-8">
-        New here? <Link href="/account/register" className="text-accent">Create account</Link>
-      </p>
+    <div className={embedded ? "w-full" : "mx-auto max-w-md px-4 py-24 md:py-32"}>
+      <h1 className={`font-display text-3xl ${showRegisterLink ? "mb-2" : "mb-6"}`}>Sign In</h1>
+      {showRegisterLink && (
+        <p className="text-sm text-muted mb-8">
+          New here? <Link href="/account/register" className="text-accent">Create account</Link>
+        </p>
+      )}
       {googleEnabled && (
         <>
           <GoogleButton label="Sign in with Google" />

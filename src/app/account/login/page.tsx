@@ -1,8 +1,8 @@
-import { LoginClient } from "@/app/(auth)/login/login-client"
+import { AuthAccessClient } from "@/app/(auth)/auth-access-client"
 import { isGoogleConfigured } from "@/lib/google-auth"
 
-export const metadata = { title: "Account login" }
+export const metadata = { title: "Account access" }
 
 export default function AccountLoginPage() {
-  return <LoginClient googleEnabled={isGoogleConfigured()} />
+  return <AuthAccessClient googleEnabled={isGoogleConfigured()} />
 }

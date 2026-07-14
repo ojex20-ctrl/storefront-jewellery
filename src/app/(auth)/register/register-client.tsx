@@ -8,7 +8,7 @@ import { useAuthStore } from "@/stores/auth-store"
 import { GoogleButton, OrDivider } from "@/components/auth/google-button"
 import { isStrongPassword, isValidEmail, isValidName, isValidOtp, isValidPhone } from "@/lib/validation"
 
-export function RegisterClient({ googleEnabled = false }: { googleEnabled?: boolean }) {
+export function RegisterClient({ googleEnabled = false, embedded = false, showLoginLink = true }: { googleEnabled?: boolean; embedded?: boolean; showLoginLink?: boolean }) {
   const router = useRouter()
   const setSession = useAuthStore((s) => s.setSession)
   const [step, setStep] = useState<"form" | "otp">("form")
@@ -97,7 +97,7 @@ export function RegisterClient({ googleEnabled = false }: { googleEnabled?: bool
 
   if (step === "otp") {
     return (
-      <div className="mx-auto max-w-md px-4 py-24 md:py-32">
+      <div className={embedded ? "w-full" : "mx-auto max-w-md px-4 py-24 md:py-32"}>
         <h1 className="font-display text-3xl mb-4">Verify Email</h1>
         <p className="text-sm text-muted mb-8">Enter the 6-digit code sent to <strong>{email}</strong></p>
         <form onSubmit={handleVerify} className="space-y-5">
@@ -128,11 +128,13 @@ export function RegisterClient({ googleEnabled = false }: { googleEnabled?: bool
   }
 
   return (
-    <div className="mx-auto max-w-md px-4 py-24 md:py-32">
-      <h1 className="font-display text-3xl mb-2">Create Account</h1>
-      <p className="text-sm text-muted mb-8">
-        Already have an account? <Link href="/account/login" className="text-accent">Sign in</Link>
-      </p>
+    <div className={embedded ? "w-full" : "mx-auto max-w-md px-4 py-24 md:py-32"}>
+      <h1 className={`font-display text-3xl ${showLoginLink ? "mb-2" : "mb-6"}`}>Create Account</h1>
+      {showLoginLink && (
+        <p className="text-sm text-muted mb-8">
+          Already have an account? <Link href="/account/login" className="text-accent">Sign in</Link>
+        </p>
+      )}
       {googleEnabled && (
         <>
           <GoogleButton label="Sign up with Google" />

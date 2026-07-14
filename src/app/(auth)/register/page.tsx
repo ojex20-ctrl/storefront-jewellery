@@ -1,8 +1,8 @@
-import { RegisterClient } from "./register-client"
+import { AuthAccessClient } from "../auth-access-client"
 import { isGoogleConfigured } from "@/lib/google-auth"
 
-export const metadata = { title: "Create account" }
+export const metadata = { title: "Sign in or create account" }
 
 export default function RegisterPage() {
-  return <RegisterClient googleEnabled={isGoogleConfigured()} />
+  return <AuthAccessClient googleEnabled={isGoogleConfigured()} />
 }
