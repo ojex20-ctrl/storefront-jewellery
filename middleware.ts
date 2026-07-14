@@ -16,9 +16,6 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
-  if (pathname.startsWith("/api/auth")) {
-    return NextResponse.json({ error: "Customer login is disabled" }, { status: 410 })
-  }
 
   if (req.method === "GET" && pathname.startsWith("/products/")) {
     const [, section, rawSlug, extra] = pathname.split("/")
@@ -46,16 +43,6 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
-  const customerAuthRoutes = [
-    "/account",
-    "/login",
-    "/register",
-    "/forgot-password",
-    "/reset-password",
-  ]
-  if (customerAuthRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`))) {
-    return NextResponse.redirect(redirectTarget(req, "/order-track"))
-  }
 
   return NextResponse.next()
 }
