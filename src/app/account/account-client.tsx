@@ -11,13 +11,7 @@ import { useAuthStore } from "@/stores/auth-store"
 import { useRecentlyViewedStore } from "@/stores/recently-viewed-store"
 import { refreshCustomer } from "@/lib/auth"
 import { fetchOrders, type StoreOrder } from "@/lib/orders"
-
-const MENU = [
-  { key: "orders", label: "Orders", href: "/account/orders" },
-  { key: "profile", label: "Profile", href: "/account/profile" },
-  { key: "addresses", label: "Addresses", href: "/account/addresses" },
-  { key: "wishlist", label: "Wishlist", href: "/account/wishlist" },
-] as const
+import { ACCOUNT_NAV_LINKS } from "@/lib/navigation"
 
 type Loyalty = {
   rewards: { points: number; tier: string }
@@ -101,7 +95,7 @@ export function AccountClient() {
       <div className="grid grid-cols-1 gap-12 md:grid-cols-[1fr_2fr] md:gap-16">
         <aside>
           <Eyebrow className="mb-3.5 block">Menu</Eyebrow>
-          {MENU.map((m) => (
+          {ACCOUNT_NAV_LINKS.map((m) => (
             <Link key={m.key} href={m.href} className="group flex w-full items-center justify-between border-b border-line py-3.5 text-left text-sm text-ink transition-colors hover:text-accent">
               <span>{m.label}</span>
               <span>{"->"}</span>

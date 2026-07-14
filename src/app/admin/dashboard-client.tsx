@@ -1,7 +1,7 @@
 "use client"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { LayoutDashboard, Package, ShoppingBag, FileText, Image, Settings, LogOut, Upload } from "lucide-react"
+import { FileText, Package, Upload } from "lucide-react"
+import { Sidebar } from "@/components/admin/sidebar"
 
 type Props = {
   user: { name: string; email: string }
@@ -10,16 +10,9 @@ type Props = {
 }
 
 export function AdminDashboard({ user, stats, recentOrders }: Props) {
-  const router = useRouter()
-
-  const handleLogout = async () => {
-    await fetch("/api/admin/auth/logout", { method: "POST" })
-    router.push("/admin/login")
-  }
-
   return (
     <div className="admin-layout flex min-h-screen bg-[#F5F3EF] text-[#1A1A1C]">
-      <Sidebar onLogout={handleLogout} userName={user.name} />
+      <Sidebar userName={user.name} />
       <main className="admin-content flex-1 p-8 md:p-12 overflow-y-auto">
         <h1 className="font-display text-4xl tracking-tight mb-8">Dashboard</h1>
 
@@ -85,44 +78,6 @@ export function AdminDashboard({ user, stats, recentOrders }: Props) {
         )}
       </main>
     </div>
-  )
-}
-
-function Sidebar({ onLogout, userName }: { onLogout: () => void; userName: string }) {
-  const links = [
-    { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
-    { href: "/admin/products", icon: Package, label: "Products" },
-    { href: "/admin/orders", icon: ShoppingBag, label: "Orders" },
-    { href: "/admin/content", icon: FileText, label: "Content" },
-    { href: "/admin/banners", icon: Image, label: "Banners" },
-    { href: "/admin/settings", icon: Settings, label: "Settings" },
-  ]
-
-  return (
-    <aside className="admin-sidebar flex w-full flex-col bg-[#0B0B0C] text-white p-4 md:w-56 md:p-6">
-      <div className="font-display text-xl tracking-tight mb-4 md:mb-10">SYRA</div>
-      <nav className="flex-1 grid grid-cols-2 gap-1 md:block md:space-y-1">
-        {links.map((l) => (
-          <Link
-            key={l.href}
-            href={l.href}
-            className="flex items-center gap-3 px-3 py-2.5 text-xs uppercase tracking-widest text-white/60 hover:text-white hover:bg-white/5 rounded transition-colors"
-          >
-            <l.icon size={16} />
-            {l.label}
-          </Link>
-        ))}
-      </nav>
-      <div className="border-t border-white/10 pt-4 mt-4">
-        <p className="text-[10px] uppercase tracking-widest text-white/40 mb-2">{userName}</p>
-        <button
-          onClick={onLogout}
-          className="flex items-center gap-2 text-xs uppercase tracking-widest text-white/40 hover:text-red-400 transition-colors"
-        >
-          <LogOut size={14} /> Sign out
-        </button>
-      </div>
-    </aside>
   )
 }
 

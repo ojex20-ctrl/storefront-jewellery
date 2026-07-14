@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
@@ -9,8 +9,10 @@ import { Button, Eyebrow, Placeholder } from "@podium/ui/primitives"
 import { priceFmt } from "@podium/ui/lib"
 import { useCartStore } from "@/stores/cart-store"
 import { useOrderStore } from "@/stores/order-store"
+import { useAuthStore } from "@/stores/auth-store"
 import type { BrandConfig } from "@/lib/brand-config"
 import { openRazorpayCheckout } from "@/lib/razorpay"
+import { addAddress, listAddresses, type Address } from "@/lib/account"
 
 /** Rental cart lines store a flacon hex; buy lines store a stone hex. Not shown as a colour name. */
 const variantLabel = (_hex: string) => "Finish"
@@ -29,6 +31,45 @@ const blank = {
 }
 
 type AppliedCoupon = { code: string; discount: number; message: string }
+type CheckoutDetails = typeof blank
+type DetailKey = keyof CheckoutDetails
+
+const ADDRESS_DETAIL_KEYS: DetailKey[] = ["firstName", "lastName", "address", "city", "postcode", "country", "phone"]
+
+function normalizeCheckoutCountry(value?: string | null) {
+  const country = value?.trim()
+  if (!country) return "India"
+  return country.toLowerCase() === "in" ? "India" : country
+}
+
+function addressToDetails(address: Address, current: CheckoutDetails): CheckoutDetails {
+  return {
+    ...current,
+    firstName: address.first_name || current.firstName,
+    lastName: address.last_name || current.lastName,
+    address: address.address_1 || current.address,
+    city: address.city || current.city,
+    postcode: address.postal_code || current.postcode,
+    country: normalizeCheckoutCountry(address.country_code),
+    phone: address.phone || current.phone,
+  }
+}
+
+function detailsToAddress(details: CheckoutDetails): Address {
+  return {
+    first_name: details.firstName,
+    last_name: details.lastName,
+    address_1: details.address,
+    city: details.city,
+    postal_code: details.postcode,
+    country_code: details.country || "India",
+    phone: details.phone,
+  }
+}
+
+function addressTitle(address: Address) {
+  return `${address.first_name ?? ""} ${address.last_name ?? ""}`.trim() || "Saved address"
+}
 
 export function CheckoutClient({ brand }: { brand: BrandConfig }) {
   // All money is in paise. Rates are admin-configurable (Store Settings).
@@ -41,12 +82,18 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
   const items = useCartStore((s) => s.items)
   const clearCart = useCartStore((s) => s.clear)
   const addOrder = useOrderStore((s) => s.add)
+  const token = useAuthStore((s) => s.token)
+  const customer = useAuthStore((s) => s.customer)
   const router = useRouter()
 
   const [step, setStep] = useState(1)
-  const [details, setDetails] = useState(blank)
+  const [details, setDetails] = useState<CheckoutDetails>(blank)
   const [shipping, setShipping] = useState<Shipping>("standard")
   const [placing, setPlacing] = useState(false)
+  const [savedAddresses, setSavedAddresses] = useState<Address[]>([])
+  const [addressesLoading, setAddressesLoading] = useState(false)
+  const [selectedAddressId, setSelectedAddressId] = useState("new")
+  const [saveAddress, setSaveAddress] = useState(false)
 
   const [couponInput, setCouponInput] = useState("")
   const [coupon, setCoupon] = useState<AppliedCoupon | null>(null)
@@ -57,6 +104,58 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
     shipping === "pickup" ? 0 : shipping === "express" ? EXPRESS_RATE : subtotal >= FREE_SHIPPING_OVER ? 0 : STANDARD_RATE
   const discount = Math.min(coupon?.discount ?? 0, subtotal)
   const total = Math.max(0, subtotal + ship - discount)
+
+  const fetchSavedAddresses = useCallback(async () => {
+    if (!customer) {
+      setSavedAddresses([])
+      setSelectedAddressId("new")
+      setSaveAddress(false)
+      return
+    }
+    setAddressesLoading(true)
+    try {
+      setSavedAddresses(await listAddresses(token || "customer_cookie"))
+    } catch {
+      setSavedAddresses([])
+    } finally {
+      setAddressesLoading(false)
+    }
+  }, [customer, token])
+
+  useEffect(() => {
+    if (!customer) return
+    setDetails((current) => ({
+      ...current,
+      email: current.email || customer.email || "",
+      firstName: current.firstName || customer.first_name || "",
+      lastName: current.lastName || customer.last_name || "",
+      phone: current.phone || customer.phone || "",
+    }))
+  }, [customer])
+
+  useEffect(() => {
+    void fetchSavedAddresses()
+  }, [fetchSavedAddresses])
+
+  const updateDetails = (key: DetailKey, value: string) => {
+    setDetails((current) => ({ ...current, [key]: value }))
+    if (ADDRESS_DETAIL_KEYS.includes(key)) {
+      setSelectedAddressId("new")
+      if (customer) setSaveAddress(true)
+    }
+  }
+
+  const selectSavedAddress = (address: Address) => {
+    setDetails((current) => addressToDetails(address, current))
+    setSelectedAddressId(address.id ?? "saved")
+    setSaveAddress(false)
+  }
+
+  const startNewAddress = () => {
+    setSelectedAddressId("new")
+    setSaveAddress(Boolean(customer))
+    setDetails((current) => ({ ...current, address: "", city: "", postcode: "", country: current.country || "India" }))
+  }
 
   if (items.length === 0) return <EmptyState />
 
@@ -126,6 +225,12 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
         orderNumber: data.order.orderNumber,
         customer: details,
       })
+
+      if (customer && saveAddress && selectedAddressId === "new") {
+        await addAddress(token || "customer_cookie", detailsToAddress(details)).catch(() => {
+          toast.error("Order placed, but the address could not be saved.")
+        })
+      }
 
       addOrder({ id: orderId, details, items, total, shipping, payment: "razorpay", createdAt: Date.now() })
       clearCart()
@@ -198,18 +303,84 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
           >
             {step === 1 && (
               <div className="flex flex-col gap-5">
-                <Field label="Email" value={details.email} onChange={(v) => setDetails({ ...details, email: v })} placeholder="email@domain.com" />
+                {customer && (
+                  <div className="border border-line bg-bg-2 p-4">
+                    <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <Eyebrow className="mb-1 block">Saved addresses</Eyebrow>
+                        <p className="text-[13px] text-muted">Fetch an address from your profile or add a new one for this order.</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={fetchSavedAddresses}
+                          className="border border-line px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-ink hover:border-accent hover:text-accent"
+                        >
+                          {addressesLoading ? "Fetching" : "Fetch"}
+                        </button>
+                        <Link href="/account/addresses" className="border border-line px-3 py-2 font-mono text-[10px] uppercase tracking-widest text-ink hover:border-accent hover:text-accent">
+                          Manage
+                        </Link>
+                      </div>
+                    </div>
+
+                    {savedAddresses.length > 0 ? (
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                        {savedAddresses.map((address, index) => {
+                          const active = selectedAddressId === (address.id ?? `saved-${index}`)
+                          return (
+                            <button
+                              key={address.id ?? index}
+                              type="button"
+                              onClick={() => selectSavedAddress(address)}
+                              className={`border p-4 text-left transition-colors ${active ? "border-accent bg-accent-soft" : "border-line bg-bg"}`}
+                            >
+                              <p className="font-display text-lg">{addressTitle(address)}</p>
+                              <p className="mt-1 text-[13px] text-muted">{address.address_1}</p>
+                              <p className="text-[13px] text-muted">
+                                {address.city}{address.postal_code ? `, ${address.postal_code}` : ""}
+                              </p>
+                              {address.phone && <p className="mt-2 font-mono text-[10px] uppercase tracking-widest text-muted">{address.phone}</p>}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      <p className="border border-dashed border-line px-4 py-5 text-sm text-muted">
+                        {addressesLoading ? "Fetching saved addresses..." : "No saved addresses found. Add one below or manage addresses in your account."}
+                      </p>
+                    )}
+
+                    <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <button
+                        type="button"
+                        onClick={startNewAddress}
+                        className="self-start font-mono text-[11px] uppercase tracking-widest text-accent underline underline-offset-4"
+                      >
+                        + Add new address
+                      </button>
+                      {selectedAddressId === "new" && (
+                        <label className="flex items-center gap-2 text-[13px] text-muted">
+                          <input type="checkbox" checked={saveAddress} onChange={(e) => setSaveAddress(e.target.checked)} className="accent-[var(--accent)]" />
+                          Save this address to my profile
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <Field label="Email" value={details.email} onChange={(v) => updateDetails("email", v)} placeholder="email@domain.com" />
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                  <Field label="First name" value={details.firstName} onChange={(v) => setDetails({ ...details, firstName: v })} />
-                  <Field label="Last name" value={details.lastName} onChange={(v) => setDetails({ ...details, lastName: v })} />
+                  <Field label="First name" value={details.firstName} onChange={(v) => updateDetails("firstName", v)} />
+                  <Field label="Last name" value={details.lastName} onChange={(v) => updateDetails("lastName", v)} />
                 </div>
-                <Field label="Address" value={details.address} onChange={(v) => setDetails({ ...details, address: v })} />
+                <Field label="Address" value={details.address} onChange={(v) => updateDetails("address", v)} />
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-[2fr_1fr_1fr]">
-                  <Field label="City" value={details.city} onChange={(v) => setDetails({ ...details, city: v })} />
-                  <Field label="Pincode" value={details.postcode} onChange={(v) => setDetails({ ...details, postcode: v })} />
-                  <Field label="Country" value={details.country} onChange={(v) => setDetails({ ...details, country: v })} />
+                  <Field label="City" value={details.city} onChange={(v) => updateDetails("city", v)} />
+                  <Field label="Pincode" value={details.postcode} onChange={(v) => updateDetails("postcode", v)} />
+                  <Field label="Country" value={details.country} onChange={(v) => updateDetails("country", v)} />
                 </div>
-                <Field label="Phone (Mobile)" value={details.phone} onChange={(v) => setDetails({ ...details, phone: v })} placeholder="+91 ..." />
+                <Field label="Phone (Mobile)" value={details.phone} onChange={(v) => updateDetails("phone", v)} placeholder="+91 ..." />
               </div>
             )}
 

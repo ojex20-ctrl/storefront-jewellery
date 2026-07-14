@@ -7,6 +7,7 @@ import { useCartStore } from "@/stores/cart-store"
 import { SearchTrigger } from "./search-trigger"
 import { ThemeToggle } from "./theme-toggle"
 import type { BrandConfig } from "@/lib/brand-config"
+import { buildStorefrontNavLinks, STOREFRONT_FOOTER_GROUPS } from "@/lib/navigation"
 
 /**
  * Perfumes chrome — every piece of copy / link / flag comes from `brand`.
@@ -28,48 +29,8 @@ export function SiteChrome({
   const setCartOpen = useCartStore((s) => s.setOpen)
 
   const tagline = brand.tagline ?? "Rentals and Jewels,|worn for the moment."
-  const defaultNavLinks = [
-    { href: "/collection", label: "New In" },
-    { href: "/collection", label: "All Products" },
-    { href: "/collection?kind=Ring", label: "Rings" },
-    { href: "/collection?kind=Earrings", label: "Earrings" },
-    { href: "/collection?kind=Necklace", label: "Necklaces" },
-    { href: "/collection?kind=Bracelet", label: "Bracelets" },
-    { href: "/collection", label: "Signature Collection" },
-  ]
-  const configuredNavLinks = brand.nav_links ?? defaultNavLinks
-  const navLinks = [
-    { href: "/", label: "Home" },
-    ...configuredNavLinks.filter((link) => link.href !== "/"),
-  ]
-  for (const link of [
-    { href: "/order-track", label: "Track Order" },
-  ]) {
-    if (!navLinks.some((item) => item.href === link.href)) navLinks.push(link)
-  }
-  const footerGroups = brand.footer_groups ?? [
-    { title: "Shop", links: [
-      { href: "/collection", label: "All Pieces" },
-      { href: "/collection?kind=Ring", label: "Rings" },
-      { href: "/collection?kind=Necklace", label: "Necklaces" },
-      { href: "/collection?kind=Bracelet", label: "Bracelets" },
-      { href: "/collection?kind=Earrings", label: "Earrings" },
-    ] },
-    { title: "Help", links: [
-      { href: "/shipping", label: "Shipping" },
-      { href: "/returns", label: "Returns" },
-      { href: "/size-guide", label: "Size Guide" },
-      { href: "/warranty", label: "Warranty" },
-      { href: "/care-guide", label: "Care Guide" },
-    ] },
-    { title: "Company", links: [
-      { href: "/about", label: "About Us" },
-      { href: "/contact", label: "Contact" },
-      { href: "/journal", label: "Journal" },
-      { href: "/terms", label: "Terms" },
-      { href: "/privacy", label: "Privacy" },
-    ] },
-  ]
+  const navLinks = buildStorefrontNavLinks(brand.nav_links)
+  const footerGroups = brand.footer_groups ?? STOREFRONT_FOOTER_GROUPS
   const computedFooterGroups = brand.social_links?.instagram
     ? [
         ...footerGroups,
@@ -118,7 +79,7 @@ export function SiteChrome({
         cartBumping={cartBumping}
         onCartClick={() => setCartOpen(true)}
       />
-      <div className="fixed right-[4.75rem] top-4 z-[120] flex items-center gap-1 border border-line bg-bg/92 p-1 text-ink shadow-xl backdrop-blur md:right-[5.25rem]">
+      <div className="fixed bottom-5 left-5 z-[120] flex items-center gap-1 border border-line bg-bg/92 p-1 text-ink shadow-xl backdrop-blur md:left-6">
         {enableSearch && <SearchTrigger />}
         <ThemeToggle />
       </div>
@@ -150,7 +111,7 @@ export function SiteChrome({
       {adminPreview && !pathname.startsWith("/admin") && (
         <a
           href="/admin"
-          className="fixed bottom-5 left-5 z-50 border border-white/10 bg-[#0B0B0C] px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-white shadow-2xl transition-colors hover:bg-accent hover:text-bg"
+          className="fixed bottom-20 left-5 z-50 border border-white/10 bg-[#0B0B0C] px-4 py-3 font-mono text-[10px] uppercase tracking-widest text-white shadow-2xl transition-colors hover:bg-accent hover:text-bg md:left-6"
         >
           Back to Admin
         </a>

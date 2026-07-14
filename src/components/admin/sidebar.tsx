@@ -1,7 +1,8 @@
 "use client"
 import Link from "next/link"
 import { useRouter, usePathname } from "next/navigation"
-import { LayoutDashboard, Package, ShoppingBag, FileText, Image, Settings, LogOut, Images, Tags, Ticket, Users, Inbox } from "lucide-react"
+import { LogOut } from "lucide-react"
+import { ADMIN_NAV_LINKS } from "@/lib/navigation"
 
 export function Sidebar({ userName }: { userName?: string }) {
   const router = useRouter()
@@ -13,19 +14,7 @@ export function Sidebar({ userName }: { userName?: string }) {
     router.refresh()
   }
 
-  const links = [
-    { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
-    { href: "/admin/products", icon: Package, label: "Products" },
-    { href: "/admin/collections", icon: Tags, label: "Collections" },
-    { href: "/admin/orders", icon: ShoppingBag, label: "Orders" },
-    { href: "/admin/customers", icon: Users, label: "Customers" },
-    { href: "/admin/coupons", icon: Ticket, label: "Coupons" },
-    { href: "/admin/inbox", icon: Inbox, label: "Inbox" },
-    { href: "/admin/content", icon: FileText, label: "Content" },
-    { href: "/admin/banners", icon: Image, label: "Banners" },
-    { href: "/admin/media", icon: Images, label: "Gallery" },
-    { href: "/admin/settings", icon: Settings, label: "Settings" },
-  ]
+  const links = ADMIN_NAV_LINKS
 
   return (
     <aside className="admin-sidebar flex w-full flex-col bg-[#0B0B0C] text-white p-4 shrink-0 md:w-56 md:p-6">

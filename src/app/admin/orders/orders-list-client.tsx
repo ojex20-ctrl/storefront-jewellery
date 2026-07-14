@@ -1,5 +1,6 @@
 "use client"
 import Link from "next/link"
+import { Sidebar } from "@/components/admin/sidebar"
 import { useRouter } from "next/navigation"
 import { ShoppingBag } from "lucide-react"
 
@@ -22,16 +23,7 @@ export function OrdersListClient({ orders }: { orders: Order[] }) {
 
   return (
     <div className="flex min-h-screen bg-[#F5F3EF] text-[#1A1A1C]">
-      <aside className="hidden md:flex w-56 flex-col bg-[#0B0B0C] text-white p-6">
-        <Link href="/admin" className="font-display text-xl tracking-tight mb-10">SYRA</Link>
-        <nav className="flex-1 space-y-1">
-          <Link href="/admin" className="block px-3 py-2.5 text-xs uppercase tracking-widest text-white/60">Dashboard</Link>
-          <Link href="/admin/products" className="block px-3 py-2.5 text-xs uppercase tracking-widest text-white/60">Products</Link>
-          <Link href="/admin/orders" className="block px-3 py-2.5 text-xs uppercase tracking-widest text-white bg-white/10 rounded">Orders</Link>
-          <Link href="/admin/content" className="block px-3 py-2.5 text-xs uppercase tracking-widest text-white/60">Content</Link>
-          <Link href="/admin/settings" className="block px-3 py-2.5 text-xs uppercase tracking-widest text-white/60">Settings</Link>
-        </nav>
-      </aside>
+      <Sidebar />
 
       <main className="flex-1 p-8 md:p-12 overflow-y-auto">
         <h1 className="font-display text-4xl tracking-tight mb-8">Orders ({orders.length})</h1>
