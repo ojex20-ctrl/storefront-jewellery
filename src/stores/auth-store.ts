@@ -8,6 +8,8 @@ export type Customer = {
   first_name?: string | null
   last_name?: string | null
   phone?: string | null
+  auth_provider?: "password" | "google" | "external" | null
+  can_change_password?: boolean | null
 }
 
 type State = {

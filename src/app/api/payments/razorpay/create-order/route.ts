@@ -21,6 +21,11 @@ export async function POST(req: Request) {
       receipt: String(order.orderNumber),
       notes: { orderId: order.id, orderNumber: String(order.orderNumber) },
     })
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { razorpayOrderId: razorpayOrder.id, paymentMethod: "razorpay" },
+    })
+
     return NextResponse.json({
       orderId: razorpayOrder.id,
       amount: razorpayOrder.amount,

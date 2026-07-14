@@ -5,8 +5,8 @@ import { Sidebar } from "@/components/admin/sidebar"
 
 type Props = {
   user: { name: string; email: string }
-  stats: { products: number; orders: number }
-  recentOrders: { id: string; orderNumber: number; firstName: string; lastName: string; total: number; status: string; createdAt: Date }[]
+  stats: { products: number; orders: number; paidOrders: number; revenue: number }
+  recentOrders: { id: string; orderNumber: number; firstName: string; lastName: string; total: number; status: string; paymentStatus: string; createdAt: Date }[]
 }
 
 export function AdminDashboard({ user, stats, recentOrders }: Props) {
@@ -17,10 +17,11 @@ export function AdminDashboard({ user, stats, recentOrders }: Props) {
         <h1 className="font-display text-4xl tracking-tight mb-8">Dashboard</h1>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 mb-10">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-4 mb-10">
           <StatCard label="Products" value={stats.products} href="/admin/products" />
           <StatCard label="Orders" value={stats.orders} href="/admin/orders" />
-          <StatCard label="Revenue" value={`₹${(recentOrders.reduce((s, o) => s + o.total, 0) / 100).toLocaleString()}`} />
+          <StatCard label="Paid orders" value={stats.paidOrders} href="/admin/orders" />
+          <StatCard label="Paid revenue" value={`₹${(stats.revenue / 100).toLocaleString("en-IN")}`} />
         </div>
 
         {/* Quick Actions */}
@@ -51,6 +52,7 @@ export function AdminDashboard({ user, stats, recentOrders }: Props) {
                   <th className="px-4 py-3 text-left">Order</th>
                   <th className="px-4 py-3 text-left">Customer</th>
                   <th className="px-4 py-3 text-left">Total</th>
+                  <th className="px-4 py-3 text-left">Payment</th>
                   <th className="px-4 py-3 text-left">Status</th>
                   <th className="px-4 py-3 text-left">Date</th>
                 </tr>
@@ -60,7 +62,12 @@ export function AdminDashboard({ user, stats, recentOrders }: Props) {
                   <tr key={o.id} className="border-t border-[#1A1A1C]/5 hover:bg-[#F5F3EF]/50">
                     <td className="px-4 py-3 font-mono">#{o.orderNumber}</td>
                     <td className="px-4 py-3">{o.firstName} {o.lastName}</td>
-                    <td className="px-4 py-3 font-mono">₹{(o.total / 100).toLocaleString()}</td>
+                    <td className="px-4 py-3 font-mono">₹{(o.total / 100).toLocaleString("en-IN")}</td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-block px-2 py-0.5 text-[10px] uppercase tracking-widest rounded-sm ${o.paymentStatus === "paid" ? "bg-green-100 text-green-700" : o.paymentStatus === "failed" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`}>
+                        {o.paymentStatus}
+                      </span>
+                    </td>
                     <td className="px-4 py-3">
                       <span className={`inline-block px-2 py-0.5 text-[10px] uppercase tracking-widest rounded-sm ${
                         o.status === "delivered" ? "bg-green-100 text-green-700" :

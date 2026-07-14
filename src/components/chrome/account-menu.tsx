@@ -31,6 +31,10 @@ export function AccountMenu() {
   const clear = useAuthStore((state) => state.clear)
 
   const displayName = customer?.first_name || customer?.email?.split("@")[0] || "Customer"
+  const accountLinks = useMemo(() => {
+    const canChangePassword = customer?.can_change_password !== false
+    return ACCOUNT_NAV_LINKS.filter((item) => canChangePassword || item.key !== "security")
+  }, [customer?.can_change_password])
   const initials = useMemo(() => {
     const name = `${customer?.first_name ?? ""} ${customer?.last_name ?? ""}`.trim() || customer?.email || "SY"
     return name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase()
@@ -117,7 +121,7 @@ export function AccountMenu() {
                 </div>
                 <div className="grid grid-cols-1 p-2">
                   <MenuLink href="/account" label="Account dashboard" description="Rewards, recent orders, and shortcuts" icon={Home} onClick={close} />
-                  {ACCOUNT_NAV_LINKS.map((item) => {
+                  {accountLinks.map((item) => {
                     const Icon = ICONS[item.key as keyof typeof ICONS] ?? UserRound
                     return <MenuLink key={item.key} href={item.href} label={item.label} description={item.description} icon={Icon} onClick={close} />
                   })}

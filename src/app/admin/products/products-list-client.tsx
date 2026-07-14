@@ -10,6 +10,19 @@ type Product = {
   image: string; tag: string | null; published: boolean; createdAt: Date
 }
 
+const FALLBACK_IMAGES: Record<string, string> = {
+  Ring: "/jewellery/gen-diamond-ring.png",
+  Necklace: "/jewellery/gen-gold-necklace.png",
+  Earrings: "/jewellery/gen-crystal-earrings.png",
+  Bracelet: "/jewellery/gen-gold-bracelet.png",
+  "Nose ring": "/jewellery/gen-pink-heart-ring.png",
+  "Nose Ring": "/jewellery/gen-pink-heart-ring.png",
+}
+
+function productImage(product: Product) {
+  return product.image || FALLBACK_IMAGES[product.kind] || FALLBACK_IMAGES.Ring
+}
+
 export function ProductsListClient({ products, user }: { products: Product[]; user: { name: string } }) {
   const router = useRouter()
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -122,9 +135,7 @@ export function ProductsListClient({ products, user }: { products: Product[]; us
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      {p.image && (
-                        <div className="h-10 w-8 bg-cover bg-center border border-[#1A1A1C]/10 rounded-sm" style={{ backgroundImage: `url(${p.image})` }} />
-                      )}
+                      <div className="h-10 w-8 bg-cover bg-center border border-[#1A1A1C]/10 rounded-sm" style={{ backgroundImage: `url(${productImage(p)})` }} />
                       <div>
                         <p className="font-medium">{p.name}</p>
                         <p className="text-[10px] text-[#1A1A1C]/70">{p.slug}</p>
@@ -163,10 +174,8 @@ export function ProductsListClient({ products, user }: { products: Product[]; us
           {products.map((p) => (
             <article key={p.id} className="mobile-product-card border border-[#1A1A1C]/10 bg-white">
               <div className="h-[88px] w-[72px] overflow-hidden rounded-sm border border-[#1A1A1C]/10 bg-[#F5F3EF]">
-                {p.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
-                ) : null}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={productImage(p)} alt={p.name} className="h-full w-full object-cover" />
               </div>
               <div className="min-w-0">
                 <h2 className="truncate text-sm font-semibold leading-tight">{p.name}</h2>

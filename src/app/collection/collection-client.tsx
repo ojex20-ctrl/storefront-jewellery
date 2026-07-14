@@ -23,6 +23,48 @@ const METALS: Metal[] = ["18k Gold", "Sterling", "Rose Gold", "White Gold"]
 const STONES: Stone[] = ["Diamond", "Sapphire", "Emerald", "Onyx", "Pearl", "None"]
 const AXES = ["kind", "subcategory", "metal", "stone", "collection", "rentable"] as const
 
+type HeroCopy = { eyebrow: string; title: string; body: string; fallbackImage: string }
+
+const DEFAULT_HERO: HeroCopy = {
+  eyebrow: "Collection",
+  title: "Anti-tarnish pieces for every day.",
+  body: "Explore rings, earrings, necklaces and bracelets designed to hold their finish through daily wear.",
+  fallbackImage: "/hero/syra_hero_1.png",
+}
+
+const KIND_HERO: Record<Kind, HeroCopy> = {
+  Ring: {
+    eyebrow: "The ring edit",
+    title: "Rings made to stack, shine, and stay polished.",
+    body: "From slim daily bands to crystal statements, explore anti-tarnish rings for every hand and every mood.",
+    fallbackImage: "/hero/syra_banner_rings.png",
+  },
+  Necklace: {
+    eyebrow: "The necklace edit",
+    title: "Necklaces that layer cleanly and hold their glow.",
+    body: "Discover chains, pendants, and layered pieces with waterproof finishes and easy everyday styling.",
+    fallbackImage: "/jewellery/gen-gold-necklace.png",
+  },
+  Earrings: {
+    eyebrow: "The earring edit",
+    title: "Earrings for soft sparkle, strong shine, and daily wear.",
+    body: "Shop studs, hoops, huggies, and drops designed to feel light, skin-friendly, and polished all day.",
+    fallbackImage: "/hero/syra_banner_earrings.png",
+  },
+  Bracelet: {
+    eyebrow: "The bracelet edit",
+    title: "Bracelets with movement, shine, and an easy fit.",
+    body: "Explore cuffs, tennis bracelets, bangles, and delicate stacks finished for sweat-proof daily wear.",
+    fallbackImage: "/hero/syra_banner_bracelets.png",
+  },
+  "Nose ring": {
+    eyebrow: "The nose ring edit",
+    title: "Nose rings with a polished, delicate finish.",
+    body: "Minimal hoops and refined accents made for comfortable wear and a clean everyday look.",
+    fallbackImage: "/jewellery/gen-pink-heart-ring.png",
+  },
+}
+
 type CollectionClientProps = {
   products: Product[]
   showHero?: boolean
@@ -73,7 +115,15 @@ export function CollectionClient({ products, showHero = true }: CollectionClient
   const isFacetActive = (axis: string, value: string) =>
     filters.facets[axis]?.includes(value) ?? false
 
-  const heroProduct = products.find((p) => p.image) ?? products[0]
+  const activeKinds = (filters.facets.kind ?? []).filter((kind): kind is Kind => KINDS.includes(kind as Kind))
+  const activeKind = activeKinds.length === 1 ? activeKinds[0] : null
+  const heroCopy = activeKind ? KIND_HERO[activeKind] : DEFAULT_HERO
+  const heroPool = activeKind
+    ? (filtered.length > 0 ? filtered : products.filter((p) => p.kind === activeKind))
+    : (filtered.length > 0 ? filtered : products)
+  const heroProduct = heroPool.find((p) => p.image) ?? products.find((p) => p.image) ?? products[0]
+  const heroImage = heroProduct?.image || heroCopy.fallbackImage
+  const heroAlt = heroProduct?.name ?? heroCopy.title
   const availableKinds = KINDS.filter((k) => counts.kind[k])
   const availableMetals = METALS.filter((m) => counts.metal[m])
   const availableStones = STONES.filter((s) => counts.stone[s])
@@ -94,12 +144,12 @@ export function CollectionClient({ products, showHero = true }: CollectionClient
           />
           <div className="relative mx-auto grid max-w-[1480px] gap-10 lg:grid-cols-[minmax(0,1fr)_390px] lg:items-end">
             <div>
-              <Eyebrow className="mb-4 block text-accent">Collection</Eyebrow>
+              <Eyebrow className="mb-4 block text-accent">{heroCopy.eyebrow}</Eyebrow>
               <h1 className="max-w-[920px] font-display leading-[0.92] tracking-tight" style={{ fontSize: "clamp(52px, 9vw, 136px)" }}>
-                Anti-tarnish pieces for every day.
+                {heroCopy.title}
               </h1>
               <p className="mt-6 max-w-[640px] text-sm leading-relaxed text-muted md:text-base">
-                Explore rings, earrings, necklaces and bracelets designed to hold their finish through daily wear.
+                {heroCopy.body}
               </p>
               <div className="mt-9 grid max-w-[760px] grid-cols-3 border-y border-line text-center md:text-left">
                 <Metric label="Pieces" value={products.length} />
@@ -110,19 +160,17 @@ export function CollectionClient({ products, showHero = true }: CollectionClient
 
             <div className="border border-line bg-paper p-4 shadow-2xl md:p-5">
               <div className="relative aspect-[4/5] overflow-hidden bg-bg-2">
-                {heroProduct && (
-                  <OptimizedImage
-                    src={heroProduct.image}
-                    alt={heroProduct.name}
-                    sizes="(max-width: 1024px) 100vw, 390px"
-                    priority
-                    className="object-cover"
-                  />
-                )}
+                <OptimizedImage
+                  src={heroImage}
+                  alt={heroAlt}
+                  sizes="(max-width: 1024px) 100vw, 390px"
+                  priority
+                  className="object-cover"
+                />
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-5 text-white">
                   <p className="font-display text-2xl leading-tight">{heroProduct?.name ?? "SYRA jewellery"}</p>
                   <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-white/70">
-                    {heroProduct ? priceFmt(heroProduct.price) : "Waterproof finish"}
+                    {heroProduct ? `${formatKind(heroProduct.kind)} / ${priceFmt(heroProduct.price)}` : "Waterproof finish"}
                   </p>
                 </div>
               </div>

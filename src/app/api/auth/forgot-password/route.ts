@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { createPasswordResetToken, normalizeEmail } from "@/lib/customer-auth"
+import { createPasswordResetToken, hasLocalPasswordHash, normalizeEmail } from "@/lib/customer-auth"
 import { sendEmail, resetPasswordLinkEmail } from "@/lib/email"
 import { isSupabaseConfigured, supabaseForgotPassword } from "@/lib/supabase-auth"
 import { rateLimit, requestIp, validRequestOrigin } from "@/lib/rate-limit"
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   }
 
   const customer = await prisma.customer.findUnique({ where: { email } })
-  if (!customer) {
+  if (!customer || !hasLocalPasswordHash(customer.passwordHash)) {
     return NextResponse.json({ message: "If the email exists, a reset link has been sent." })
   }
 

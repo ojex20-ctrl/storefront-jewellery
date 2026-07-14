@@ -46,6 +46,8 @@ export async function POST(req: Request) {
       status: "placed",
       paymentMethod: "razorpay",
       paymentId: razorpay_payment_id ?? null,
+      razorpayOrderId: razorpay_order_id ?? null,
+      razorpayPaymentId: razorpay_payment_id ?? null,
       notes: JSON.stringify({
         razorpay_order_id,
         razorpay_payment_id,

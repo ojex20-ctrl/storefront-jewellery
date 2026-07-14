@@ -18,7 +18,7 @@ export default async function AdminCustomerDetail({ params }: { params: Promise<
     prisma.order.findMany({ where: { email: customer.email }, orderBy: { createdAt: "desc" } }),
     prisma.customerAddress.findMany({ where: { customerId: id }, orderBy: { createdAt: "desc" } }),
   ])
-  const spent = orders.reduce((s, o) => s + o.total, 0)
+  const spent = orders.filter((o) => o.paymentStatus === "paid").reduce((s, o) => s + o.total, 0)
 
   return (
     <div className="flex min-h-screen bg-[#F5F3EF] text-[#1A1A1C]">
@@ -32,7 +32,7 @@ export default async function AdminCustomerDetail({ params }: { params: Promise<
 
         <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
           <Stat label="Orders" value={String(orders.length)} />
-          <Stat label="Spent" value={rupees(spent)} />
+          <Stat label="Paid spent" value={rupees(spent)} />
           <Stat label="Phone" value={customer.phone || "—"} />
           <Stat label="Verified" value={customer.verified || customer.emailVerified ? "Yes" : "No"} />
         </div>

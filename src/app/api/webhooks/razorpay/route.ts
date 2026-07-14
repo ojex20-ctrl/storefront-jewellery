@@ -41,6 +41,8 @@ export async function POST(req: Request) {
         status: "confirmed",
         paymentMethod: "razorpay",
         paymentId: payment?.id ?? null,
+        razorpayOrderId: payment?.order_id ?? null,
+        razorpayPaymentId: payment?.id ?? null,
         notes: JSON.stringify({ razorpay_order_id: payment?.order_id, razorpay_payment_id: payment?.id }),
       },
     })
@@ -54,6 +56,8 @@ export async function POST(req: Request) {
         paymentStatus: "failed",
         paymentMethod: "razorpay",
         paymentId: payment?.id ?? null,
+        razorpayOrderId: payment?.order_id ?? null,
+        razorpayPaymentId: payment?.id ?? null,
         notes: JSON.stringify({ razorpay_order_id: payment?.order_id, razorpay_payment_id: payment?.id }),
       },
     })

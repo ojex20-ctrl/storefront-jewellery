@@ -1,4 +1,5 @@
 "use client"
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { toast } from "sonner"
@@ -13,10 +14,17 @@ type Review = {
   verified: boolean
   createdAt: string
 }
+type ReviewEligibility = {
+  canReview: boolean
+  status: "guest" | "not_purchased" | "already_reviewed" | "purchased"
+  message: string
+  name?: string
+}
 type Summary = {
   average: number
   count: number
   distribution: { star: number; count: number }[]
+  eligibility?: ReviewEligibility
   reviews: Review[]
 }
 
@@ -43,7 +51,7 @@ function Stars({ value, size = 14, onSelect }: { value: number; size?: number; o
 export function Reviews({ productId }: { productId: string }) {
   const [data, setData] = useState<Summary | null>(null)
   const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ name: "", rating: 0, title: "", body: "" })
+  const [form, setForm] = useState({ rating: 0, title: "", body: "" })
   const [submitting, setSubmitting] = useState(false)
 
   const load = async () => {
@@ -54,9 +62,16 @@ export function Reviews({ productId }: { productId: string }) {
   }
   useEffect(() => { void load() }, [productId]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const eligibility = data?.eligibility
+  const canReview = Boolean(eligibility?.canReview)
+
   const submit = async () => {
-    if (!form.name.trim() || form.rating < 1 || !form.body.trim()) {
-      toast.error("Please add your name, a rating, and a review.")
+    if (!canReview) {
+      toast.error(eligibility?.message ?? "Only verified buyers can write reviews.")
+      return
+    }
+    if (form.rating < 1 || !form.body.trim()) {
+      toast.error("Please add a rating and a review.")
       return
     }
     setSubmitting(true)
@@ -69,11 +84,12 @@ export function Reviews({ productId }: { productId: string }) {
       const d = await res.json()
       if (!res.ok) throw new Error(d.error || "Could not submit review")
       toast.success("Thank you for your review!")
-      setForm({ name: "", rating: 0, title: "", body: "" })
+      setForm({ rating: 0, title: "", body: "" })
       setShowForm(false)
       await load()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not submit review")
+      await load()
     } finally {
       setSubmitting(false)
     }
@@ -116,17 +132,35 @@ export function Reviews({ productId }: { productId: string }) {
               </div>
             )}
 
-            <button
-              onClick={() => setShowForm((s) => !s)}
-              className="mt-8 w-full border border-ink px-5 py-3 font-mono text-[11px] uppercase tracking-widest transition-colors hover:bg-ink hover:text-bg"
-            >
-              {showForm ? "Close" : "Write a review"}
-            </button>
+            {canReview ? (
+              <button
+                onClick={() => setShowForm((s) => !s)}
+                className="mt-8 w-full border border-ink px-5 py-3 font-mono text-[11px] uppercase tracking-widest transition-colors hover:bg-ink hover:text-bg"
+              >
+                {showForm ? "Close" : "Write a review"}
+              </button>
+            ) : eligibility?.status === "guest" ? (
+              <Link
+                href={`/account/login?next=${encodeURIComponent(`/products/${productId}#reviews`)}`}
+                className="mt-8 block w-full border border-ink px-5 py-3 text-center font-mono text-[11px] uppercase tracking-widest transition-colors hover:bg-ink hover:text-bg"
+              >
+                Sign in to review
+              </Link>
+            ) : (
+              <button
+                type="button"
+                disabled
+                className="mt-8 w-full border border-line px-5 py-3 font-mono text-[11px] uppercase tracking-widest text-muted"
+              >
+                {eligibility?.status === "already_reviewed" ? "Review submitted" : "Verified buyers only"}
+              </button>
+            )}
+            {eligibility && !canReview && <p className="mt-3 text-[12px] leading-5 text-muted">{eligibility.message}</p>}
           </div>
 
           {/* List + form */}
           <div>
-            {showForm && (
+            {showForm && canReview && (
               <motion.div
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -137,12 +171,11 @@ export function Reviews({ productId }: { productId: string }) {
                   <Stars value={form.rating} size={22} onSelect={(n) => setForm({ ...form, rating: n })} />
                 </div>
                 <div className="flex flex-col gap-3">
-                  <input
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    placeholder="Your name"
-                    className="border-b border-line-2 bg-transparent py-2 text-sm outline-none focus:border-ink"
-                  />
+                  {eligibility?.name && (
+                    <p className="font-mono text-[10px] uppercase tracking-widest text-muted">
+                      Posting as <span className="text-ink">{eligibility.name}</span>
+                    </p>
+                  )}
                   <input
                     value={form.title}
                     onChange={(e) => setForm({ ...form, title: e.target.value })}
@@ -168,7 +201,7 @@ export function Reviews({ productId }: { productId: string }) {
             )}
 
             {count === 0 ? (
-              <p className="text-sm text-muted">No reviews yet. Be the first to share your thoughts.</p>
+              <p className="text-sm text-muted">No reviews yet.</p>
             ) : (
               <ul className="flex flex-col divide-y divide-line">
                 {data!.reviews.map((r) => (

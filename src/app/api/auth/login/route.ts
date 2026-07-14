@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { prisma } from "@/lib/db"
-import { verifyPassword, createCustomerToken, CUSTOMER_COOKIE, normalizeEmail } from "@/lib/customer-auth"
+import { verifyPassword, createCustomerToken, CUSTOMER_COOKIE, hasLocalPasswordHash, normalizeEmail } from "@/lib/customer-auth"
 import { isSupabaseConfigured, supabasePasswordLogin } from "@/lib/supabase-auth"
 import { rateLimit, requestIp, validRequestOrigin } from "@/lib/rate-limit"
 
@@ -58,7 +58,7 @@ export async function POST(req: Request) {
       } as const
       cookieStore.set(CUSTOMER_COOKIE, token, options)
       cookieStore.set("customer_token", token, options)
-      return NextResponse.json({ user: { id: customer.id, email: customer.email, firstName: customer.firstName, lastName: customer.lastName } })
+      return NextResponse.json({ user: { id: customer.id, email: customer.email, firstName: customer.firstName, lastName: customer.lastName, authProvider: "external", canChangePassword: false } })
     } catch (err) {
       return NextResponse.json({ error: err instanceof Error ? err.message : "Login failed" }, { status: 401 })
     }
@@ -79,6 +79,9 @@ export async function POST(req: Request) {
 
   if (!password) {
     return NextResponse.json({ error: "Password is required" }, { status: 400 })
+  }
+  if (!hasLocalPasswordHash(customer.passwordHash)) {
+    return NextResponse.json({ error: customer.googleId ? "Use Google sign-in for this account." : "Password login is not available for this account." }, { status: 401 })
   }
 
   const valid = await verifyPassword(password, customer.passwordHash)
@@ -104,5 +107,5 @@ export async function POST(req: Request) {
   cookieStore.set(CUSTOMER_COOKIE, token, options)
   cookieStore.set("customer_token", token, options)
 
-  return NextResponse.json({ user: { id: customer.id, email: customer.email, firstName: customer.firstName, lastName: customer.lastName } })
+  return NextResponse.json({ user: { id: customer.id, email: customer.email, firstName: customer.firstName, lastName: customer.lastName, authProvider: "password", canChangePassword: true } })
 }

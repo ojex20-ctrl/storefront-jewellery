@@ -47,6 +47,12 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash)
 }
 
+const NON_LOCAL_PASSWORD_HASHES = new Set(["google", "supabase", ""])
+
+export function hasLocalPasswordHash(passwordHash?: string | null) {
+  return Boolean(passwordHash && !NON_LOCAL_PASSWORD_HASHES.has(passwordHash))
+}
+
 export function normalizeEmail(email: string) {
   return email.trim().toLowerCase()
 }

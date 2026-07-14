@@ -9,15 +9,15 @@ export default async function AdminCustomersPage() {
 
   const [customers, orders] = await Promise.all([
     prisma.customer.findMany({ orderBy: { createdAt: "desc" } }),
-    prisma.order.findMany({ select: { email: true, total: true } }),
+    prisma.order.findMany({ select: { email: true, total: true, paymentStatus: true } }),
   ])
 
-  const byEmail: Record<string, { count: number; total: number }> = {}
+  const byEmail: Record<string, { count: number; paidTotal: number }> = {}
   for (const o of orders) {
     const k = o.email.toLowerCase()
-    byEmail[k] = byEmail[k] || { count: 0, total: 0 }
+    byEmail[k] = byEmail[k] || { count: 0, paidTotal: 0 }
     byEmail[k].count += 1
-    byEmail[k].total += o.total
+    if (o.paymentStatus === "paid") byEmail[k].paidTotal += o.total
   }
 
   const rows = customers.map((c) => ({
@@ -29,7 +29,7 @@ export default async function AdminCustomersPage() {
     verified: c.verified || c.emailVerified,
     createdAt: c.createdAt.toISOString(),
     orders: byEmail[c.email.toLowerCase()]?.count ?? 0,
-    spent: byEmail[c.email.toLowerCase()]?.total ?? 0,
+    spent: byEmail[c.email.toLowerCase()]?.paidTotal ?? 0,
   }))
 
   return <CustomersClient customers={rows} user={session} />

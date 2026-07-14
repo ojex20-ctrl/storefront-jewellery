@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { hashPassword, isStrongPassword, verifyCustomerSession, verifyPassword } from "@/lib/customer-auth"
+import { hashPassword, hasLocalPasswordHash, isStrongPassword, verifyCustomerSession, verifyPassword } from "@/lib/customer-auth"
 import { validRequestOrigin } from "@/lib/rate-limit"
 import { sendEmail, passwordChangedEmail } from "@/lib/email"
 
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
   }
 
   const customer = await prisma.customer.findUnique({ where: { id: session.id } })
-  if (!customer || customer.passwordHash === "supabase") return NextResponse.json({ error: "Password cannot be changed here." }, { status: 400 })
+  if (!customer || !hasLocalPasswordHash(customer.passwordHash)) return NextResponse.json({ error: "Password cannot be changed for this sign-in method." }, { status: 400 })
   const valid = await verifyPassword(currentPassword, customer.passwordHash)
   if (!valid) return NextResponse.json({ error: "Current password is incorrect." }, { status: 401 })
 

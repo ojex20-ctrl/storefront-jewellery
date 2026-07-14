@@ -72,6 +72,7 @@ export function AccountClient() {
   }
 
   const displayName = customer?.first_name || customer?.email?.split("@")[0] || "friend"
+  const accountLinks = ACCOUNT_NAV_LINKS.filter((item) => customer?.can_change_password !== false || item.key !== "security")
   const handleSignOut = () => {
     void fetch("/api/auth/me", { method: "DELETE", credentials: "include" }).catch(() => null)
     clear()
@@ -96,7 +97,7 @@ export function AccountClient() {
         <aside>
           <Eyebrow className="mb-3.5 block">Account menu</Eyebrow>
           <div className="border border-line bg-bg-2 p-2">
-            {ACCOUNT_NAV_LINKS.map((m, index) => (
+            {accountLinks.map((m, index) => (
               <motion.div
                 key={m.key}
                 initial={{ opacity: 0, x: -8 }}

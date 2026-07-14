@@ -44,6 +44,8 @@ export function LoginClient({ googleEnabled = false }: { googleEnabled?: boolean
         email: data.user.email,
         first_name: data.user.firstName,
         last_name: data.user.lastName,
+        auth_provider: data.user.authProvider ?? "password",
+        can_change_password: data.user.canChangePassword ?? true,
       })
       toast.success("Welcome back!")
       router.push("/account")

@@ -1,5 +1,6 @@
 "use client"
-import { useState, type FormEvent } from "react"
+import Link from "next/link"
+import { useEffect, useState, type FormEvent } from "react"
 import { toast } from "sonner"
 import { Button, Eyebrow } from "@podium/ui/primitives"
 
@@ -8,6 +9,21 @@ export default function ChangePasswordPage() {
   const [newPassword, setNewPassword] = useState("")
   const [confirm, setConfirm] = useState("")
   const [pending, setPending] = useState(false)
+  const [canChangePassword, setCanChangePassword] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    let active = true
+    void fetch("/api/auth/me", { credentials: "include" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!active) return
+        setCanChangePassword(data?.user?.canChangePassword ?? true)
+      })
+      .catch(() => {
+        if (active) setCanChangePassword(true)
+      })
+    return () => { active = false }
+  }, [])
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -31,6 +47,19 @@ export default function ChangePasswordPage() {
     } finally {
       setPending(false)
     }
+  }
+
+  if (canChangePassword === false) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-24 md:py-32">
+        <Eyebrow className="mb-3 block">Account Security</Eyebrow>
+        <h1 className="mb-4 font-display text-4xl">Google sign-in</h1>
+        <div className="border border-line p-6 text-sm leading-6 text-muted">
+          <p>This account signs in with Google, so there is no SYRA password to change or reset here.</p>
+          <Link href="/account/profile" className="mt-5 inline-flex font-mono text-[11px] uppercase tracking-widest text-accent">Back to profile -&gt;</Link>
+        </div>
+      </div>
+    )
   }
 
   return (
