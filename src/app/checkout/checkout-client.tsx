@@ -191,6 +191,7 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
       toast.error("No active payment gateway is configured")
       return
     }
+    let orderId: string | null = null
     setPlacing(true)
     try {
       const res = await fetch("/api/checkout", {
@@ -218,10 +219,11 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || "Order failed")
-      const orderId = data.order.id
+      const createdOrderId = String(data.order.id)
+      orderId = createdOrderId
 
       await openRazorpayCheckout({
-        internalOrderId: orderId,
+        internalOrderId: createdOrderId,
         orderNumber: data.order.orderNumber,
         customer: details,
       })
@@ -232,11 +234,22 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
         })
       }
 
-      addOrder({ id: orderId, details, items, total, shipping, payment: "razorpay", createdAt: Date.now() })
+      addOrder({ id: createdOrderId, details, items, total, shipping, payment: "razorpay", createdAt: Date.now() })
       clearCart()
-      router.push(`/confirmation/${orderId}`)
+      router.push(`/confirmation/${createdOrderId}`)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Payment failed")
+      const message = err instanceof Error ? err.message : "Payment failed"
+      toast.error(message)
+      if (orderId) {
+        await fetch("/api/payments/razorpay/failure", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ internalOrderId: orderId, description: message }),
+        }).catch(() => null)
+        setPlacing(false)
+        router.push(`/payment-failed/${orderId}?reason=${encodeURIComponent(message)}`)
+        return
+      }
       setPlacing(false)
     }
   }

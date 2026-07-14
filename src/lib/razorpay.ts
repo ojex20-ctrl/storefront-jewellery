@@ -31,6 +31,20 @@ type RazorpayOptions = {
   modal?: { ondismiss?: () => void }
 }
 
+type RazorpayFailureResponse = {
+  error?: {
+    code?: string
+    description?: string
+    source?: string
+    step?: string
+    reason?: string
+    metadata?: {
+      order_id?: string
+      payment_id?: string
+    }
+  }
+}
+
 let scriptPromise: Promise<void> | null = null
 let scriptSrc: string | null = null
 
@@ -67,6 +81,18 @@ export async function openRazorpayCheckout(args: CheckoutArgs): Promise<void> {
   await loadScript(orderData.checkoutScriptUrl)
 
   return new Promise<void>((resolve, reject) => {
+    let settled = false
+    const finish = () => {
+      if (settled) return
+      settled = true
+      resolve()
+    }
+    const fail = (message: string) => {
+      if (settled) return
+      settled = true
+      reject(new Error(message))
+    }
+
     const rzp = new window.Razorpay!({
       key: orderData.keyId,
       amount: orderData.amount,
@@ -89,12 +115,32 @@ export async function openRazorpayCheckout(args: CheckoutArgs): Promise<void> {
         })
         const verifyData = await verifyResp.json().catch(() => ({}))
         if (!verifyResp.ok) {
-          reject(new Error(verifyData.error || "Payment verification failed"))
+          fail(verifyData.error || "Payment verification failed")
           return
         }
-        resolve()
+        finish()
       },
-      modal: { ondismiss: () => reject(new Error("Razorpay popup dismissed")) },
+      modal: { ondismiss: () => fail("Payment was cancelled before completion") },
+    })
+    rzp.on("payment.failed", async (...eventArgs: unknown[]) => {
+      const response = eventArgs[0] as RazorpayFailureResponse | undefined
+      const error = response?.error
+      const metadata = error?.metadata ?? {}
+      await fetch("/api/payments/razorpay/failure", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          internalOrderId: args.internalOrderId,
+          razorpay_order_id: metadata.order_id ?? orderData.orderId,
+          razorpay_payment_id: metadata.payment_id,
+          code: error?.code,
+          source: error?.source,
+          step: error?.step,
+          reason: error?.reason,
+          description: error?.description,
+        }),
+      }).catch(() => null)
+      fail(error?.description || "Payment could not be completed")
     })
     rzp.open()
   })

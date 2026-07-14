@@ -12,6 +12,7 @@ export default async function AdminSettingsPage() {
   const settings: Record<string, string> = {}
   for (const s of raw) settings[s.key] = s.value
   const payment = await getPaymentSettings(settings)
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "")
   return (
     <SettingsClient
       settings={effectivePaymentSettingsForForm(settings, payment)}
@@ -22,6 +23,7 @@ export default async function AdminSettingsPage() {
         razorpayMode: payment.razorpay.mode,
         razorpayKeyId: payment.razorpay.keyId,
         razorpayWebhookConfigured: payment.razorpay.webhookConfigured,
+        razorpayWebhookUrl: siteUrl ? `${siteUrl}/api/webhooks/razorpay` : "/api/webhooks/razorpay",
         stripeConfigured: payment.stripe.configured,
         smtpConfigured: Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS),
         supabaseConfigured: Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY),

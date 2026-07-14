@@ -11,6 +11,7 @@ type IntegrationStatus = {
   razorpayMode: "test" | "live"
   razorpayKeyId: string
   razorpayWebhookConfigured: boolean
+  razorpayWebhookUrl: string
   stripeConfigured: boolean
   smtpConfigured: boolean
   supabaseConfigured: boolean
@@ -138,7 +139,10 @@ export function SettingsClient({
               </div>
             </details>
             <p className="text-xs leading-relaxed text-[#1A1A1C]/75">
-              Use your Razorpay test account key pair here for test mode. Razorpay decides test vs live from the key pair. Webhook URL: <span className="font-mono">/api/webhooks/razorpay</span>
+              Use your Razorpay test account key pair here for test mode. Razorpay decides test vs live from the key pair.
+              Configure Razorpay webhooks for <span className="font-mono">payment.captured</span> and{" "}
+              <span className="font-mono">payment.failed</span> at{" "}
+              <span className="font-mono">{integrationStatus?.razorpayWebhookUrl ?? "/api/webhooks/razorpay"}</span>.
             </p>
           </Card>
 
@@ -171,6 +175,7 @@ export function SettingsClient({
             <StatusRow label="Razorpay Mode" value={integrationStatus?.razorpayMode ?? "test"} />
             <StatusRow label="Razorpay Key ID" value={maskKey(integrationStatus?.razorpayKeyId ?? "") || "Not set"} />
             <StatusRow label="Razorpay Webhook" value={integrationStatus?.razorpayWebhookConfigured ? "Configured" : "Not configured"} />
+            <StatusRow label="Webhook URL" value={integrationStatus?.razorpayWebhookUrl ?? "/api/webhooks/razorpay"} />
             <StatusRow label="Stripe" value={integrationStatus?.stripeConfigured ? "Configured" : "Not configured"} />
             <StatusRow label="SMTP Email" value={integrationStatus?.smtpConfigured ? "Configured" : "Not configured"} />
             <StatusRow label="Supabase" value={integrationStatus?.supabaseConfigured ? "Configured" : "Not configured"} />
