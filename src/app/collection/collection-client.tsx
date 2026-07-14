@@ -13,7 +13,6 @@ import { priceFmt } from "@podium/ui/lib"
 import type { Kind, Metal, Stone, Product } from "@/lib/products"
 import { STONE_HEX } from "@/lib/products"
 import { ProductCard } from "@/components/product/product-card"
-import { CompareTray } from "@/components/commerce/compare-tray"
 import { OptimizedImage } from "@/components/media/optimized-image"
 import { JsonLd } from "@/components/seo/json-ld"
 import { collectionJsonLd } from "@/lib/seo-jsonld"
@@ -311,7 +310,6 @@ export function CollectionClient({ products, showHero = true }: CollectionClient
         </div>
       </section>
 
-      <CompareTray products={products} />
     </div>
   )
 }

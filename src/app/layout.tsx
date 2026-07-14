@@ -12,12 +12,14 @@ import { BrandProvider } from "@/providers/brand-provider"
 import { WhatsAppButton } from "@/components/chrome/whatsapp-button"
 import { MarketingWidgets } from "@/components/marketing/marketing-widgets"
 import { WishlistSync } from "@/components/commerce/wishlist-sync"
+import { CompareTray } from "@/components/commerce/compare-tray"
 import { cookies, headers } from "next/headers"
 import { getBrandConfig } from "@/lib/brand-config"
 import { CURRENCY_COOKIE, resolveCurrency, setActiveCurrencyForRender } from "@podium/ui/lib"
 import { verifyAdminSession } from "@/lib/admin-auth"
 import { JsonLd } from "@/components/seo/json-ld"
 import { organizationJsonLd, websiteJsonLd } from "@/lib/seo-jsonld"
+import { fetchProducts } from "@/lib/medusa-products"
 
 export async function generateMetadata(): Promise<Metadata> {
   const brand = await getBrandConfig()
@@ -34,7 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const brand = await getBrandConfig()
+  const [brand, compareProducts] = await Promise.all([getBrandConfig(), fetchProducts()])
   const adminSession = await verifyAdminSession()
   const cookieJar = await cookies()
   const headerJar = await headers()
@@ -67,6 +69,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <ScrollProgress />
             <SiteChrome brand={brand} currency={currency} adminPreview={Boolean(adminSession)}>{children}</SiteChrome>
             <CartDrawer />
+            <CompareTray products={compareProducts} />
           </LenisProvider>
         </BrandProvider>
         <MarketingWidgets />
