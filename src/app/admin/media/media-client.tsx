@@ -118,7 +118,7 @@ export function MediaClient({ user }: { user: { name: string } }) {
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="font-display text-4xl tracking-tight">Media Library</h1>
-            <p className="text-sm text-[#1A1A1C]/50 mt-1">Upload and manage media files for your products.</p>
+            <p className="text-sm text-[#1A1A1C]/75 mt-1">Upload and manage media files for your products.</p>
           </div>
 
           <div className="flex gap-3">
@@ -145,14 +145,14 @@ export function MediaClient({ user }: { user: { name: string } }) {
           onClick={() => fileInputRef.current?.click()}
           className="border-2 border-dashed border-[#1A1A1C]/15 bg-white p-8 mb-8 text-center cursor-pointer hover:border-[#c9a36b] transition-colors group"
         >
-          <Upload size={24} className="mx-auto text-[#1A1A1C]/30 group-hover:text-[#c9a36b] transition-colors mb-2" />
-          <span className="text-sm text-[#1A1A1C]/60 block font-medium">Drag & drop files or click to select</span>
-          <span className="text-xs text-[#1A1A1C]/40 block mt-1">Supports PNG, JPG, WEBP, GIF</span>
+          <Upload size={24} className="mx-auto text-[#1A1A1C]/75 group-hover:text-[#c9a36b] transition-colors mb-2" />
+          <span className="text-sm text-[#1A1A1C]/75 block font-medium">Drag & drop files or click to select</span>
+          <span className="text-xs text-[#1A1A1C]/70 block mt-1">Supports PNG, JPG, WEBP, GIF</span>
         </div>
 
         {/* Search */}
         <div className="flex items-center gap-2 bg-white border border-[#1A1A1C]/10 px-3 py-2.5 mb-6 max-w-md">
-          <Search size={16} className="text-[#1A1A1C]/40" />
+          <Search size={16} className="text-[#1A1A1C]/70" />
           <input
             type="text"
             placeholder="Search by file name..."
@@ -163,10 +163,10 @@ export function MediaClient({ user }: { user: { name: string } }) {
         </div>
 
         {loading ? (
-          <p className="text-sm text-[#1A1A1C]/50">Loading media files...</p>
+          <p className="text-sm text-[#1A1A1C]/75">Loading media files...</p>
         ) : filteredFiles.length === 0 ? (
           <div className="border border-[#1A1A1C]/10 bg-white p-12 text-center">
-            <p className="text-sm text-[#1A1A1C]/50">
+            <p className="text-sm text-[#1A1A1C]/75">
               {searchQuery ? "No files match your search criteria." : "No files uploaded yet."}
             </p>
           </div>
@@ -189,7 +189,7 @@ export function MediaClient({ user }: { user: { name: string } }) {
                     <p className="text-xs font-semibold truncate text-[#1A1A1C]" title={file.name}>
                       {file.name}
                     </p>
-                    <div className="flex justify-between items-center text-[10px] text-[#1A1A1C]/50 mt-1">
+                    <div className="flex justify-between items-center text-[10px] text-[#1A1A1C]/75 mt-1">
                       <span>{formatSize(file.size)}</span>
                       <span>{new Date(file.createdAt).toLocaleDateString()}</span>
                     </div>

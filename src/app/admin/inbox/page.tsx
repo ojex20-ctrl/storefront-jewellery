@@ -27,7 +27,7 @@ export default async function AdminInboxPage() {
 
         <Section title="Enquiries & messages">
           <table className="w-full text-sm">
-            <thead className="bg-[#F5F3EF] text-xs uppercase tracking-widest text-[#1A1A1C]/50">
+            <thead className="bg-[#F5F3EF] text-xs uppercase tracking-widest text-[#1A1A1C]/75">
               <tr>
                 <th className="px-4 py-3 text-left">From</th>
                 <th className="px-4 py-3 text-left">Type</th>
@@ -36,16 +36,16 @@ export default async function AdminInboxPage() {
               </tr>
             </thead>
             <tbody>
-              {messages.length === 0 && <tr><td colSpan={4} className="px-4 py-8 text-center text-[#1A1A1C]/40">No messages yet.</td></tr>}
+              {messages.length === 0 && <tr><td colSpan={4} className="px-4 py-8 text-center text-[#1A1A1C]/70">No messages yet.</td></tr>}
               {messages.map((m) => (
                 <tr key={m.id} className="border-t border-[#1A1A1C]/5 align-top">
                   <td className="px-4 py-3">
                     <p className="font-medium">{m.name}</p>
-                    <p className="font-mono text-xs text-[#1A1A1C]/50">{m.email}{m.phone ? ` · ${m.phone}` : ""}</p>
+                    <p className="font-mono text-xs text-[#1A1A1C]/75">{m.email}{m.phone ? ` · ${m.phone}` : ""}</p>
                   </td>
                   <td className="px-4 py-3 capitalize">{m.type}</td>
                   <td className="max-w-[420px] px-4 py-3 text-[#1A1A1C]/80">{m.subject ? <strong>{m.subject}: </strong> : null}{m.message}</td>
-                  <td className="whitespace-nowrap px-4 py-3 text-[#1A1A1C]/50">{m.createdAt.toLocaleString()}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-[#1A1A1C]/75">{m.createdAt.toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -54,16 +54,16 @@ export default async function AdminInboxPage() {
 
         <Section title="Newsletter subscribers">
           <table className="w-full text-sm">
-            <thead className="bg-[#F5F3EF] text-xs uppercase tracking-widest text-[#1A1A1C]/50">
+            <thead className="bg-[#F5F3EF] text-xs uppercase tracking-widest text-[#1A1A1C]/75">
               <tr><th className="px-4 py-3 text-left">Email</th><th className="px-4 py-3 text-left">Source</th><th className="px-4 py-3 text-left">Joined</th></tr>
             </thead>
             <tbody>
-              {subscribers.length === 0 && <tr><td colSpan={3} className="px-4 py-8 text-center text-[#1A1A1C]/40">No subscribers yet.</td></tr>}
+              {subscribers.length === 0 && <tr><td colSpan={3} className="px-4 py-8 text-center text-[#1A1A1C]/70">No subscribers yet.</td></tr>}
               {subscribers.map((s) => (
                 <tr key={s.id} className="border-t border-[#1A1A1C]/5">
                   <td className="px-4 py-3 font-mono text-xs">{s.email}</td>
                   <td className="px-4 py-3">{s.source ?? "—"}</td>
-                  <td className="px-4 py-3 text-[#1A1A1C]/50">{s.createdAt.toLocaleDateString()}</td>
+                  <td className="px-4 py-3 text-[#1A1A1C]/75">{s.createdAt.toLocaleDateString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -72,16 +72,16 @@ export default async function AdminInboxPage() {
 
         <Section title="Back-in-stock alerts">
           <table className="w-full text-sm">
-            <thead className="bg-[#F5F3EF] text-xs uppercase tracking-widest text-[#1A1A1C]/50">
+            <thead className="bg-[#F5F3EF] text-xs uppercase tracking-widest text-[#1A1A1C]/75">
               <tr><th className="px-4 py-3 text-left">Product</th><th className="px-4 py-3 text-left">Email</th><th className="px-4 py-3 text-left">Requested</th></tr>
             </thead>
             <tbody>
-              {restock.length === 0 && <tr><td colSpan={3} className="px-4 py-8 text-center text-[#1A1A1C]/40">No alerts yet.</td></tr>}
+              {restock.length === 0 && <tr><td colSpan={3} className="px-4 py-8 text-center text-[#1A1A1C]/70">No alerts yet.</td></tr>}
               {restock.map((r) => (
                 <tr key={r.id} className="border-t border-[#1A1A1C]/5">
                   <td className="px-4 py-3 font-mono text-xs">{r.productId}</td>
                   <td className="px-4 py-3 font-mono text-xs">{r.email}</td>
-                  <td className="px-4 py-3 text-[#1A1A1C]/50">{r.createdAt.toLocaleDateString()}</td>
+                  <td className="px-4 py-3 text-[#1A1A1C]/75">{r.createdAt.toLocaleDateString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -95,7 +95,7 @@ export default async function AdminInboxPage() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="border border-[#1A1A1C]/10 bg-white p-4">
-      <p className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">{label}</p>
+      <p className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/75">{label}</p>
       <p className="mt-1 font-display text-2xl">{value}</p>
     </div>
   )

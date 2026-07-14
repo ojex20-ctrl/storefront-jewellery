@@ -103,7 +103,7 @@ function SectionEditor({ section, saving, onSave, onDelete }: {
             <input type="checkbox" checked={form.published} onChange={(e) => set("published", e.target.checked)} className="accent-[#c9a36b]" />
             Published
           </label>
-          <button onClick={onDelete} className="text-[#1A1A1C]/30 hover:text-red-500"><Trash2 size={14} /></button>
+          <button onClick={onDelete} className="text-[#1A1A1C]/75 hover:text-red-500"><Trash2 size={14} /></button>
         </div>
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -111,7 +111,7 @@ function SectionEditor({ section, saving, onSave, onDelete }: {
         <Field label="Subtitle" value={form.subtitle ?? ""} onChange={(v) => set("subtitle", v)} />
         <div className="md:col-span-2">
           <label className="block">
-            <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">Body</span>
+            <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/75">Body</span>
             <textarea value={form.body ?? ""} onChange={(e) => set("body", e.target.value)} rows={3}
               className="mt-1 w-full border border-[#1A1A1C]/10 bg-transparent p-2 text-sm outline-none focus:border-[#c9a36b] resize-y" />
           </label>
@@ -135,7 +135,7 @@ function SectionEditor({ section, saving, onSave, onDelete }: {
 function Field({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <label className="block">
-      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">{label}</span>
+      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/75">{label}</span>
       <input value={value} onChange={(e) => onChange(e.target.value)}
         className="mt-1 w-full border-b border-[#1A1A1C]/15 bg-transparent py-2 text-sm outline-none focus:border-[#c9a36b]" />
     </label>

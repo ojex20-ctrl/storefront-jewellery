@@ -84,7 +84,7 @@ export function CouponsClient({ coupons, user }: { coupons: Coupon[]; user: { na
         <section className="mb-8 grid items-end gap-4 border border-[#1A1A1C]/10 bg-white p-6 md:grid-cols-6">
           <Field label="Code" value={draft.code} onChange={(v) => setDraft({ ...draft, code: v.toUpperCase() })} />
           <label className="block">
-            <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">Type</span>
+            <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/75">Type</span>
             <select
               value={draft.type}
               onChange={(e) => setDraft({ ...draft, type: e.target.value })}
@@ -98,7 +98,7 @@ export function CouponsClient({ coupons, user }: { coupons: Coupon[]; user: { na
           <Field label="Min order (₹)" value={draft.minOrder} onChange={(v) => setDraft({ ...draft, minOrder: v })} />
           <Field label="Max uses" value={draft.maxUses} onChange={(v) => setDraft({ ...draft, maxUses: v })} />
           <label className="block">
-            <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">Expires</span>
+            <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/75">Expires</span>
             <input
               type="date"
               value={draft.expiresAt}
@@ -117,7 +117,7 @@ export function CouponsClient({ coupons, user }: { coupons: Coupon[]; user: { na
 
         <div className="overflow-x-auto border border-[#1A1A1C]/10 bg-white">
           <table className="w-full text-sm">
-            <thead className="bg-[#F5F3EF] text-xs uppercase tracking-widest text-[#1A1A1C]/50">
+            <thead className="bg-[#F5F3EF] text-xs uppercase tracking-widest text-[#1A1A1C]/75">
               <tr>
                 <th className="px-4 py-3 text-left">Code</th>
                 <th className="px-4 py-3 text-left">Discount</th>
@@ -130,7 +130,7 @@ export function CouponsClient({ coupons, user }: { coupons: Coupon[]; user: { na
             </thead>
             <tbody>
               {items.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-10 text-center text-[#1A1A1C]/40">No coupons yet.</td></tr>
+                <tr><td colSpan={7} className="px-4 py-10 text-center text-[#1A1A1C]/70">No coupons yet.</td></tr>
               )}
               {items.map((c) => (
                 <tr key={c.id} className="border-t border-[#1A1A1C]/5">
@@ -142,7 +142,7 @@ export function CouponsClient({ coupons, user }: { coupons: Coupon[]; user: { na
                   <td className="px-4 py-3">
                     <button
                       onClick={() => toggle(c)}
-                      className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-widest ${c.active ? "bg-green-100 text-green-700" : "bg-[#1A1A1C]/10 text-[#1A1A1C]/50"}`}
+                      className={`rounded-full px-2 py-0.5 text-[10px] uppercase tracking-widest ${c.active ? "bg-green-100 text-green-700" : "bg-[#1A1A1C]/10 text-[#1A1A1C]/75"}`}
                     >
                       {c.active ? "Active" : "Off"}
                     </button>
@@ -163,7 +163,7 @@ export function CouponsClient({ coupons, user }: { coupons: Coupon[]; user: { na
 function Field({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <label className="block">
-      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">{label}</span>
+      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/75">{label}</span>
       <input value={value} onChange={(e) => onChange(e.target.value)} className="mt-1 w-full border-b border-[#1A1A1C]/15 bg-transparent py-2 text-sm outline-none focus:border-[#c9a36b]" />
     </label>
   )

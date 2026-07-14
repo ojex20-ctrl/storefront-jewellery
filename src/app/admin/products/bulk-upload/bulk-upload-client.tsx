@@ -62,15 +62,15 @@ export function BulkUploadClient() {
       <Sidebar />
 
       <main className="flex-1 p-8 md:p-12 overflow-y-auto">
-        <Link href="/admin/products" className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-[#1A1A1C]/50 hover:text-[#1A1A1C] mb-6">
+        <Link href="/admin/products" className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-[#1A1A1C]/75 hover:text-[#1A1A1C] mb-6">
           <ArrowLeft size={14} /> Back to products
         </Link>
         <h1 className="font-display text-4xl tracking-tight mb-8">Bulk Upload Products</h1>
 
         {/* Step 1: Download template */}
         <div className="border border-[#1A1A1C]/10 bg-white p-6 mb-6">
-          <h3 className="text-xs uppercase tracking-widest text-[#1A1A1C]/50 mb-3">Step 1: Download Template</h3>
-          <div className="text-sm text-[#1A1A1C]/60 mb-4 space-y-2">
+          <h3 className="text-xs uppercase tracking-widest text-[#1A1A1C]/75 mb-3">Step 1: Download Template</h3>
+          <div className="text-sm text-[#1A1A1C]/75 mb-4 space-y-2">
             <p>Download the CSV template, fill in your products, then upload below.</p>
             <div className="text-xs border-l-2 border-[#c9a36b] pl-3 py-1.5 space-y-1 bg-[#F5F3EF]/30">
               <span className="font-semibold uppercase tracking-wider text-[10px] text-[#1A1A1C]/75">Bulk Upload Options:</span>
@@ -89,8 +89,8 @@ export function BulkUploadClient() {
 
         {/* Optional: Inline Image Upload helper */}
         <div className="border border-[#1A1A1C]/10 bg-white p-6 mb-6">
-          <h3 className="text-xs uppercase tracking-widest text-[#1A1A1C]/50 mb-3">Optional: Upload Images to get URLs</h3>
-          <p className="text-xs text-[#1A1A1C]/60 mb-4">Upload product images here, then copy their URLs to paste into your CSV template columns.</p>
+          <h3 className="text-xs uppercase tracking-widest text-[#1A1A1C]/75 mb-3">Optional: Upload Images to get URLs</h3>
+          <p className="text-xs text-[#1A1A1C]/75 mb-4">Upload product images here, then copy their URLs to paste into your CSV template columns.</p>
           <input
             type="file"
             accept="image/*"
@@ -123,12 +123,12 @@ export function BulkUploadClient() {
               setUploadedAssets((prev) => [...newUrls, ...prev])
               setUploadingAssets(false)
             }}
-            className="text-xs text-[#1A1A1C]/60 file:mr-4 file:py-2 file:px-4 file:border file:border-[#1A1A1C]/15 file:text-xs file:font-semibold file:bg-transparent file:text-[#1A1A1C]/80 file:cursor-pointer hover:file:bg-[#F5F3EF]"
+            className="text-xs text-[#1A1A1C]/75 file:mr-4 file:py-2 file:px-4 file:border file:border-[#1A1A1C]/15 file:text-xs file:font-semibold file:bg-transparent file:text-[#1A1A1C]/80 file:cursor-pointer hover:file:bg-[#F5F3EF]"
           />
           {uploadingAssets && <p className="text-xs text-[#c9a36b] mt-2">Uploading assets...</p>}
           {uploadedAssets.length > 0 && (
             <div className="mt-4 border-t border-[#1A1A1C]/5 pt-4">
-              <h4 className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/40 mb-2">Recent Uploads (Click to copy URL)</h4>
+              <h4 className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/70 mb-2">Recent Uploads (Click to copy URL)</h4>
               <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
                 {uploadedAssets.map((url, idx) => (
                   <div key={idx} className="flex items-center justify-between p-2 border border-[#1A1A1C]/5 text-xs bg-[#F5F3EF]/30">
@@ -151,25 +151,25 @@ export function BulkUploadClient() {
 
         {/* Step 2: Upload CSV */}
         <div className="border border-[#1A1A1C]/10 bg-white p-6 mb-6">
-          <h3 className="text-xs uppercase tracking-widest text-[#1A1A1C]/50 mb-3">Step 2: Upload CSV</h3>
+          <h3 className="text-xs uppercase tracking-widest text-[#1A1A1C]/75 mb-3">Step 2: Upload CSV</h3>
           <input ref={fileRef} type="file" accept=".csv" onChange={onFileChange} className="hidden" />
           <button
             onClick={() => fileRef.current?.click()}
             className="flex items-center gap-3 border-2 border-dashed border-[#1A1A1C]/15 p-8 w-full text-center hover:border-[#c9a36b] transition-colors"
           >
-            <Upload size={20} className="mx-auto text-[#1A1A1C]/30" />
-            <span className="text-sm text-[#1A1A1C]/50">Click to select CSV file</span>
+            <Upload size={20} className="mx-auto text-[#1A1A1C]/75" />
+            <span className="text-sm text-[#1A1A1C]/75">Click to select CSV file</span>
           </button>
         </div>
 
         {/* Step 3: Preview */}
         {rows.length > 0 && !result && (
           <div className="border border-[#1A1A1C]/10 bg-white p-6 mb-6">
-            <h3 className="text-xs uppercase tracking-widest text-[#1A1A1C]/50 mb-3">Step 3: Preview ({rows.length} products)</h3>
+            <h3 className="text-xs uppercase tracking-widest text-[#1A1A1C]/75 mb-3">Step 3: Preview ({rows.length} products)</h3>
             <div className="overflow-x-auto max-h-64 overflow-y-auto">
               <table className="w-full text-xs">
                 <thead className="bg-[#F5F3EF]">
-                  <tr>{headers.slice(0, 6).map((h) => <th key={h} className="px-3 py-2 text-left uppercase tracking-widest text-[#1A1A1C]/40">{h}</th>)}</tr>
+                  <tr>{headers.slice(0, 6).map((h) => <th key={h} className="px-3 py-2 text-left uppercase tracking-widest text-[#1A1A1C]/70">{h}</th>)}</tr>
                 </thead>
                 <tbody>
                   {rows.slice(0, 10).map((r, i) => (
@@ -179,7 +179,7 @@ export function BulkUploadClient() {
                   ))}
                 </tbody>
               </table>
-              {rows.length > 10 && <p className="text-xs text-[#1A1A1C]/40 mt-2">...and {rows.length - 10} more rows</p>}
+              {rows.length > 10 && <p className="text-xs text-[#1A1A1C]/70 mt-2">...and {rows.length - 10} more rows</p>}
             </div>
             <button
               onClick={handleUpload}

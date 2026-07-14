@@ -69,7 +69,7 @@ export function SettingsClient({
       <Sidebar userName={user.name} />
       <main className="flex-1 overflow-y-auto p-8 md:p-12">
         <h1 className="mb-2 font-display text-4xl tracking-tight">Store Settings</h1>
-        <p className="mb-8 text-sm text-[#1A1A1C]/50">Everything here is live on the storefront the moment you save.</p>
+        <p className="mb-8 text-sm text-[#1A1A1C]/75">Everything here is live on the storefront the moment you save.</p>
 
         <form onSubmit={onSubmit} className="max-w-3xl space-y-6">
           <Card title="Brand">
@@ -131,13 +131,13 @@ export function SettingsClient({
               <Field label="Checkout theme color" value={form.payment_razorpay_theme_color ?? "#c9a36b"} onChange={(v) => set("payment_razorpay_theme_color", v)} />
             </Grid2>
             <details className="border border-[#1A1A1C]/10 p-4">
-              <summary className="cursor-pointer text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">Advanced Razorpay endpoints</summary>
+              <summary className="cursor-pointer text-[10px] uppercase tracking-widest text-[#1A1A1C]/75">Advanced Razorpay endpoints</summary>
               <div className="mt-4 grid gap-4">
                 <Field label="Checkout script URL" value={form.payment_razorpay_checkout_script_url ?? ""} onChange={(v) => set("payment_razorpay_checkout_script_url", v)} />
                 <Field label="Orders API URL" value={form.payment_razorpay_orders_api_url ?? ""} onChange={(v) => set("payment_razorpay_orders_api_url", v)} />
               </div>
             </details>
-            <p className="text-xs leading-relaxed text-[#1A1A1C]/50">
+            <p className="text-xs leading-relaxed text-[#1A1A1C]/75">
               Use your Razorpay test account key pair here for test mode. Razorpay decides test vs live from the key pair. Webhook URL: <span className="font-mono">/api/webhooks/razorpay</span>
             </p>
           </Card>
@@ -192,7 +192,7 @@ export function SettingsClient({
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="border border-[#1A1A1C]/10 bg-white p-6">
-      <h3 className="mb-4 text-xs uppercase tracking-widest text-[#1A1A1C]/50">{title}</h3>
+      <h3 className="mb-4 text-xs uppercase tracking-widest text-[#1A1A1C]/75">{title}</h3>
       <div className="space-y-4">{children}</div>
     </div>
   )
@@ -205,7 +205,7 @@ function Grid2({ children }: { children: React.ReactNode }) {
 function Field({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <label className="block">
-      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">{label}</span>
+      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/75">{label}</span>
       <input value={value} onChange={(e) => onChange(e.target.value)}
         className="mt-1 w-full border-b border-[#1A1A1C]/15 bg-transparent py-2 text-sm outline-none focus:border-[#c9a36b]" />
     </label>
@@ -216,7 +216,7 @@ function RupeeField({ label, paise, onChange }: { label: string; paise: string |
   const rupees = paise !== undefined && paise !== "" && Number.isFinite(Number(paise)) ? String(Number(paise) / 100) : ""
   return (
     <label className="block">
-      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">{label} (₹)</span>
+      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/75">{label} (₹)</span>
       <input
         type="number"
         min={0}
@@ -234,7 +234,7 @@ function RupeeField({ label, paise, onChange }: { label: string; paise: string |
 function SecretField({ label, value, configured, onChange }: { label: string; value: string; configured?: boolean; onChange: (v: string) => void }) {
   return (
     <label className="block">
-      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">{label}</span>
+      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/75">{label}</span>
       <input
         type="password"
         value={value}
@@ -250,7 +250,7 @@ function SecretField({ label, value, configured, onChange }: { label: string; va
 function SelectField({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (v: string) => void }) {
   return (
     <label className="block">
-      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">{label}</span>
+      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/75">{label}</span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -276,7 +276,7 @@ function readProviders(raw: string | undefined) {
 function StatusRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between border-b border-[#1A1A1C]/10 py-2 text-sm">
-      <span className="text-[#1A1A1C]/55">{label}</span>
+      <span className="text-[#1A1A1C]/60">{label}</span>
       <span className="font-mono text-[11px] uppercase tracking-widest">{value}</span>
     </div>
   )
@@ -293,7 +293,7 @@ function Textarea({ label, value, onChange, placeholder, rows = 4, mono }: {
 }) {
   return (
     <label className="block">
-      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">{label}</span>
+      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/75">{label}</span>
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}

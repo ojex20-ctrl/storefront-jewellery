@@ -33,7 +33,7 @@ export function OrderStatusChanger({ orderId, current }: { orderId: string; curr
 
   return (
     <div className="border border-[#1A1A1C]/10 bg-white p-5">
-      <p className="mb-3 text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">Update status</p>
+      <p className="mb-3 text-[10px] uppercase tracking-widest text-[#1A1A1C]/75">Update status</p>
       <div className="flex flex-col gap-3">
         <select
           value={status}

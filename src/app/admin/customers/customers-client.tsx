@@ -46,7 +46,7 @@ export function CustomersClient({ customers, user }: { customers: Row[]; user: {
 
         <div className="overflow-x-auto border border-[#1A1A1C]/10 bg-white">
           <table className="w-full text-sm">
-            <thead className="bg-[#F5F3EF] text-xs uppercase tracking-widest text-[#1A1A1C]/50">
+            <thead className="bg-[#F5F3EF] text-xs uppercase tracking-widest text-[#1A1A1C]/75">
               <tr>
                 <th className="px-4 py-3 text-left">Name</th>
                 <th className="px-4 py-3 text-left">Email</th>
@@ -58,7 +58,7 @@ export function CustomersClient({ customers, user }: { customers: Row[]; user: {
             </thead>
             <tbody>
               {filtered.length === 0 && (
-                <tr><td colSpan={6} className="px-4 py-10 text-center text-[#1A1A1C]/40">No customers found.</td></tr>
+                <tr><td colSpan={6} className="px-4 py-10 text-center text-[#1A1A1C]/70">No customers found.</td></tr>
               )}
               {filtered.map((c) => (
                 <tr key={c.id} className="border-t border-[#1A1A1C]/5 hover:bg-[#F5F3EF]/50">
@@ -72,7 +72,7 @@ export function CustomersClient({ customers, user }: { customers: Row[]; user: {
                   <td className="px-4 py-3">{c.phone || "—"}</td>
                   <td className="px-4 py-3">{c.orders}</td>
                   <td className="px-4 py-3">{c.spent ? rupees(c.spent) : "—"}</td>
-                  <td className="px-4 py-3 text-[#1A1A1C]/60">{new Date(c.createdAt).toLocaleDateString()}</td>
+                  <td className="px-4 py-3 text-[#1A1A1C]/75">{new Date(c.createdAt).toLocaleDateString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -86,7 +86,7 @@ export function CustomersClient({ customers, user }: { customers: Row[]; user: {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="border border-[#1A1A1C]/10 bg-white p-4">
-      <p className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">{label}</p>
+      <p className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/75">{label}</p>
       <p className="mt-1 font-display text-2xl">{value}</p>
     </div>
   )

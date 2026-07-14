@@ -42,11 +42,11 @@ export function AdminDashboard({ user, stats, recentOrders }: Props) {
         {/* Recent Orders */}
         <h2 className="font-display text-2xl mb-4">Recent Orders</h2>
         {recentOrders.length === 0 ? (
-          <p className="text-sm text-[#1A1A1C]/50">No orders yet.</p>
+          <p className="text-sm text-[#1A1A1C]/75">No orders yet.</p>
         ) : (
           <div className="border border-[#1A1A1C]/10 bg-white overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-[#F5F3EF] text-xs uppercase tracking-widest text-[#1A1A1C]/50">
+              <thead className="bg-[#F5F3EF] text-xs uppercase tracking-widest text-[#1A1A1C]/75">
                 <tr>
                   <th className="px-4 py-3 text-left">Order</th>
                   <th className="px-4 py-3 text-left">Customer</th>
@@ -69,7 +69,7 @@ export function AdminDashboard({ user, stats, recentOrders }: Props) {
                         "bg-yellow-100 text-yellow-700"
                       }`}>{o.status}</span>
                     </td>
-                    <td className="px-4 py-3 text-[#1A1A1C]/50">{new Date(o.createdAt).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 text-[#1A1A1C]/75">{new Date(o.createdAt).toLocaleDateString()}</td>
                   </tr>
                 ))}
               </tbody>
@@ -84,7 +84,7 @@ export function AdminDashboard({ user, stats, recentOrders }: Props) {
 function StatCard({ label, value, href }: { label: string; value: string | number; href?: string }) {
   const inner = (
     <div className="border border-[#1A1A1C]/10 bg-white p-6 hover:border-[#c9a36b] transition-colors">
-      <p className="text-xs uppercase tracking-widest text-[#1A1A1C]/50 mb-2">{label}</p>
+      <p className="text-xs uppercase tracking-widest text-[#1A1A1C]/75 mb-2">{label}</p>
       <p className="font-display text-3xl">{value}</p>
     </div>
   )

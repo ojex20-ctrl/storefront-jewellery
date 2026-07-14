@@ -15,7 +15,9 @@ import {
 import type { FooterGroup, NavLink } from "./brand-config"
 
 export type AdminNavLink = NavLink & { icon: LucideIcon }
-export type AccountNavLink = NavLink & { key: string }
+export type AccountNavLink = NavLink & { key: string; description: string }
+
+export const MENU_SEARCH_HREF = "/search?quick=1"
 
 export const STOREFRONT_NAV_LINKS: NavLink[] = [
   { href: "/collection", label: "New In" },
@@ -82,13 +84,17 @@ export const ADMIN_NAV_LINKS: AdminNavLink[] = [
 ]
 
 export const ACCOUNT_NAV_LINKS: AccountNavLink[] = [
-  { key: "orders", label: "Orders", href: "/account/orders" },
-  { key: "profile", label: "Profile", href: "/account/profile" },
-  { key: "addresses", label: "Addresses", href: "/account/addresses" },
-  { key: "wishlist", label: "Wishlist", href: "/account/wishlist" },
+  { key: "orders", label: "Order history", href: "/account/orders", description: "Invoices, payment status, and delivery progress" },
+  { key: "profile", label: "Profile management", href: "/account/profile", description: "Name, email, and phone details" },
+  { key: "addresses", label: "Saved addresses", href: "/account/addresses", description: "Shipping addresses for faster checkout" },
+  { key: "wishlist", label: "Wishlist", href: "/account/wishlist", description: "Saved products and favourites" },
+  { key: "track", label: "Track order", href: "/order-track", description: "Look up any order by email and order number" },
+  { key: "security", label: "Password & security", href: "/account/change-password", description: "Change password or recover access" },
+  { key: "support", label: "Support", href: "/contact", description: "Questions, customization, and order help" },
+  { key: "returns", label: "Returns & exchanges", href: "/returns", description: "Return policy and exchange help" },
 ]
 
-export function buildStorefrontNavLinks(configuredLinks?: NavLink[] | null) {
+export function buildStorefrontNavLinks(configuredLinks?: NavLink[] | null, options: { includeSearch?: boolean } = {}) {
   const links: NavLink[] = []
   const addUnique = (link: NavLink) => {
     if (!links.some((item) => item.href === link.href && item.label === link.label)) links.push(link)
@@ -97,6 +103,9 @@ export function buildStorefrontNavLinks(configuredLinks?: NavLink[] | null) {
   addUnique(HOME_NAV_LINK)
   for (const link of configuredLinks?.length ? configuredLinks : STOREFRONT_NAV_LINKS) {
     if (link.href !== "/") addUnique(link)
+  }
+  if (options.includeSearch && !links.some((item) => item.href.split("?")[0] === "/search")) {
+    addUnique({ href: MENU_SEARCH_HREF, label: "Search" })
   }
   for (const link of REQUIRED_STOREFRONT_NAV_LINKS.slice(1)) addUnique(link)
 

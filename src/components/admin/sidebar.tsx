@@ -29,7 +29,7 @@ export function Sidebar({ userName }: { userName?: string }) {
               key={l.href}
               href={l.href}
               className={`flex items-center gap-3 px-3 py-2.5 text-xs uppercase tracking-widest transition-colors rounded ${
-                isActive ? "text-white bg-white/10" : "text-white/60 hover:text-white hover:bg-white/5"
+                isActive ? "text-white bg-white/10" : "text-white/80 hover:text-white hover:bg-white/5"
               }`}
             >
               <l.icon size={16} />
@@ -39,10 +39,10 @@ export function Sidebar({ userName }: { userName?: string }) {
         })}
       </nav>
       <div className="border-t border-white/10 pt-4 mt-4">
-        {userName && <p className="text-[10px] uppercase tracking-widest text-white/40 mb-2 truncate">{userName}</p>}
+        {userName && <p className="text-[10px] uppercase tracking-widest text-white/70 mb-2 truncate">{userName}</p>}
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 text-xs uppercase tracking-widest text-white/40 hover:text-red-400 transition-colors"
+          className="flex items-center gap-2 text-xs uppercase tracking-widest text-white/70 hover:text-red-400 transition-colors"
         >
           <LogOut size={14} /> Sign out
         </button>

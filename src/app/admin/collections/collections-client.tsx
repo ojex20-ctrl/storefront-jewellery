@@ -57,7 +57,7 @@ export function CollectionsClient({
       <main className="flex-1 p-8 md:p-12">
         <div className="mb-8 flex items-center justify-between">
           <h1 className="font-display text-4xl tracking-tight">Collections</h1>
-          <Link href="/admin/products" className="text-xs uppercase tracking-widest text-[#1A1A1C]/50 hover:text-[#c9a36b]">Products</Link>
+          <Link href="/admin/products" className="text-xs uppercase tracking-widest text-[#1A1A1C]/75 hover:text-[#c9a36b]">Products</Link>
         </div>
         <section className="mb-8 grid gap-4 border border-[#1A1A1C]/10 bg-white p-6 md:grid-cols-5">
           <Field label="Name" value={draft.name} onChange={(name) => setDraft({ ...draft, name })} />
@@ -71,7 +71,7 @@ export function CollectionsClient({
         </section>
         <div className="overflow-hidden border border-[#1A1A1C]/10 bg-white">
           <table className="w-full text-sm">
-            <thead className="bg-[#F5F3EF] text-xs uppercase tracking-widest text-[#1A1A1C]/50">
+            <thead className="bg-[#F5F3EF] text-xs uppercase tracking-widest text-[#1A1A1C]/75">
               <tr>
                 <th className="px-4 py-3 text-left">Name</th>
                 <th className="px-4 py-3 text-left">Slug</th>
@@ -101,7 +101,7 @@ export function CollectionsClient({
 function Field({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   return (
     <label className="block">
-      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">{label}</span>
+      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/75">{label}</span>
       <input value={value} onChange={(e) => onChange(e.target.value)} className="mt-1 w-full border-b border-[#1A1A1C]/15 bg-transparent py-2 text-sm outline-none focus:border-[#c9a36b]" />
     </label>
   )

@@ -30,13 +30,13 @@ export function OrdersListClient({ orders }: { orders: Order[] }) {
 
         {orders.length === 0 ? (
           <div className="border border-[#1A1A1C]/10 bg-white p-12 text-center">
-            <ShoppingBag size={32} className="mx-auto text-[#1A1A1C]/20 mb-4" />
-            <p className="text-sm text-[#1A1A1C]/50">No orders yet. They&apos;ll appear here when customers place orders.</p>
+            <ShoppingBag size={32} className="mx-auto text-[#1A1A1C]/60 mb-4" />
+            <p className="text-sm text-[#1A1A1C]/75">No orders yet. They&apos;ll appear here when customers place orders.</p>
           </div>
         ) : (
           <div className="border border-[#1A1A1C]/10 bg-white overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-[#F5F3EF] text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">
+              <thead className="bg-[#F5F3EF] text-[10px] uppercase tracking-widest text-[#1A1A1C]/75">
                 <tr>
                   <th className="px-4 py-3 text-left">Order</th>
                   <th className="px-4 py-3 text-left">Customer</th>
@@ -54,7 +54,7 @@ export function OrdersListClient({ orders }: { orders: Order[] }) {
                     </td>
                     <td className="px-4 py-3">
                       <p>{o.firstName} {o.lastName}</p>
-                      <p className="text-[10px] text-[#1A1A1C]/40">{o.email}</p>
+                      <p className="text-[10px] text-[#1A1A1C]/70">{o.email}</p>
                     </td>
                     <td className="px-4 py-3 font-mono">₹{(o.total / 100).toLocaleString()}</td>
                     <td className="px-4 py-3">
@@ -77,7 +77,7 @@ export function OrdersListClient({ orders }: { orders: Order[] }) {
                         <option value="cancelled">Cancelled</option>
                       </select>
                     </td>
-                    <td className="px-4 py-3 text-[#1A1A1C]/50">{new Date(o.createdAt).toLocaleDateString()}</td>
+                    <td className="px-4 py-3 text-[#1A1A1C]/75">{new Date(o.createdAt).toLocaleDateString()}</td>
                   </tr>
                 ))}
               </tbody>

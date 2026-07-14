@@ -94,17 +94,25 @@ export function AccountClient() {
 
       <div className="grid grid-cols-1 gap-12 md:grid-cols-[1fr_2fr] md:gap-16">
         <aside>
-          <Eyebrow className="mb-3.5 block">Menu</Eyebrow>
-          {ACCOUNT_NAV_LINKS.map((m) => (
-            <Link key={m.key} href={m.href} className="group flex w-full items-center justify-between border-b border-line py-3.5 text-left text-sm text-ink transition-colors hover:text-accent">
-              <span>{m.label}</span>
-              <span>{"->"}</span>
-            </Link>
-          ))}
-          <Link href="/account/change-password" className="group flex w-full items-center justify-between border-b border-line py-3.5 text-left text-sm text-ink transition-colors hover:text-accent">
-            <span>Change password</span>
-            <span>{"->"}</span>
-          </Link>
+          <Eyebrow className="mb-3.5 block">Account menu</Eyebrow>
+          <div className="border border-line bg-bg-2 p-2">
+            {ACCOUNT_NAV_LINKS.map((m, index) => (
+              <motion.div
+                key={m.key}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: index * 0.025 }}
+              >
+                <Link href={m.href} className="group flex w-full items-start justify-between border-b border-line px-3 py-3.5 text-left transition-colors last:border-b-0 hover:bg-bg hover:text-accent">
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-medium text-ink group-hover:text-accent">{m.label}</span>
+                    <span className="mt-1 block text-[12px] leading-5 text-muted">{m.description}</span>
+                  </span>
+                  <span className="ml-3 font-mono text-[11px] text-muted group-hover:text-accent">{"->"}</span>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
           {recentlyViewed.length > 0 && (
             <div className="border-b border-line py-3.5">
               <span className="text-sm text-ink">Recently viewed</span>
@@ -122,15 +130,15 @@ export function AccountClient() {
               </div>
             </div>
           )}
-          <button onClick={handleSignOut} className="group flex w-full items-center justify-between border-b border-line py-3.5 text-left text-sm text-muted transition-colors hover:text-accent">
-            <span>Sign out</span>
+          <button onClick={handleSignOut} className="mt-3 flex w-full items-center justify-between border border-line px-3 py-3.5 text-left text-sm text-muted transition-colors hover:border-accent hover:text-accent">
+            <span>Logout</span>
             <span>{"->"}</span>
           </button>
         </aside>
 
         <div>
           {loyalty && (
-            <div className="mb-8 grid grid-cols-1 border border-line md:grid-cols-3">
+            <div id="rewards" className="mb-8 grid grid-cols-1 border border-line md:grid-cols-3">
               <Metric label="Rewards" value={`${loyalty.rewards.points} pts`} sub={loyalty.rewards.tier} />
               <Metric label="Store Credits" value={priceFmt(loyalty.storeCredits)} sub="Available" />
               <Metric label="Referral" value={loyalty.referralCode} sub="Share with friends" />

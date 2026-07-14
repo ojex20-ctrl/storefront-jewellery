@@ -79,7 +79,7 @@ export function ProductsListClient({ products, user }: { products: Product[]; us
 
         <div className="products-table border border-[#1A1A1C]/10 bg-white overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-[#F5F3EF] text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">
+            <thead className="bg-[#F5F3EF] text-[10px] uppercase tracking-widest text-[#1A1A1C]/75">
               <tr>
                 <th className="px-4 py-3 text-left w-10">
                   <input
@@ -127,18 +127,18 @@ export function ProductsListClient({ products, user }: { products: Product[]; us
                       )}
                       <div>
                         <p className="font-medium">{p.name}</p>
-                        <p className="text-[10px] text-[#1A1A1C]/40">{p.slug}</p>
+                        <p className="text-[10px] text-[#1A1A1C]/70">{p.slug}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-[#1A1A1C]/60">{p.kind}</td>
+                  <td className="px-4 py-3 text-[#1A1A1C]/75">{p.kind}</td>
                   <td className="px-4 py-3 font-mono">₹{(p.price / 100).toLocaleString()}</td>
                   <td className="px-4 py-3">
                     {p.tag && <span className="bg-[#c9a36b]/10 text-[#c9a36b] px-2 py-0.5 text-[10px] uppercase tracking-widest">{p.tag}</span>}
                   </td>
                   <td className="px-4 py-3">
                     <button onClick={() => togglePublish(p.id, p.published)} className="text-[10px] uppercase tracking-widest">
-                      {p.published ? <span className="text-green-600 flex items-center gap-1"><Eye size={12} /> Live</span> : <span className="text-[#1A1A1C]/40 flex items-center gap-1"><EyeOff size={12} /> Draft</span>}
+                      {p.published ? <span className="text-green-600 flex items-center gap-1"><Eye size={12} /> Live</span> : <span className="text-[#1A1A1C]/70 flex items-center gap-1"><EyeOff size={12} /> Draft</span>}
                     </button>
                   </td>
                   <td className="px-4 py-3 text-right">
@@ -147,7 +147,7 @@ export function ProductsListClient({ products, user }: { products: Product[]; us
                       <button
                         onClick={() => handleDelete(p.id)}
                         disabled={deleting === p.id}
-                        className="text-[#1A1A1C]/30 hover:text-red-500 transition-colors"
+                        className="text-[#1A1A1C]/75 hover:text-red-500 transition-colors"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -173,7 +173,7 @@ export function ProductsListClient({ products, user }: { products: Product[]; us
                 <p className="mt-1 text-[10px] uppercase tracking-widest text-[#1A1A1C]/45">{p.kind}</p>
                 <p className="mt-2 font-mono text-sm">₹{(p.price / 100).toLocaleString()}</p>
                 <button onClick={() => togglePublish(p.id, p.published)} className="mt-2 text-[10px] uppercase tracking-widest">
-                  {p.published ? <span className="text-green-600 flex items-center gap-1"><Eye size={12} /> Live</span> : <span className="text-[#1A1A1C]/40 flex items-center gap-1"><EyeOff size={12} /> Draft</span>}
+                  {p.published ? <span className="text-green-600 flex items-center gap-1"><Eye size={12} /> Live</span> : <span className="text-[#1A1A1C]/70 flex items-center gap-1"><EyeOff size={12} /> Draft</span>}
                 </button>
               </div>
               <div className="mobile-product-actions">

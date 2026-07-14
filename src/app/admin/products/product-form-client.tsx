@@ -329,7 +329,7 @@ export function ProductFormClient({ product }: { product: Product | null }) {
       <main className="admin-content flex-1 p-8 md:p-12 overflow-y-auto">
         <div className="admin-page-header flex items-center justify-between mb-8 border-b border-[#1A1A1C]/10 pb-4">
           <div>
-            <Link href="/admin/products" className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-[#1A1A1C]/50 hover:text-[#1A1A1C] mb-2">
+            <Link href="/admin/products" className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-[#1A1A1C]/75 hover:text-[#1A1A1C] mb-2">
               <ArrowLeft size={14} /> Back to products
             </Link>
             <h1 className="font-display text-4xl tracking-tight">{isEdit ? "Edit Product" : "New Products"}</h1>
@@ -444,14 +444,14 @@ export function ProductFormClient({ product }: { product: Product | null }) {
                         placeholder="/uploads/gallery/ring-1.jpg, /uploads/gallery/ring-2.jpg"
                       />
                       <div className="flex items-center gap-2 mt-2">
-                        <span className="text-[9px] text-[#1A1A1C]/50 uppercase tracking-widest">Or Upload Up To 6 Files:</span>
+                        <span className="text-[9px] text-[#1A1A1C]/75 uppercase tracking-widest">Or Upload Up To 6 Files:</span>
                         <input
                           type="file"
                           accept="image/*"
                           multiple
                           onChange={(e) => handleImagesUpload(index, e.target.files)}
                           disabled={form.images.length >= 6}
-                          className="text-xs text-[#1A1A1C]/60 file:mr-3 file:py-1 file:px-2 file:border file:border-[#1A1A1C]/15 file:text-[9px] file:uppercase file:tracking-widest file:bg-transparent file:text-[#1A1A1C]/80 file:cursor-pointer hover:file:bg-[#F5F3EF] disabled:opacity-30"
+                          className="text-xs text-[#1A1A1C]/75 file:mr-3 file:py-1 file:px-2 file:border file:border-[#1A1A1C]/15 file:text-[9px] file:uppercase file:tracking-widest file:bg-transparent file:text-[#1A1A1C]/80 file:cursor-pointer hover:file:bg-[#F5F3EF] disabled:opacity-30"
                         />
                       </div>
                     </div>
@@ -619,7 +619,7 @@ export function ProductFormClient({ product }: { product: Product | null }) {
                         <span className="truncate max-w-[130px] font-semibold text-[#1A1A1C]/90">
                           {f.name.trim() || `Product #${i + 1}`}
                         </span>
-                        <span className="font-mono text-[10px] text-[#1A1A1C]/60 shrink-0">
+                        <span className="font-mono text-[10px] text-[#1A1A1C]/75 shrink-0">
                           ₹{((parseInt(f.price) || 0) / 100).toLocaleString()}
                         </span>
                       </li>
@@ -646,7 +646,7 @@ export function ProductFormClient({ product }: { product: Product | null }) {
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="border border-[#1A1A1C]/10 bg-white p-6">
-      <h3 className="text-xs uppercase tracking-widest text-[#1A1A1C]/50 mb-4">{title}</h3>
+      <h3 className="text-xs uppercase tracking-widest text-[#1A1A1C]/75 mb-4">{title}</h3>
       <div className="space-y-4">{children}</div>
     </div>
   )
@@ -657,7 +657,7 @@ function Field({ label, value, onChange, type = "text", placeholder, required }:
 }) {
   return (
     <label className="block">
-      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">{label}</span>
+      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/75">{label}</span>
       <input type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} required={required}
         className="mt-1 w-full border-b border-[#1A1A1C]/15 bg-transparent py-2 text-sm outline-none focus:border-[#c9a36b]" />
     </label>
@@ -667,7 +667,7 @@ function Field({ label, value, onChange, type = "text", placeholder, required }:
 function TextArea({ label, value, onChange, rows = 3 }: { label: string; value: string; onChange: (v: string) => void; rows?: number }) {
   return (
     <label className="block">
-      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">{label}</span>
+      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/75">{label}</span>
       <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={rows}
         className="mt-1 w-full border border-[#1A1A1C]/10 bg-transparent p-2 text-sm outline-none focus:border-[#c9a36b] resize-y" />
     </label>
@@ -679,7 +679,7 @@ function ScrollableCheckboxGroup({ label, values, options, onChange }: { label: 
   const summary = values.length > 0 ? values.join(", ") : `Select ${displayLabel}`
   return (
     <div className="block">
-      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">{displayLabel}</span>
+      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/75">{displayLabel}</span>
       <details className="admin-multiselect mt-1 rounded-sm border border-[#1A1A1C]/10 bg-white">
         <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-xs text-[#1A1A1C]">
           <span className="min-w-0 truncate">{summary}</span>

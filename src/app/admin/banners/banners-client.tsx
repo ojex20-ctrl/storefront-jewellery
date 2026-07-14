@@ -60,8 +60,8 @@ export function BannersClient({ banners }: { banners: Banner[] }) {
 
         {banners.length === 0 && (
           <div className="border border-[#1A1A1C]/10 bg-white p-12 text-center">
-            <ImageIcon size={32} className="mx-auto text-[#1A1A1C]/20 mb-4" />
-            <p className="text-sm text-[#1A1A1C]/50">No banners yet. Add one to get started.</p>
+            <ImageIcon size={32} className="mx-auto text-[#1A1A1C]/60 mb-4" />
+            <p className="text-sm text-[#1A1A1C]/75">No banners yet. Add one to get started.</p>
           </div>
         )}
       </main>
@@ -83,9 +83,9 @@ function BannerEditor({ banner, saving, onSave, onDelete }: {
             <input type="checkbox" checked={form.published} onChange={(e) => set("published", e.target.checked)} className="accent-[#c9a36b]" />
             Published
           </label>
-          <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/40">{form.position} · {form.page}</span>
+          <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/70">{form.position} · {form.page}</span>
         </div>
-        <button onClick={onDelete} className="text-[#1A1A1C]/30 hover:text-red-500"><Trash2 size={14} /></button>
+        <button onClick={onDelete} className="text-[#1A1A1C]/75 hover:text-red-500"><Trash2 size={14} /></button>
       </div>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Field label="Title" value={form.title} onChange={(v) => set("title", v)} />
@@ -110,7 +110,7 @@ function BannerEditor({ banner, saving, onSave, onDelete }: {
 function Field({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
     <label className="block">
-      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/50">{label}</span>
+      <span className="text-[10px] uppercase tracking-widest text-[#1A1A1C]/75">{label}</span>
       <input value={value} onChange={(e) => onChange(e.target.value)}
         className="mt-1 w-full border-b border-[#1A1A1C]/15 bg-transparent py-2 text-sm outline-none focus:border-[#c9a36b]" />
     </label>

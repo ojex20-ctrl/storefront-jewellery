@@ -38,12 +38,12 @@ export default function AdminLoginPage() {
       <form onSubmit={onSubmit} className="w-full max-w-sm space-y-6 p-8">
         <div className="text-center">
           <h1 className="font-display text-3xl text-white tracking-tight">SYRA Admin</h1>
-          <p className="mt-2 text-sm text-white/50">Sign in to manage your store</p>
+          <p className="mt-2 text-sm text-white/75">Sign in to manage your store</p>
         </div>
         {error && <p className="text-center text-sm text-red-400">{error}</p>}
         <div className="space-y-4">
           <label className="block">
-            <span className="text-xs uppercase tracking-widest text-white/40">Username or Email</span>
+            <span className="text-xs uppercase tracking-widest text-white/70">Username or Email</span>
             <input
               type="text"
               value={email}
@@ -53,7 +53,7 @@ export default function AdminLoginPage() {
             />
           </label>
           <label className="block">
-            <span className="text-xs uppercase tracking-widest text-white/40">Password</span>
+            <span className="text-xs uppercase tracking-widest text-white/70">Password</span>
             <input
               type="password"
               value={password}

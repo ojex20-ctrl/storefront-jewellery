@@ -4,10 +4,11 @@ import { AnimatePresence, motion } from "framer-motion"
 import { Nav, Footer } from "@podium/ui/chrome"
 import { priceFmt } from "@podium/ui/lib"
 import { useCartStore } from "@/stores/cart-store"
+import { AccountMenu } from "./account-menu"
 import { SearchTrigger } from "./search-trigger"
 import { ThemeToggle } from "./theme-toggle"
 import type { BrandConfig } from "@/lib/brand-config"
-import { buildStorefrontNavLinks, STOREFRONT_FOOTER_GROUPS } from "@/lib/navigation"
+import { buildStorefrontNavLinks, MENU_SEARCH_HREF, STOREFRONT_FOOTER_GROUPS } from "@/lib/navigation"
 
 /**
  * Perfumes chrome — every piece of copy / link / flag comes from `brand`.
@@ -29,7 +30,9 @@ export function SiteChrome({
   const setCartOpen = useCartStore((s) => s.setOpen)
 
   const tagline = brand.tagline ?? "Rentals and Jewels,|worn for the moment."
-  const navLinks = buildStorefrontNavLinks(brand.nav_links)
+  const flags = brand.feature_flags ?? {}
+  const enableSearch = flags.enable_search !== false
+  const navLinks = buildStorefrontNavLinks(brand.nav_links, { includeSearch: enableSearch })
   const footerGroups = brand.footer_groups ?? STOREFRONT_FOOTER_GROUPS
   const computedFooterGroups = brand.social_links?.instagram
     ? [
@@ -47,8 +50,6 @@ export function SiteChrome({
   const copyright =
     brand.footer_copyright ?? `© ${new Date().getFullYear()} ${brand.brand_name}`
 
-  const flags = brand.feature_flags ?? {}
-  const enableSearch = flags.enable_search !== false
   const enableTransitions = flags.enable_route_transitions !== false
   const showAnnouncement =
     (flags.enable_announcement_bar ?? false) &&
@@ -79,8 +80,9 @@ export function SiteChrome({
         cartBumping={cartBumping}
         onCartClick={() => setCartOpen(true)}
       />
+      {enableSearch && <SearchTrigger renderButton={false} listenForHref={MENU_SEARCH_HREF} />}
+      <AccountMenu />
       <div className="fixed bottom-5 left-5 z-[120] flex items-center gap-1 border border-line bg-bg/92 p-1 text-ink shadow-xl backdrop-blur md:left-6">
-        {enableSearch && <SearchTrigger />}
         <ThemeToggle />
       </div>
 
