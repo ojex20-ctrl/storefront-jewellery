@@ -59,61 +59,15 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
     setLoading(true)
     const handle = setTimeout(async () => {
       try {
-        const backend = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL
-        const key = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
-        if (backend && key) {
-          const resp = await fetch(
-            `${backend}/store/products?q=${encodeURIComponent(q)}&limit=12&fields=handle,title,thumbnail,metadata,*variants.prices`,
-            { headers: { "x-publishable-api-key": key } },
-          )
-          if (resp.ok) {
-            type MedusaProduct = {
-              handle: string
-              title: string
-              thumbnail?: string
-              variants?: { prices?: { amount: number; currency_code: string }[] }[]
-              metadata?: { kind?: string }
-            }
-            const data = (await resp.json()) as { products: MedusaProduct[] }
-            const hits = data.products.map<Hit>((p) => ({
-              id: p.handle,
-              name: p.title,
-              category: p.metadata?.kind ?? "Piece",
-              price:
-                p.variants?.[0]?.prices?.find((x) => x.currency_code === "aed")?.amount ?? 0,
-              image: p.thumbnail,
-            }))
-            setResults(hits)
-            setLoading(false)
-            return
-          }
-        }
-      } catch {
-        /* fall through */
-      }
-
-      // ─── LOCAL FALLBACK ───
-      // If backend fails, we try searching the mock data locally.
-      // This is essential for a "fully working" demo without a live DB.
-      try {
-        const { MOCK_PRODUCTS } = await import("@/lib/mock-data")
-        const lowerQ = q.toLowerCase()
-        const hits = MOCK_PRODUCTS.filter(p => 
-          p.name.toLowerCase().includes(lowerQ) || 
-          p.kind.toLowerCase().includes(lowerQ) ||
-          p.desc.toLowerCase().includes(lowerQ)
-        ).map(p => ({
-          id: p.id,
-          name: p.name,
-          category: p.kind,
-          price: p.price,
-          image: p.image
-        }))
-        setResults(hits)
+        const resp = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=12`, { cache: "no-store" })
+        if (!resp.ok) throw new Error("Search failed")
+        const data = (await resp.json()) as { results: Hit[] }
+        setResults(data.results)
       } catch {
         setResults([])
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }, 200)
     return () => clearTimeout(handle)
   }, [q])

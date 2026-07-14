@@ -2,8 +2,6 @@ import { NextResponse, type NextRequest } from "next/server"
 
 const ADMIN_COOKIE = "syra_admin_token"
 const LEGACY_ADMIN_COOKIE = "admin_token"
-const CUSTOMER_COOKIE = "syra_customer_token"
-const LEGACY_CUSTOMER_COOKIE = "customer_token"
 
 function redirectTarget(req: NextRequest, path: string) {
   const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || req.nextUrl.host
@@ -16,6 +14,10 @@ export async function middleware(req: NextRequest) {
 
   if (pathname.startsWith("/admin/login") || pathname.startsWith("/admin/logout")) {
     return NextResponse.next()
+  }
+
+  if (pathname.startsWith("/api/auth")) {
+    return NextResponse.json({ error: "Customer login is disabled" }, { status: 410 })
   }
 
   if (req.method === "GET" && pathname.startsWith("/products/")) {
@@ -44,26 +46,20 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next()
   }
 
-  const publicAccountRoutes = [
-    "/account/login",
-    "/account/register",
-    "/account/forgot-password",
-    "/account/reset-password",
-    "/account/verify",
-    "/account/logout",
+  const customerAuthRoutes = [
+    "/account",
+    "/login",
+    "/register",
+    "/forgot-password",
+    "/reset-password",
   ]
-  if (publicAccountRoutes.some((route) => pathname.startsWith(route))) {
-    return NextResponse.next()
-  }
-
-  if (pathname.startsWith("/account")) {
-    const hasCustomer = Boolean(req.cookies.get(CUSTOMER_COOKIE)?.value || req.cookies.get(LEGACY_CUSTOMER_COOKIE)?.value)
-    if (!hasCustomer) return NextResponse.redirect(redirectTarget(req, `/account/login?next=${encodeURIComponent(pathname + search)}`))
+  if (customerAuthRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`))) {
+    return NextResponse.redirect(redirectTarget(req, "/order-track"))
   }
 
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/account/:path*", "/products/:path*"],
+  matcher: ["/admin/:path*", "/account/:path*", "/products/:path*", "/login", "/register", "/forgot-password", "/reset-password", "/api/auth/:path*"],
 }

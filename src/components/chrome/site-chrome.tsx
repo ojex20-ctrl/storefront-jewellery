@@ -27,7 +27,7 @@ export function SiteChrome({
   const setCartOpen = useCartStore((s) => s.setOpen)
 
   const tagline = brand.tagline ?? "Rentals and Jewels,|worn for the moment."
-  const navLinks = brand.nav_links ?? [
+  const defaultNavLinks = [
     { href: "/collection", label: "New In" },
     { href: "/collection", label: "All Products" },
     { href: "/collection?kind=Ring", label: "Rings" },
@@ -36,6 +36,17 @@ export function SiteChrome({
     { href: "/collection?kind=Bracelet", label: "Bracelets" },
     { href: "/collection", label: "Signature Collection" },
   ]
+  const configuredNavLinks = brand.nav_links ?? defaultNavLinks
+  const navLinks = [
+    { href: "/", label: "Home" },
+    ...configuredNavLinks.filter((link) => link.href !== "/"),
+  ]
+  for (const link of [
+    { href: "/search", label: "Search" },
+    { href: "/order-track", label: "Track Order" },
+  ]) {
+    if (!navLinks.some((item) => item.href === link.href)) navLinks.push(link)
+  }
   const footerGroups = brand.footer_groups ?? [
     { title: "Shop", links: [
       { href: "/collection", label: "All Pieces" },
@@ -99,11 +110,19 @@ export function SiteChrome({
       <Nav
         brand={brand.brand_name}
         links={navLinks}
-        activeHref={navLinks.find((l) => pathname.startsWith(l.href))?.href}
+        activeHref={navLinks.find((l) => {
+          const baseHref = l.href.split("?")[0] || l.href
+          return l.href === "/" ? pathname === "/" : pathname.startsWith(baseHref)
+        })?.href}
         cartCount={cartCount}
         cartBumping={cartBumping}
         onCartClick={() => setCartOpen(true)}
       />
+      {enableSearch && (
+        <div className="fixed right-[5.25rem] top-4 z-[120] hidden border border-line bg-bg/90 px-3 py-2 text-ink shadow-xl backdrop-blur md:block">
+          <SearchTrigger />
+        </div>
+      )}
 
       {enableTransitions ? (
         <AnimatePresence mode="wait">

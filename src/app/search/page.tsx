@@ -1,19 +1,19 @@
 import { Suspense } from "react"
-import { CollectionClient } from "../collection/collection-client"
 import { fetchProducts } from "@/lib/medusa-products"
+import { SearchClient } from "./search-client"
 
 export const metadata = { title: "Search — SYRA" }
 
-/**
- * /search reuses the collection client — the listing already binds its
- * filter state to URL params (including `?q=…`), so the same UI doubles
- * as both an A-Z catalogue and a search results page.
- */
-export default async function SearchPage() {
+export default async function SearchPage({
+  searchParams,
+}: {
+  searchParams: { q?: string | string[] }
+}) {
   const products = await fetchProducts()
+  const q = Array.isArray(searchParams.q) ? searchParams.q[0] ?? "" : searchParams.q ?? ""
   return (
     <Suspense>
-      <CollectionClient products={products} />
+      <SearchClient products={products} initialQuery={q} />
     </Suspense>
   )
 }

@@ -26,7 +26,7 @@ import {
   type Stone,
 } from "@/lib/products"
 
-type Props = { product: Product; related: Product[] }
+type Props = { product: Product; related: Product[]; freeShippingThreshold: number }
 
 function uniqueImages(product: Product) {
   const seen = new Set<string>()
@@ -49,7 +49,7 @@ function usefulDescription(product: Product) {
   return product.desc?.trim() || product.caption?.trim() || `${product.name} is a SYRA ${product.kind.toLowerCase()} designed for everyday styling.`
 }
 
-export function ProductDetailClient({ product, related }: Props) {
+export function ProductDetailClient({ product, related, freeShippingThreshold }: Props) {
   const params = useSearchParams()
   const add = useCartStore((s) => s.add)
   const customer = useAuthStore((s) => s.customer)
@@ -106,18 +106,15 @@ export function ProductDetailClient({ product, related }: Props) {
   const description = usefulDescription(product)
   const material = product.material || product.metals.join(", ") || "Anti-tarnish plated jewellery"
   const compareAt = product.compareAtPrice && product.compareAtPrice > product.price ? product.compareAtPrice : null
-  const qualifiesMysteryGift = product.price >= 59900
-  const qualifiesOrganiser = product.price >= 199900
-
   return (
-    <div className="min-h-screen bg-white text-[#0A0A0A]">
-      <div className="border-b border-gray-100 px-5 py-4 md:px-12">
-        <nav className="flex flex-wrap items-center gap-2 text-[12px] text-gray-500">
-          <Link href="/" className="hover:text-black">Home</Link>
+    <div className="min-h-screen bg-bg text-ink">
+      <div className="border-b border-line px-5 py-4 md:px-12">
+        <nav className="flex flex-wrap items-center gap-2 text-[12px] text-muted">
+          <Link href="/" className="hover:text-accent">Home</Link>
           <span>/</span>
-          <Link href={`/collection?kind=${encodeURIComponent(product.kind)}`} className="hover:text-black">{product.kind}</Link>
+          <Link href={`/collection?kind=${encodeURIComponent(product.kind)}`} className="hover:text-accent">{product.kind}</Link>
           <span>/</span>
-          <span className="text-black">{product.name}</span>
+          <span className="text-ink">{product.name}</span>
         </nav>
       </div>
 
@@ -131,8 +128,8 @@ export function ProductDetailClient({ product, related }: Props) {
                     key={src}
                     type="button"
                     onClick={() => setActiveImg(index)}
-                    className={`relative h-16 w-16 shrink-0 overflow-hidden border bg-gray-50 md:h-[76px] md:w-[76px] ${
-                      activeImg === index ? "border-black" : "border-gray-200"
+                    className={`relative h-16 w-16 shrink-0 overflow-hidden border bg-bg-2 md:h-[76px] md:w-[76px] ${
+                      activeImg === index ? "border-accent" : "border-line"
                     }`}
                     aria-label={`Show image ${index + 1}`}
                   >
@@ -142,7 +139,7 @@ export function ProductDetailClient({ product, related }: Props) {
               </div>
             )}
 
-            <div className="relative order-1 aspect-[4/5] overflow-hidden bg-gray-50 md:order-2">
+            <div className="relative order-1 aspect-[4/5] overflow-hidden bg-bg-2 md:order-2">
               <OptimizedImage
                 src={gallery[activeImg] ?? product.image}
                 alt={product.name}
@@ -157,24 +154,24 @@ export function ProductDetailClient({ product, related }: Props) {
           <div className="space-y-3">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="font-mono text-[11px] uppercase tracking-widest text-gray-500">{product.kind}</p>
+                <p className="font-mono text-[11px] uppercase tracking-widest text-muted">{product.kind}</p>
                 <h1 className="mt-2 font-display text-3xl leading-tight tracking-tight md:text-4xl">{product.name}</h1>
               </div>
               <ProductActions productId={product.id} />
             </div>
 
-            {product.caption && <p className="text-sm leading-6 text-gray-600">{product.caption}</p>}
+            {product.caption && <p className="text-sm leading-6 text-muted">{product.caption}</p>}
 
             <div className="flex flex-wrap items-end gap-3">
               <span className="text-2xl font-semibold">{priceFmt(product.price)}</span>
-              {compareAt && <span className="pb-1 text-sm text-gray-400 line-through">{priceFmt(compareAt)}</span>}
+              {compareAt && <span className="pb-1 text-sm text-muted line-through">{priceFmt(compareAt)}</span>}
               <span className={`pb-1 text-xs uppercase tracking-widest ${unavailable ? "text-red-600" : "text-emerald-700"}`}>
                 {unavailable ? "Out of stock" : product.tag === "LOW STOCK" ? "Low stock" : "In stock"}
               </span>
             </div>
           </div>
 
-          <div className="space-y-4 border-y border-gray-100 py-5">
+          <div className="space-y-4 border-y border-line py-5">
             {product.metals.length > 0 && (
               <OptionGroup label="Color / finish">
                 {product.metals.map((item) => (
@@ -182,7 +179,7 @@ export function ProductDetailClient({ product, related }: Props) {
                     key={item}
                     type="button"
                     onClick={() => setMetal(item)}
-                    className={`border px-4 py-2 text-xs transition ${metal === item ? "border-black bg-black text-white" : "border-gray-300 hover:border-black"}`}
+                    className={`border px-4 py-2 text-xs transition ${metal === item ? "border-accent bg-accent text-bg" : "border-line hover:border-accent"}`}
                   >
                     {item}
                   </button>
@@ -197,7 +194,7 @@ export function ProductDetailClient({ product, related }: Props) {
                     key={item}
                     type="button"
                     onClick={() => setStone(item)}
-                    className={`inline-flex items-center gap-2 border px-4 py-2 text-xs transition ${stone === item ? "border-black" : "border-gray-300 hover:border-black"}`}
+                    className={`inline-flex items-center gap-2 border px-4 py-2 text-xs transition ${stone === item ? "border-accent bg-accent-soft" : "border-line hover:border-accent"}`}
                   >
                     <span className="h-3 w-3 rounded-full border" style={{ background: STONE_HEX[item] }} />
                     {item}
@@ -213,7 +210,7 @@ export function ProductDetailClient({ product, related }: Props) {
                     key={item}
                     type="button"
                     onClick={() => setSize(item)}
-                    className={`h-10 min-w-10 border px-3 text-sm transition ${size === item ? "border-black bg-black text-white" : "border-gray-300 hover:border-black"}`}
+                    className={`h-10 min-w-10 border px-3 text-sm transition ${size === item ? "border-accent bg-accent text-bg" : "border-line hover:border-accent"}`}
                   >
                     {item}
                   </button>
@@ -222,11 +219,11 @@ export function ProductDetailClient({ product, related }: Props) {
             )}
 
             <div>
-              <p className="mb-2 font-mono text-[11px] uppercase tracking-widest text-gray-500">Quantity</p>
-              <div className="inline-grid grid-cols-[40px_48px_40px] items-center border border-gray-300">
-                <button type="button" onClick={() => setQty((value) => Math.max(1, value - 1))} className="h-10 text-lg hover:bg-gray-50" aria-label="Decrease quantity">-</button>
+              <p className="mb-2 font-mono text-[11px] uppercase tracking-widest text-muted">Quantity</p>
+              <div className="inline-grid grid-cols-[40px_48px_40px] items-center border border-line">
+                <button type="button" onClick={() => setQty((value) => Math.max(1, value - 1))} className="h-10 text-lg hover:bg-bg-2" aria-label="Decrease quantity">-</button>
                 <span className="text-center text-sm font-medium">{qty}</span>
-                <button type="button" onClick={() => setQty((value) => value + 1)} className="h-10 text-lg hover:bg-gray-50" aria-label="Increase quantity">+</button>
+                <button type="button" onClick={() => setQty((value) => value + 1)} className="h-10 text-lg hover:bg-bg-2" aria-label="Increase quantity">+</button>
               </div>
             </div>
           </div>
@@ -235,20 +232,19 @@ export function ProductDetailClient({ product, related }: Props) {
             type="button"
             onClick={addToCart}
             disabled={unavailable}
-            className="w-full bg-black px-6 py-4 text-sm font-semibold uppercase tracking-widest text-white transition hover:bg-accent disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-600"
+            className="w-full bg-ink px-6 py-4 text-sm font-semibold uppercase tracking-widest text-bg transition hover:bg-accent disabled:cursor-not-allowed disabled:bg-line disabled:text-muted"
           >
             {unavailable ? "Out of Stock" : "Add to Cart"}
           </button>
 
           {unavailable && <BackInStock productId={product.id} />}
 
-          <div className="space-y-2 border border-gray-200 p-4">
-            <p className="text-sm">Free shipping over {priceFmt(500)}</p>
-            {qualifiesMysteryGift && <p className="text-sm">Gift offer available for this product.</p>}
-            {qualifiesOrganiser && <p className="text-sm">Premium organiser offer available at checkout.</p>}
+          <div className="space-y-2 border border-line bg-paper p-4">
+            <p className="text-sm">Free shipping over {priceFmt(freeShippingThreshold)}</p>
+            <p className="text-sm text-muted">Order status, totals, and shipment updates are available after checkout.</p>
           </div>
 
-          <div className="grid grid-cols-1 gap-3 text-sm text-gray-600 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 text-sm text-muted sm:grid-cols-2">
             <InfoTile label="Material" value={material} />
             <InfoTile label="Category" value={product.subcategory ? `${product.kind} / ${product.subcategory}` : product.kind} />
             <InfoTile label="Anti-tarnish" value={product.warranty || "Anti-tarnish finish for everyday wear."} />
@@ -316,7 +312,7 @@ export function ProductDetailClient({ product, related }: Props) {
 function OptionGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="mb-2 font-mono text-[11px] uppercase tracking-widest text-gray-500">{label}</p>
+      <p className="mb-2 font-mono text-[11px] uppercase tracking-widest text-muted">{label}</p>
       <div className="flex flex-wrap gap-2">{children}</div>
     </div>
   )
@@ -324,9 +320,9 @@ function OptionGroup({ label, children }: { label: string; children: React.React
 
 function InfoTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="border border-gray-200 p-3">
-      <p className="font-mono text-[10px] uppercase tracking-widest text-gray-400">{label}</p>
-      <p className="mt-1 leading-5 text-black">{value}</p>
+    <div className="border border-line bg-paper p-3">
+      <p className="font-mono text-[10px] uppercase tracking-widest text-muted">{label}</p>
+      <p className="mt-1 leading-5 text-ink">{value}</p>
     </div>
   )
 }
@@ -343,12 +339,12 @@ function Accordion({
   children: React.ReactNode
 }) {
   return (
-    <div className="border border-gray-200">
+    <div className="border border-line bg-paper">
       <button type="button" onClick={onClick} className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium">
         {title}
-        <span className="text-gray-400">{open ? "-" : "+"}</span>
+        <span className="text-muted">{open ? "-" : "+"}</span>
       </button>
-      {open && <div className="space-y-3 border-t border-gray-100 px-4 py-4 text-sm leading-6 text-gray-600">{children}</div>}
+      {open && <div className="space-y-3 border-t border-line px-4 py-4 text-sm leading-6 text-muted">{children}</div>}
     </div>
   )
 }

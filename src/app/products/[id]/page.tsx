@@ -4,6 +4,7 @@ import { ProductDetailClient } from "./product-detail-client"
 import { Reviews } from "@/components/product/reviews"
 import { fetchProduct, fetchProducts } from "@/lib/medusa-products"
 import { JsonLd } from "@/components/seo/json-ld"
+import { getBrandConfig } from "@/lib/brand-config"
 import { productFaqJsonLd, productJsonLd } from "@/lib/seo-jsonld"
 
 type Params = Promise<{ id: string }>
@@ -30,6 +31,7 @@ export default async function ProductPage({ params }: { params: Params }) {
   const { id } = await params
   const product = await fetchProduct(id)
   if (!product) notFound()
+  const brand = await getBrandConfig()
   const all = await fetchProducts()
   const productTags = new Set(product.tags ?? [])
   const related = all
@@ -45,7 +47,7 @@ export default async function ProductPage({ params }: { params: Params }) {
   return (
     <Suspense>
       <JsonLd data={[productJsonLd(product), productFaqJsonLd()]} />
-      <ProductDetailClient product={product} related={related} />
+      <ProductDetailClient product={product} related={related} freeShippingThreshold={brand.free_shipping_threshold} />
       <Reviews productId={product.id} />
     </Suspense>
   )

@@ -2,6 +2,7 @@
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { ArrowRight, Home as HomeIcon, PackageSearch, Ruler, Search } from "lucide-react"
 import {
   Reveal,
   Marquee,
@@ -16,6 +17,7 @@ import type { Product } from "@/lib/products"
 import { ProductCard } from "@/components/product/product-card"
 
 export function HomeClient({ products }: { products: Product[] }) {
+  const brand = useBrand()
   const featured = products.slice(0, 8)
   const [currentHero, setCurrentHero] = useState(0)
   
@@ -193,7 +195,7 @@ export function HomeClient({ products }: { products: Product[] }) {
             "Anti-Tarnish Technology",
             "Lifetime Warranty",
             "Ethically Sourced",
-            "Free Shipping Over ₹999",
+            `Free Shipping Over ${priceFmt(brand.free_shipping_threshold)}`,
             "SYRA — Timeless Elegance",
           ]}
           speed={35}
@@ -201,6 +203,8 @@ export function HomeClient({ products }: { products: Product[] }) {
           className="font-mono text-[14px] uppercase tracking-[0.2em] text-muted"
         />
       </section>
+
+      <QuickActionsSection freeShippingThreshold={brand.free_shipping_threshold} />
 
       {/* ─── SHOP YOUR VIBE ─────────────────────────────────────────── */}
       <section className="px-6 py-20 md:px-12 bg-bg">
@@ -386,6 +390,46 @@ export function HomeClient({ products }: { products: Product[] }) {
       {/* ─── INTERACTIVE 3D SCATTER SECTION ──────────────────────────── */}
       <ScatterSection products={products} />
     </div>
+  )
+}
+
+function QuickActionsSection({ freeShippingThreshold }: { freeShippingThreshold: number }) {
+  const actions = [
+    { href: "/collection", label: "Shop all", detail: `Free shipping over ${priceFmt(freeShippingThreshold)}`, icon: HomeIcon },
+    { href: "/search", label: "Search styles", detail: "Rings, pearls, stone colors, and edits", icon: Search },
+    { href: "/order-track", label: "Track order", detail: "Status, totals, and shipment links", icon: PackageSearch },
+    { href: "/size-guide", label: "Size guide", detail: "Ring and jewellery fit before checkout", icon: Ruler },
+  ]
+
+  return (
+    <section className="border-b border-line bg-bg px-6 py-12 md:px-12">
+      <div className="mx-auto max-w-[1400px]">
+        <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent/80">Start here</p>
+            <h2 className="mt-2 font-display text-3xl text-ink md:text-4xl">Everything one tap away</h2>
+          </div>
+          <Link href="/order-track" className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-accent hover:underline">
+            Track an order
+            <ArrowRight className="h-3.5 w-3.5" strokeWidth={1.6} />
+          </Link>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {actions.map((action) => {
+            const Icon = action.icon
+            return (
+              <Link key={action.href} href={action.href} className="group border border-line bg-paper p-5 transition-colors hover:border-accent">
+                <div className="mb-5 inline-flex h-10 w-10 items-center justify-center border border-line text-accent group-hover:border-accent">
+                  <Icon className="h-4 w-4" strokeWidth={1.6} />
+                </div>
+                <h3 className="font-display text-2xl leading-tight text-ink">{action.label}</h3>
+                <p className="mt-2 min-h-10 text-sm leading-5 text-muted">{action.detail}</p>
+              </Link>
+            )
+          })}
+        </div>
+      </div>
+    </section>
   )
 }
 

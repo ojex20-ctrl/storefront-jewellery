@@ -135,7 +135,7 @@ export function ConfirmationClient({ orderId }: { orderId: string }) {
         <Magnetic>
           <Link href="/collection"><Button>Continue browsing →</Button></Link>
         </Magnetic>
-        <Link href="/account/orders"><Button variant="ghost">View order</Button></Link>
+        <Link href="/order-track"><Button variant="ghost">Track order</Button></Link>
       </div>
     </div>
   )
