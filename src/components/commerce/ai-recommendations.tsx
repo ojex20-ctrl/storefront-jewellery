@@ -13,9 +13,9 @@ export function AIRecommendations({ productId }: { productId: string }) {
   }, [productId])
   if (items.length === 0) return null
   return (
-    <section className="max-w-[1400px] mx-auto px-6 md:px-12 py-16 border-t border-gray-100">
+    <section className="max-w-[1400px] mx-auto px-6 md:px-12 py-16 border-t border-line">
       <h2 className="text-xl font-semibold mb-8">Recommended For You</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-5">
         {items.slice(0, 4).map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
       </div>
     </section>

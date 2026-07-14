@@ -44,7 +44,7 @@ export default function AtelierPage() {
           "BESPOKE COMMISSIONS OPEN",
         ]}
         speed={36}
-        className="border-b border-line bg-[#E8E2D8] py-5 font-display text-[28px] italic"
+        className="border-b border-line bg-bg-2 py-5 font-display text-[28px] italic text-ink"
       />
     </div>
   )

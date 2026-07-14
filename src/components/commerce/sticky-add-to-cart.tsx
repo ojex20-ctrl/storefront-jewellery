@@ -31,14 +31,14 @@ export function StickyAddToCart({
 
   if (!visible) return null
   return (
-    <div className="fixed inset-x-0 bottom-0 z-[95] border-t border-gray-200 bg-white/95 px-4 py-3 text-[#0A0A0A] shadow-[0_-12px_30px_rgba(0,0,0,0.12)] backdrop-blur">
+    <div className="fixed inset-x-0 bottom-0 z-[95] border-t border-line bg-paper/95 px-4 py-3 text-ink shadow-[0_-12px_30px_rgba(0,0,0,0.12)] backdrop-blur">
       <div className="mx-auto flex max-w-[1100px] items-center gap-3">
         <div className="relative h-12 w-10 overflow-hidden">
           <OptimizedImage src={product.image} alt="" sizes="40px" />
         </div>
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{product.name}</p>
-          <p className="font-mono text-[11px] text-gray-500">{priceFmt(product.price)}</p>
+          <p className="font-mono text-[11px] text-muted">{priceFmt(product.price)}</p>
         </div>
         <button
           onClick={() => {
@@ -51,7 +51,7 @@ export function StickyAddToCart({
             toast.success(`${product.name} added to bag`)
           }}
           disabled={disabled}
-          className="rounded-full bg-accent px-5 py-3 text-xs font-semibold uppercase tracking-widest text-white disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-full bg-accent px-5 py-3 text-xs font-semibold uppercase tracking-widest text-bg disabled:cursor-not-allowed disabled:opacity-50"
         >
           {disabled ? "Out of Stock" : "Add to Cart"}
         </button>

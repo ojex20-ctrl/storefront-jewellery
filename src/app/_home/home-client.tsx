@@ -234,11 +234,11 @@ export function HomeClient({ products }: { products: Product[] }) {
                     />
                   </div>
                   {/* Text overlay at bottom */}
-                  <div className={`relative z-10 p-5 ${i === 4 ? 'text-white' : 'text-[#0A0A0A]'}`}>
+                  <div className={`relative z-10 m-4 rounded bg-bg/85 p-4 text-ink shadow-sm backdrop-blur-sm`}>
                     <h3 className="font-display text-xl md:text-2xl leading-tight mb-1">
                       {vibe.title}
                     </h3>
-                    <p className={`text-[9px] font-mono tracking-wide ${i === 4 ? 'text-white/60' : 'text-[#0A0A0A]/60'}`}>
+                    <p className="font-mono text-[9px] tracking-wide text-muted">
                       {vibe.sub}
                     </p>
                   </div>
@@ -253,7 +253,7 @@ export function HomeClient({ products }: { products: Product[] }) {
       <section className="px-6 py-20 md:px-12 bg-bg">
         <div className="mx-auto max-w-[1400px]">
           <h2 className="font-display text-3xl md:text-4xl text-ink mb-10">New In</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
             {featured.map((product, i) => (
               <ProductCard key={product.id} product={product} index={i} />
             ))}
@@ -296,7 +296,7 @@ export function HomeClient({ products }: { products: Product[] }) {
              {windows.map((shape, i) => (
                 <div key={i} className={`collection-window w-[var(--card-w)] h-[420px] shrink-0 overflow-hidden relative ${shape} bg-bg shadow-lg border border-line pointer-events-none`}>
                    <div 
-                      className="absolute top-0 flex gap-[var(--gap)] transition-transform duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] pointer-events-auto"
+                      className="absolute top-0 flex gap-[var(--gap)] transition-transform duration-700 ease-out pointer-events-auto"
                       style={{
                          transform: `translateX(calc((var(--card-w) + var(--gap)) * -${i + carouselIndex}))`
                       }}
@@ -310,7 +310,7 @@ export function HomeClient({ products }: { products: Product[] }) {
                             <div className="flex-1 relative overflow-hidden bg-bg-2">
                               <Placeholder 
                                 image={cat.img ?? "/placeholder.png"} 
-                                className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.5s] group-hover:scale-110" 
+                                className="absolute inset-0 h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110"
                                 alt={cat.name}
                               />
                             </div>
@@ -369,17 +369,17 @@ export function HomeClient({ products }: { products: Product[] }) {
             alt="Editorial Story"
           />
         </div>
-        <div className="flex flex-col justify-center p-12 md:p-20 bg-[#F5F3EE]">
+        <div className="flex flex-col justify-center bg-paper p-8 text-ink md:p-20">
           <Reveal>
-            <p className="font-mono text-[10px] uppercase tracking-[0.3em] text-[#8A8070] mb-6">Philosophy</p>
-            <h2 className="font-display text-4xl md:text-5xl tracking-tight leading-[1.1] text-[#0A0A0A] mb-8">
+            <p className="mb-6 font-mono text-[10px] uppercase tracking-[0.3em] text-accent">Philosophy</p>
+            <h2 className="mb-8 font-display text-4xl leading-[1.1] tracking-tight text-ink md:text-5xl">
               Quiet luxury,<br />understated confidence.
             </h2>
-            <p className="text-[#0A0A0A]/70 text-base leading-relaxed max-w-md mb-10">
+            <p className="mb-10 max-w-md text-base leading-relaxed text-muted">
               At SYRA, we create jewellery that doesn&apos;t shout. Using advanced anti-tarnish technology, our pieces are designed for the modern individual who values durability as much as aesthetic.
             </p>
             <Link href="/about">
-              <button className="border border-[#0A0A0A] px-10 py-3 font-mono text-[10px] uppercase tracking-widest text-[#0A0A0A] hover:bg-[#0A0A0A] hover:text-white transition-all">
+              <button className="border border-line px-10 py-3 font-mono text-[10px] uppercase tracking-widest text-ink transition-all hover:border-accent hover:bg-accent hover:text-bg">
                 Our Story
               </button>
             </Link>

@@ -22,17 +22,17 @@ export function BackInStock({ productId }: { productId: string }) {
     }
   }
   return (
-    <div className="rounded-lg border border-gray-200 p-4">
-      <p className="text-[12px] font-medium text-gray-600">Back in stock alerts</p>
+    <div className="rounded-lg border border-line bg-paper p-4">
+      <p className="text-[12px] font-medium text-muted">Back in stock alerts</p>
       <div className="mt-2 flex gap-2">
         <input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="email@domain.com"
-          className="min-w-0 flex-1 border border-gray-300 px-3 py-2 text-sm outline-none focus:border-black"
+          className="min-w-0 flex-1 border border-line bg-bg px-3 py-2 text-sm text-ink outline-none placeholder:text-muted focus:border-accent"
         />
-        <button onClick={submit} disabled={pending} className="bg-black px-4 py-2 text-xs uppercase tracking-widest text-white disabled:opacity-50">
+        <button onClick={submit} disabled={pending} className="bg-ink px-4 py-2 text-xs uppercase tracking-widest text-bg transition-colors hover:bg-accent disabled:opacity-50">
           Notify
         </button>
       </div>
