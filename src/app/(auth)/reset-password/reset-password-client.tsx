@@ -7,6 +7,7 @@ import { toast } from "sonner"
 import { Button, Eyebrow } from "@podium/ui/primitives"
 import { Magnetic, WordReveal } from "@podium/ui/motion"
 import { performPasswordReset } from "@/lib/account"
+import { isStrongPassword, isValidToken } from "@/lib/validation"
 
 export function ResetPasswordClient() {
   const router = useRouter()
@@ -22,7 +23,11 @@ export function ResetPasswordClient() {
       toast.error("Passwords don't match")
       return
     }
-    if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password)) {
+    if (!isValidToken(token)) {
+      toast.error("Reset link expired or invalid. Request a new one.")
+      return
+    }
+    if (!isStrongPassword(password)) {
       toast.error("Use 8+ characters with uppercase, lowercase, and a number")
       return
     }
@@ -62,7 +67,7 @@ export function ResetPasswordClient() {
           style={{ fontSize: "clamp(48px, 7vw, 88px)", lineHeight: 0.95, letterSpacing: "-0.025em" }}
         />
         <p className="text-sm leading-relaxed text-ink-2">
-          Six characters or more. Use something you&apos;ll actually remember.
+          Use 8+ characters with uppercase, lowercase, and a number.
         </p>
       </div>
 

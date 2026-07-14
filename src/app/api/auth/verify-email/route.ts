@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { hashToken } from "@/lib/customer-auth"
+import { validRequestOrigin } from "@/lib/rate-limit"
+import { isValidToken } from "@/lib/validation"
 
 export async function POST(req: Request) {
-  const { token } = await req.json()
-  if (!token) return NextResponse.json({ error: "Verification token required" }, { status: 400 })
+  if (!validRequestOrigin(req)) return NextResponse.json({ error: "Invalid request" }, { status: 403 })
+  const body = await req.json().catch(() => ({})) as { token?: string }
+  const token = String(body.token ?? "").trim()
+  if (!isValidToken(token)) return NextResponse.json({ error: "Verification token required" }, { status: 400 })
 
   const row = await prisma.emailVerificationToken
     .findUnique({ where: { tokenHash: hashToken(token) } })

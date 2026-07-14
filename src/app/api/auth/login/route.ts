@@ -4,21 +4,21 @@ import { prisma } from "@/lib/db"
 import { verifyPassword, createCustomerToken, CUSTOMER_COOKIE, hasLocalPasswordHash, normalizeEmail } from "@/lib/customer-auth"
 import { isSupabaseConfigured, supabasePasswordLogin } from "@/lib/supabase-auth"
 import { rateLimit, requestIp, validRequestOrigin } from "@/lib/rate-limit"
+import { isValidEmail } from "@/lib/validation"
 
 export async function POST(req: Request) {
   if (!validRequestOrigin(req)) return NextResponse.json({ error: "Invalid request" }, { status: 403 })
   if (!rateLimit(`customer-login:${requestIp(req)}`, 12)) {
     return NextResponse.json({ error: "Too many login attempts. Try again later." }, { status: 429 })
   }
-  const body = await req.json()
+  const body = await req.json().catch(() => ({}))
   const email = normalizeEmail(body.email ?? "")
   const password = String(body.password ?? "")
   const remember = Boolean(body.remember)
   const method = body.method
 
-  if (!email) {
-    return NextResponse.json({ error: "Email is required" }, { status: 400 })
-  }
+  if (!email) return NextResponse.json({ error: "Email is required" }, { status: 400 })
+  if (!isValidEmail(email)) return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 })
 
   if (isSupabaseConfigured() && method !== "otp") {
     if (!password) return NextResponse.json({ error: "Password is required" }, { status: 400 })
@@ -42,20 +42,9 @@ export async function POST(req: Request) {
           verified: true,
         },
       })
-      const token = createCustomerToken({
-        id: customer.id,
-        email: customer.email,
-        firstName: customer.firstName,
-        lastName: customer.lastName,
-      })
+      const token = createCustomerToken({ id: customer.id, email: customer.email, firstName: customer.firstName, lastName: customer.lastName })
       const cookieStore = await cookies()
-      const options = {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: remember ? 60 * 60 * 24 * 30 : 60 * 60 * 8,
-        path: "/",
-      } as const
+      const options = { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", maxAge: remember ? 60 * 60 * 24 * 30 : 60 * 60 * 8, path: "/" } as const
       cookieStore.set(CUSTOMER_COOKIE, token, options)
       cookieStore.set("customer_token", token, options)
       return NextResponse.json({ user: { id: customer.id, email: customer.email, firstName: customer.firstName, lastName: customer.lastName, authProvider: "external", canChangePassword: false } })
@@ -65,45 +54,20 @@ export async function POST(req: Request) {
   }
 
   const customer = await prisma.customer.findUnique({ where: { email } })
-  // Generic message for both unknown-email and wrong-password to avoid revealing
-  // which emails have accounts (account enumeration).
-  if (!customer) {
-    return NextResponse.json({ error: "Invalid email or password." }, { status: 401 })
-  }
+  if (!customer) return NextResponse.json({ error: "Invalid email or password." }, { status: 401 })
   if (!customer.verified) {
-    return NextResponse.json(
-      { error: "Please verify your email to continue.", needsVerification: true },
-      { status: 403 },
-    )
+    return NextResponse.json({ error: "Please verify your email to continue.", needsVerification: true }, { status: 403 })
   }
-
-  if (!password) {
-    return NextResponse.json({ error: "Password is required" }, { status: 400 })
-  }
+  if (!password) return NextResponse.json({ error: "Password is required" }, { status: 400 })
   if (!hasLocalPasswordHash(customer.passwordHash)) {
     return NextResponse.json({ error: customer.googleId ? "Use Google sign-in for this account." : "Password login is not available for this account." }, { status: 401 })
   }
-
   const valid = await verifyPassword(password, customer.passwordHash)
-  if (!valid) {
-    return NextResponse.json({ error: "Invalid email or password." }, { status: 401 })
-  }
+  if (!valid) return NextResponse.json({ error: "Invalid email or password." }, { status: 401 })
 
-  const token = createCustomerToken({
-    id: customer.id,
-    email: customer.email,
-    firstName: customer.firstName,
-    lastName: customer.lastName,
-  })
-
+  const token = createCustomerToken({ id: customer.id, email: customer.email, firstName: customer.firstName, lastName: customer.lastName })
   const cookieStore = await cookies()
-  const options = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: remember ? 60 * 60 * 24 * 30 : 60 * 60 * 8,
-    path: "/",
-  } as const
+  const options = { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", maxAge: remember ? 60 * 60 * 24 * 30 : 60 * 60 * 8, path: "/" } as const
   cookieStore.set(CUSTOMER_COOKIE, token, options)
   cookieStore.set("customer_token", token, options)
 

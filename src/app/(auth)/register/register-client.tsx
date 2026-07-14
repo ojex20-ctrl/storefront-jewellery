@@ -6,6 +6,7 @@ import { motion } from "framer-motion"
 import { toast } from "sonner"
 import { useAuthStore } from "@/stores/auth-store"
 import { GoogleButton, OrDivider } from "@/components/auth/google-button"
+import { isStrongPassword, isValidEmail, isValidName, isValidOtp, isValidPhone } from "@/lib/validation"
 
 export function RegisterClient({ googleEnabled = false }: { googleEnabled?: boolean }) {
   const router = useRouter()
@@ -21,9 +22,21 @@ export function RegisterClient({ googleEnabled = false }: { googleEnabled?: bool
   const [otp, setOtp] = useState("")
   const [pending, setPending] = useState(false)
 
+  const validateRegistration = () => {
+    if (!isValidName(firstName, { required: true })) return "Enter your first name."
+    if (!isValidName(lastName, { required: true })) return "Enter your last name."
+    if (!isValidEmail(email)) return "Enter a valid email address."
+    if (!isValidPhone(phone, { required: true })) return "Enter a valid mobile number."
+    if (!isStrongPassword(password)) return "Password must be 8+ characters with uppercase, lowercase, and a number."
+    if (password !== confirmPassword) return "Passwords don't match."
+    if (!acceptTerms) return "Please accept the terms and privacy policy."
+    return null
+  }
+
   const handleRegister = async (e: FormEvent) => {
     e.preventDefault()
-    if (password !== confirmPassword) { toast.error("Passwords don't match"); return }
+    const validationError = validateRegistration()
+    if (validationError) { toast.error(validationError); return }
     setPending(true)
     try {
       const res = await fetch("/api/auth/register", {
@@ -56,6 +69,7 @@ export function RegisterClient({ googleEnabled = false }: { googleEnabled?: bool
 
   const handleVerify = async (e: FormEvent) => {
     e.preventDefault()
+    if (!isValidOtp(otp)) { toast.error("Enter the 6-digit verification code."); return }
     setPending(true)
     try {
       const res = await fetch("/api/auth/verify-otp", {
@@ -90,8 +104,10 @@ export function RegisterClient({ googleEnabled = false }: { googleEnabled?: bool
           <input
             type="text"
             value={otp}
-            onChange={(e) => setOtp(e.target.value)}
+            onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
             placeholder="Enter OTP"
+            inputMode="numeric"
+            autoComplete="one-time-code"
             maxLength={6}
             className="w-full border-b border-line bg-transparent py-3 text-center text-2xl tracking-[0.5em] outline-none focus:border-accent"
           />
@@ -134,7 +150,7 @@ export function RegisterClient({ googleEnabled = false }: { googleEnabled?: bool
           <Input label="Last Name" value={lastName} onChange={setLastName} required />
         </div>
         <Input label="Email" type="email" value={email} onChange={setEmail} required />
-        <Input label="Mobile Number" type="tel" value={phone} onChange={setPhone} />
+        <Input label="Mobile Number" type="tel" value={phone} onChange={setPhone} required />
         <Input label="Password" type="password" value={password} onChange={setPassword} required />
         <Input label="Confirm Password" type="password" value={confirmPassword} onChange={setConfirmPassword} required />
         <label className="flex items-start gap-3 text-xs text-muted">
@@ -161,8 +177,15 @@ function Input({ label, value, onChange, type = "text", required }: {
   return (
     <label className="block">
       <span className="text-[10px] uppercase tracking-widest text-muted">{label}</span>
-      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} required={required}
-        className="mt-1 w-full border-b border-line bg-transparent py-2 text-sm outline-none focus:border-accent" />
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        autoComplete={type === "email" ? "email" : type === "password" ? "new-password" : type === "tel" ? "tel" : undefined}
+        inputMode={type === "tel" ? "tel" : undefined}
+        className="mt-1 w-full border-b border-line bg-transparent py-2 text-sm outline-none focus:border-accent"
+      />
     </label>
   )
 }

@@ -3,15 +3,19 @@ import { prisma } from "@/lib/db"
 import { createRazorpayOrder, publicRazorpayKey, RAZORPAY_SETUP_MESSAGE } from "@/lib/razorpay-server"
 import { getBrandConfig } from "@/lib/brand-config"
 import { getPaymentSettings } from "@/lib/payment-settings"
+import { validRequestOrigin } from "@/lib/rate-limit"
+import { isPositiveMoney, isValidSafeId } from "@/lib/validation"
 
 export async function POST(req: Request) {
-  const body = await req.json()
+  if (!validRequestOrigin(req)) return NextResponse.json({ error: "Invalid request" }, { status: 403 })
+  const body = await req.json().catch(() => ({}))
   const { orderId } = body as { orderId?: string }
-  if (!orderId) return NextResponse.json({ error: "Order id is required" }, { status: 400 })
+  if (!isValidSafeId(orderId)) return NextResponse.json({ error: "Order id is required" }, { status: 400 })
 
   const order = await prisma.order.findUnique({ where: { id: orderId } })
   if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 })
   if (order.paymentStatus === "paid") return NextResponse.json({ error: "Order is already paid" }, { status: 409 })
+  if (!isPositiveMoney(order.total)) return NextResponse.json({ error: "Order total is invalid" }, { status: 400 })
 
   try {
     const [brand, payment] = await Promise.all([getBrandConfig(), getPaymentSettings()])

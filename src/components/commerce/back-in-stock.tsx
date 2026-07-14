@@ -1,12 +1,13 @@
 "use client"
 import { useState } from "react"
 import { toast } from "sonner"
+import { isValidEmail } from "@/lib/validation"
 
 export function BackInStock({ productId }: { productId: string }) {
   const [email, setEmail] = useState("")
   const [pending, setPending] = useState(false)
   const submit = async () => {
-    if (!email) return
+    if (!isValidEmail(email)) { toast.error("Enter a valid email."); return }
     setPending(true)
     const resp = await fetch("/api/back-in-stock", {
       method: "POST",

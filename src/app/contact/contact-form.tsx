@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react"
 import { toast } from "sonner"
 import { Reveal } from "@podium/ui/motion"
 import { Eyebrow, Button } from "@podium/ui/primitives"
+import { isValidEmail, isValidName, isValidPlainText } from "@/lib/validation"
 
 export function ContactForm({ email, phone }: { email: string; phone: string }) {
   const [form, setForm] = useState({ name: "", email: "", message: "" })
@@ -10,8 +11,8 @@ export function ContactForm({ email, phone }: { email: string; phone: string }) 
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
-    if (!form.name.trim() || !/.+@.+\..+/.test(form.email) || !form.message.trim()) {
-      toast.error("Please add your name, a valid email, and a message.")
+    if (!isValidName(form.name, { required: true }) || !isValidEmail(form.email) || !isValidPlainText(form.message, { required: true, min: 10, max: 4000 })) {
+      toast.error("Please add your name, a valid email, and a message of at least 10 characters.")
       return
     }
     setSending(true)

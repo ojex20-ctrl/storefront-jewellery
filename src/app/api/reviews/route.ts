@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { verifyCustomerSession, type CustomerSession } from "@/lib/customer-auth"
+import { validRequestOrigin } from "@/lib/rate-limit"
+import { isValidPlainText, isValidSlug, normalizeSlug } from "@/lib/validation"
 
 type ReviewEligibilityStatus = "guest" | "not_purchased" | "already_reviewed" | "purchased"
 type ReviewEligibility = {
@@ -90,8 +92,8 @@ async function reviewEligibility(productId: string): Promise<ReviewEligibility> 
 
 /** GET /api/reviews?productId=<slug> — approved reviews + aggregate. */
 export async function GET(req: Request) {
-  const productId = new URL(req.url).searchParams.get("productId")
-  if (!productId) return NextResponse.json({ error: "productId required" }, { status: 400 })
+  const productId = normalizeSlug(new URL(req.url).searchParams.get("productId"))
+  if (!isValidSlug(productId)) return NextResponse.json({ error: "productId required" }, { status: 400 })
 
   const reviews = await prisma.review.findMany({
     where: { productId, approved: true },
@@ -132,15 +134,17 @@ export async function GET(req: Request) {
 
 /** POST /api/reviews — submit a verified-buyer review. */
 export async function POST(req: Request) {
+  if (!validRequestOrigin(req)) return NextResponse.json({ error: "Invalid request" }, { status: 403 })
   const body = await req.json().catch(() => ({}))
-  const productId = String(body.productId ?? "").trim()
+  const productId = normalizeSlug(body.productId)
   const rating = Math.round(Number(body.rating))
   const title = body.title ? String(body.title).trim().slice(0, 120) : null
   const text = String(body.body ?? "").trim().slice(0, 2000)
 
-  if (!productId || !(rating >= 1 && rating <= 5) || !text) {
+  if (!isValidSlug(productId) || !(rating >= 1 && rating <= 5) || !isValidPlainText(text, { required: true, min: 5, max: 2000 })) {
     return NextResponse.json({ error: "Rating (1-5) and a review are required." }, { status: 400 })
   }
+  if (title && !isValidPlainText(title, { max: 120 })) return NextResponse.json({ error: "Enter a valid review title." }, { status: 400 })
 
   // Confirm the product exists by slug to avoid orphan reviews.
   const product = await prisma.product.findUnique({ where: { slug: productId }, select: { id: true } })

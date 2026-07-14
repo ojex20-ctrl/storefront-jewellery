@@ -3,6 +3,7 @@ import Link from "next/link"
 import { useEffect, useState, type FormEvent } from "react"
 import { toast } from "sonner"
 import { Button, Eyebrow } from "@podium/ui/primitives"
+import { isStrongPassword } from "@/lib/validation"
 
 export default function ChangePasswordPage() {
   const [currentPassword, setCurrentPassword] = useState("")
@@ -27,6 +28,8 @@ export default function ChangePasswordPage() {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    if (!currentPassword) return toast.error("Current password is required")
+    if (!isStrongPassword(newPassword)) return toast.error("Use 8+ characters with uppercase, lowercase, and a number")
     if (newPassword !== confirm) return toast.error("Passwords do not match")
     setPending(true)
     try {

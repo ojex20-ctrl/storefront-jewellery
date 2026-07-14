@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db"
 import { verifyAdminSession } from "@/lib/admin-auth"
 import { hasPermission } from "@/lib/rbac"
 import { CAMPAIGN_PAGE, normalizeCampaignSlug } from "@/lib/campaigns"
+import { isValidCouponCode, isValidPlainText, isValidUrlOrPath } from "@/lib/validation"
 
 type Ctx = { params: Promise<{ id: string }> }
 
@@ -12,11 +13,10 @@ export async function PUT(req: Request, { params }: Ctx) {
   if (!hasPermission(session, "content:write")) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
   const { id } = await params
-  const body = await req.json()
+  const body = await req.json().catch(() => ({})) as Record<string, unknown>
   const payload = normalizePayload(body)
-  if (!payload.section || !payload.title) {
-    return NextResponse.json({ error: "Slug and title are required" }, { status: 400 })
-  }
+  const error = validatePayload(payload)
+  if (error) return NextResponse.json({ error }, { status: 400 })
 
   const campaign = await prisma.siteContent.update({
     where: { id },
@@ -33,6 +33,21 @@ export async function DELETE(_req: Request, { params }: Ctx) {
   const { id } = await params
   await prisma.siteContent.delete({ where: { id } })
   return NextResponse.json({ ok: true })
+}
+
+function validatePayload(payload: ReturnType<typeof normalizePayload>) {
+  if (!payload.section || !isValidPlainText(payload.title, { required: true, max: 240 })) return "Slug and title are required"
+  if (payload.subtitle && !isValidPlainText(payload.subtitle, { max: 500 })) return "Enter a valid subtitle."
+  if (payload.body && !isValidPlainText(payload.body, { max: 8000 })) return "Enter valid body content."
+  if (payload.image && !isValidUrlOrPath(payload.image)) return "Enter a valid campaign image URL or path."
+  if (payload.link && !isValidUrlOrPath(payload.link)) return "Enter a valid campaign link."
+  if (payload.linkText && !isValidPlainText(payload.linkText, { max: 160 })) return "Enter valid campaign link text."
+  const metadata = JSON.parse(payload.metadata) as { couponCode?: string; secondaryCtaHref?: string; secondaryCtaText?: string; announcement?: string }
+  if (metadata.couponCode && !isValidCouponCode(metadata.couponCode)) return "Enter a valid coupon code."
+  if (metadata.secondaryCtaHref && !isValidUrlOrPath(metadata.secondaryCtaHref)) return "Enter a valid secondary CTA link."
+  if (metadata.secondaryCtaText && !isValidPlainText(metadata.secondaryCtaText, { max: 160 })) return "Enter valid secondary CTA text."
+  if (metadata.announcement && !isValidPlainText(metadata.announcement, { max: 500 })) return "Enter valid announcement text."
+  return null
 }
 
 function normalizePayload(body: Record<string, unknown>) {

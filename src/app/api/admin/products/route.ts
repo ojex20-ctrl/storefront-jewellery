@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { verifyAdminSession } from "@/lib/admin-auth"
-import { normalizeProductInput } from "@/lib/product-input"
+import { normalizeProductInput, validateProductInput } from "@/lib/product-input"
 import { hasPermission } from "@/lib/rbac"
+import { normalizeSlug } from "@/lib/validation"
 
 const MAX_LIMIT = 100
 
@@ -21,7 +22,7 @@ export async function GET(req: Request) {
   const url = new URL(req.url)
   const page = clampInt(url.searchParams.get("page"), 1, 1, Number.MAX_SAFE_INTEGER)
   const limit = clampInt(url.searchParams.get("limit"), 50, 1, MAX_LIMIT)
-  const search = url.searchParams.get("search") ?? ""
+  const search = (url.searchParams.get("search") ?? "").trim().slice(0, 120)
 
   const where = search ? { name: { contains: search } } : {}
   const [products, total] = await Promise.all([
@@ -42,21 +43,24 @@ export async function POST(req: Request) {
   if (!hasPermission(session, "products:write")) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
   try {
-    const body = await req.json()
+    const body = await req.json().catch(() => null)
     const isArray = Array.isArray(body)
     const items = isArray ? body : [body]
+    if (items.length === 0 || items.length > 100) {
+      return NextResponse.json({ error: "Submit between 1 and 100 products." }, { status: 400 })
+    }
 
     const cleanItems = []
     for (const item of items) {
-      if (!item?.name) {
-        return NextResponse.json({ error: "Product name is required" }, { status: 400 })
+      if (!item || typeof item !== "object" || Array.isArray(item)) {
+        return NextResponse.json({ error: "Invalid product payload." }, { status: 400 })
       }
-      // Auto-generate slug if not provided
-      if (!item.slug) {
-        item.slug = String(item.name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
-      }
+      const product = item as Record<string, unknown>
+      product.slug = product.slug ? normalizeSlug(product.slug) : normalizeSlug(product.name)
+      const error = validateProductInput(product)
+      if (error) return NextResponse.json({ error }, { status: 400 })
       // Whitelist + normalize (drops unknown/virtual fields, serializes arrays, coerces numbers)
-      cleanItems.push(normalizeProductInput(item))
+      cleanItems.push(normalizeProductInput(product))
     }
 
     // Database insertion wrapped in a transaction for all-or-nothing safety
@@ -72,7 +76,7 @@ export async function POST(req: Request) {
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Failed to create product(s)" },
-      { status: 500 }
+      { status: 400 }
     )
   }
 }

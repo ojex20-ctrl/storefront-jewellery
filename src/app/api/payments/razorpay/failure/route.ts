@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { validRequestOrigin } from "@/lib/rate-limit"
+import { isValidPlainText, isValidSafeId } from "@/lib/validation"
 
 export async function POST(req: Request) {
+  if (!validRequestOrigin(req)) return NextResponse.json({ error: "Invalid request" }, { status: 403 })
   const body = await req.json().catch(() => ({}))
   const {
     internalOrderId,
@@ -23,7 +26,12 @@ export async function POST(req: Request) {
     description?: string
   }
 
-  if (!internalOrderId) return NextResponse.json({ error: "Order id is required" }, { status: 400 })
+  if (!isValidSafeId(internalOrderId)) return NextResponse.json({ error: "Order id is required" }, { status: 400 })
+  for (const field of [code, source, step, reason, description]) {
+    if (field && !isValidPlainText(field, { max: 1000 })) return NextResponse.json({ error: "Invalid payment failure details" }, { status: 400 })
+  }
+  if (razorpay_payment_id && !isValidSafeId(razorpay_payment_id)) return NextResponse.json({ error: "Invalid payment id" }, { status: 400 })
+  if (razorpay_order_id && !isValidSafeId(razorpay_order_id)) return NextResponse.json({ error: "Invalid Razorpay order id" }, { status: 400 })
 
   const existing = await prisma.order.findUnique({
     where: { id: internalOrderId },

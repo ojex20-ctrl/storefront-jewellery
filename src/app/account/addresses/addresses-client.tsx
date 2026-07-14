@@ -7,6 +7,7 @@ import { Button, Eyebrow } from "@podium/ui/primitives"
 import { LoaderBar } from "@podium/ui/motion"
 import { useAuthStore } from "@/stores/auth-store"
 import { listAddresses, addAddress, deleteAddress, type Address } from "@/lib/account"
+import { isValidName, isValidPhone, isValidPlainText, isValidPostalCode } from "@/lib/validation"
 
 const EMPTY: Address = {
   first_name: "",
@@ -14,8 +15,18 @@ const EMPTY: Address = {
   address_1: "",
   city: "",
   postal_code: "",
-  country_code: "ae",
+  country_code: "India",
   phone: "",
+}
+
+function validateAddress(address: Address) {
+  if (!isValidName(address.first_name, { required: true })) return "First name is required."
+  if (!isValidName(address.last_name)) return "Enter a valid last name."
+  if (!isValidPlainText(address.address_1, { required: true, min: 5, max: 180 })) return "Enter a complete street address."
+  if (!isValidPlainText(address.city, { required: true, min: 2, max: 80 })) return "Enter a valid city."
+  if (!isValidPostalCode(address.postal_code, { required: true })) return "Enter a valid postal code."
+  if (!isValidPhone(address.phone, { required: true })) return "Enter a valid phone number."
+  return null
 }
 
 export function AddressesClient() {
@@ -35,6 +46,8 @@ export function AddressesClient() {
 
   const onAdd = async (e: FormEvent) => {
     e.preventDefault()
+    const validationError = validateAddress(draft)
+    if (validationError) { toast.error(validationError); return }
     setPending(true)
     try {
       await addAddress(token || "customer_cookie", draft)
@@ -95,7 +108,7 @@ export function AddressesClient() {
               </div>
               <Field label="City" value={draft.city ?? ""} onChange={(v) => setDraft({ ...draft, city: v })} />
               <Field label="Postal code" value={draft.postal_code ?? ""} onChange={(v) => setDraft({ ...draft, postal_code: v })} />
-              <Field label="Country code" value={draft.country_code ?? "ae"} onChange={(v) => setDraft({ ...draft, country_code: v.toLowerCase() })} />
+              <Field label="Country code" value={draft.country_code ?? "India"} onChange={(v) => setDraft({ ...draft, country_code: v })} />
               <Field label="Phone" value={draft.phone ?? ""} onChange={(v) => setDraft({ ...draft, phone: v })} type="tel" />
             </div>
             <Button type="submit" className="mt-5" disabled={pending}>
@@ -160,6 +173,7 @@ function Field({
         type={type}
         required
         value={value}
+        inputMode={type === "tel" ? "tel" : undefined}
         onChange={(e) => onChange(e.target.value)}
         className="w-full border-0 border-b border-line-2 bg-transparent py-2.5 text-sm text-ink outline-none focus:border-ink"
       />

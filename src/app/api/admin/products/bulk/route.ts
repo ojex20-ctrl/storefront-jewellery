@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { verifyAdminSession } from "@/lib/admin-auth"
+import { hasPermission } from "@/lib/rbac"
+import { isNonNegativeMoney, isValidSafeId, isValidSlug, isValidUrlOrPath, normalizeSlug } from "@/lib/validation"
 
 const ALLOWED_MAIN = ["Best Sellers", "Earrings", "Necklace", "Bracelets", "Rings", "Pendants"]
 const ALLOWED_SUB = ["Boss Babe Basic", "Glam Girl Hours", "Everyday Slay", "Main Character Campus", "Bold Babe Edit"]
@@ -94,6 +96,13 @@ function parseRowImages(row: Record<string, string>, rowIdx: number): { images: 
   }
 
   const uniqueImages = Array.from(new Set(imagesList))
+  if (uniqueImages.some((image) => !isValidUrlOrPath(image))) {
+    return {
+      images: [],
+      error: `Row ${rowIdx}: Images must be valid URLs or site paths.`
+    }
+  }
+
   if (uniqueImages.length > 6) {
     return {
       images: [],
@@ -107,10 +116,11 @@ function parseRowImages(row: Record<string, string>, rowIdx: number): { images: 
 export async function POST(req: Request) {
   const session = await verifyAdminSession()
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!hasPermission(session, "products:write")) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
-  const { products } = await req.json() as { products: Record<string, string>[] }
-  if (!Array.isArray(products) || products.length === 0) {
-    return NextResponse.json({ error: "No products provided" }, { status: 400 })
+  const { products } = await req.json().catch(() => ({})) as { products?: Record<string, string>[] }
+  if (!Array.isArray(products) || products.length === 0 || products.length > 500) {
+    return NextResponse.json({ error: "Submit between 1 and 500 products" }, { status: 400 })
   }
 
   let imported = 0
@@ -127,7 +137,7 @@ export async function POST(req: Request) {
       }
 
       const price = parseInt(String(row.price).trim(), 10)
-      if (!Number.isFinite(price) || price < 0) {
+      if (!Number.isFinite(price) || !isNonNegativeMoney(price)) {
         errors.push({ row: rowIdx, error: `Invalid price '${row.price}': must be a non-negative number` })
         continue
       }
@@ -193,7 +203,11 @@ export async function POST(req: Request) {
       }
       const cleanTags = tagsRes.values
 
-      const slug = row.slug || row.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
+      const slug = normalizeSlug(row.slug || row.name)
+      if (!isValidSlug(slug)) {
+        errors.push({ row: rowIdx, error: "Invalid product slug" })
+        continue
+      }
       await prisma.product.upsert({
         where: { slug },
         update: {
@@ -266,6 +280,7 @@ export async function POST(req: Request) {
 export async function GET() {
   const session = await verifyAdminSession()
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!hasPermission(session, "products:write")) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
   const csv = "name,slug,kind,price,caption,description,metals,stones,sizes,images,mainHierarchy,subHierarchy,ringType,tags,material,warranty\n" +
     '"Gold Hoop Earrings","gold-hoop-earrings","Earrings, Hoop, Minimal","499","Beautiful earrings","Anti-tarnish gold hoop earrings.","18k Gold","None","[]","/uploads/gallery/gold-hoop.jpg,/uploads/gallery/gold-hoop-2.jpg","Earrings, Best Sellers","Everyday Slay, Main Character Campus","","Anti Tarnish, Daily Wear, Gold Finish, Under 499","Surgical Steel","2 Year Anti-Tarnish Guarantee"\n' +
@@ -280,11 +295,12 @@ export async function GET() {
 export async function DELETE(req: Request) {
   const session = await verifyAdminSession()
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!hasPermission(session, "products:write")) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
   try {
-    const { ids } = await req.json() as { ids: string[] }
-    if (!Array.isArray(ids) || ids.length === 0) {
-      return NextResponse.json({ error: "No product IDs provided" }, { status: 400 })
+    const { ids } = await req.json().catch(() => ({})) as { ids?: string[] }
+    if (!Array.isArray(ids) || ids.length === 0 || ids.length > 500 || ids.some((id) => !isValidSafeId(id))) {
+      return NextResponse.json({ error: "Valid product IDs are required" }, { status: 400 })
     }
     await prisma.product.deleteMany({
       where: { id: { in: ids } }

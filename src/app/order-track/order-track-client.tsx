@@ -5,6 +5,7 @@ import { toast } from "sonner"
 import { ArrowLeft, ExternalLink } from "lucide-react"
 import { Button, Eyebrow } from "@podium/ui/primitives"
 import { priceFmt } from "@podium/ui/lib"
+import { isValidEmail, isValidPhone } from "@/lib/validation"
 
 const STEPS = ["placed", "confirmed", "packed", "shipped", "out_for_delivery", "delivered"]
 
@@ -41,6 +42,12 @@ export function OrderTrackClient() {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    const parsedOrderNumber = Number(orderNumber.replace(/[^\d]/g, ""))
+    const validIdentity = isValidEmail(identity) || isValidPhone(identity, { required: true })
+    if (!Number.isInteger(parsedOrderNumber) || parsedOrderNumber <= 0 || !validIdentity) {
+      toast.error("Enter a valid order number and the email or phone used at checkout.")
+      return
+    }
     setLoading(true)
     setOrder(null)
     try {

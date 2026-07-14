@@ -9,7 +9,9 @@ export async function POST(req: Request) {
   const session = await verifyCustomerSession()
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const { currentPassword, newPassword } = await req.json()
+  const body = await req.json().catch(() => ({})) as { currentPassword?: string; newPassword?: string }
+  const currentPassword = String(body.currentPassword ?? "")
+  const newPassword = String(body.newPassword ?? "")
   if (!currentPassword || !newPassword) return NextResponse.json({ error: "Both passwords are required." }, { status: 400 })
   if (!isStrongPassword(newPassword)) {
     return NextResponse.json({ error: "Password must be 8+ characters with uppercase, lowercase, and a number." }, { status: 400 })

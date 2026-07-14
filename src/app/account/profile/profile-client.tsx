@@ -8,6 +8,7 @@ import { Magnetic } from "@podium/ui/motion"
 import { useAuthStore } from "@/stores/auth-store"
 import { updateProfile } from "@/lib/account"
 import { refreshCustomer } from "@/lib/auth"
+import { isValidName, isValidPhone } from "@/lib/validation"
 
 export function ProfileClient() {
   const router = useRouter()
@@ -38,12 +39,9 @@ export function ProfileClient() {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
     if (!token) return
-    if (!first.trim()) { toast.error("First name is required."); return }
-    const cleanedPhone = phone.replace(/[^\d]/g, "")
-    if (phone.trim() && (cleanedPhone.length < 8 || cleanedPhone.length > 15)) {
-      toast.error("Enter a valid phone number.")
-      return
-    }
+    if (!isValidName(first, { required: true })) { toast.error("First name is required."); return }
+    if (!isValidName(last)) { toast.error("Enter a valid last name."); return }
+    if (!isValidPhone(phone)) { toast.error("Enter a valid phone number."); return }
     setPending(true)
     try {
       const r = await updateProfile(token, { first_name: first.trim(), last_name: last.trim(), phone: phone.trim() })

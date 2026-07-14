@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { verifyAdminSession } from "@/lib/admin-auth"
+import { hasPermission } from "@/lib/rbac"
 import fs from "fs"
 import path from "path"
 
@@ -16,6 +17,9 @@ import path from "path"
  * lands in the root or `other/…`.
  */
 const MEDIA_ROOT = process.env.MEDIA_ROOT || path.join(process.cwd(), "public", "uploads")
+const MAX_UPLOAD_BYTES = 8 * 1024 * 1024
+const ALLOWED_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"])
+const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"])
 
 function ensureDir(dir: string) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
@@ -56,6 +60,7 @@ function walk(dir: string, rel = ""): MediaFile[] {
 export async function GET() {
   const session = await verifyAdminSession()
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!hasPermission(session, "products:write") && !hasPermission(session, "content:write")) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
   try {
     ensureDir(MEDIA_ROOT)
@@ -70,18 +75,21 @@ export async function GET() {
 export async function POST(req: Request) {
   const session = await verifyAdminSession()
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!hasPermission(session, "products:write") && !hasPermission(session, "content:write")) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
   try {
     const formData = await req.formData()
     const file = formData.get("file") as File | null
     if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 })
+    const ext = path.extname(file.name).toLowerCase()
+    if (!ALLOWED_EXTENSIONS.has(ext) || (file.type && !ALLOWED_TYPES.has(file.type))) return NextResponse.json({ error: "Only image files are allowed" }, { status: 400 })
+    if (file.size <= 0 || file.size > MAX_UPLOAD_BYTES) return NextResponse.json({ error: "Image must be 8MB or smaller" }, { status: 400 })
 
     const folder = safeRel(String(formData.get("folder") ?? ""))
     const destDir = folder ? path.join(MEDIA_ROOT, folder) : MEDIA_ROOT
     ensureDir(destDir)
 
     const buffer = Buffer.from(await file.arrayBuffer())
-    const ext = path.extname(file.name)
     const base = path
       .basename(file.name, ext)
       .toLowerCase()
@@ -103,9 +111,10 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
   const session = await verifyAdminSession()
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!hasPermission(session, "products:write") && !hasPermission(session, "content:write")) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
   try {
-    const { name } = (await req.json()) as { name: string }
+    const { name } = (await req.json().catch(() => ({}))) as { name?: string }
     if (!name) return NextResponse.json({ error: "Filename required" }, { status: 400 })
 
     const rel = safeRel(name)

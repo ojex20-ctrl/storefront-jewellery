@@ -1,6 +1,7 @@
 "use client"
 import { useState, type FormEvent } from "react"
 import { toast } from "sonner"
+import { isValidEmail } from "@/lib/validation"
 
 export function NewsletterSignup({ source = "homepage" }: { source?: string }) {
   const [email, setEmail] = useState("")
@@ -9,7 +10,7 @@ export function NewsletterSignup({ source = "homepage" }: { source?: string }) {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
-    if (!/.+@.+\..+/.test(email)) { toast.error("Enter a valid email."); return }
+    if (!isValidEmail(email)) { toast.error("Enter a valid email."); return }
     setBusy(true)
     try {
       const res = await fetch("/api/newsletter", {

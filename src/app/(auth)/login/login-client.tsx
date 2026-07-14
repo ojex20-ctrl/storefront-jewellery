@@ -6,6 +6,7 @@ import { motion } from "framer-motion"
 import { toast } from "sonner"
 import { useAuthStore } from "@/stores/auth-store"
 import { GoogleButton, OrDivider } from "@/components/auth/google-button"
+import { isValidEmail } from "@/lib/validation"
 
 export function LoginClient({ googleEnabled = false }: { googleEnabled?: boolean }) {
   const router = useRouter()
@@ -17,6 +18,8 @@ export function LoginClient({ googleEnabled = false }: { googleEnabled?: boolean
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    if (!isValidEmail(email)) { toast.error("Enter a valid email address."); return }
+    if (!password) { toast.error("Password is required."); return }
     setPending(true)
     try {
       const res = await fetch("/api/auth/login", {
@@ -94,8 +97,14 @@ function Input({ label, value, onChange, type = "text", required }: {
   return (
     <label className="block">
       <span className="text-[10px] uppercase tracking-widest text-muted">{label}</span>
-      <input type={type} value={value} onChange={(e) => onChange(e.target.value)} required={required}
-        className="mt-1 w-full border-b border-line bg-transparent py-2 text-sm outline-none focus:border-accent" />
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={required}
+        autoComplete={type === "email" ? "email" : type === "password" ? "current-password" : undefined}
+        className="mt-1 w-full border-b border-line bg-transparent py-2 text-sm outline-none focus:border-accent"
+      />
     </label>
   )
 }

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
-import { verifyCustomerSession } from "@/lib/customer-auth"
+import { sanitizeName, sanitizePhone, verifyCustomerSession } from "@/lib/customer-auth"
+import { validRequestOrigin } from "@/lib/rate-limit"
+import { isValidName, isValidPhone, isValidPlainText, isValidPostalCode } from "@/lib/validation"
 
 type Address = {
   id?: string
@@ -14,21 +16,8 @@ type Address = {
   phone?: string
 }
 
-type AddressRow = {
-  id: string
-  fullName: string
-  phone: string
-  addressLine1: string
-  addressLine2: string | null
-  city: string
-  pincode: string
-  country: string
-}
-
 async function currentCustomer() {
-  const session = await verifyCustomerSession()
-  if (session) return session
-  return null
+  return verifyCustomerSession()
 }
 
 function key(customerId: string) {
@@ -36,10 +25,7 @@ function key(customerId: string) {
 }
 
 async function readAddresses(customerId: string): Promise<Address[]> {
-  const rows = await prisma.customerAddress.findMany({
-    where: { customerId },
-    orderBy: { createdAt: "desc" },
-  })
+  const rows = await prisma.customerAddress.findMany({ where: { customerId }, orderBy: { createdAt: "desc" } })
   if (rows.length > 0) {
     return rows.map((row) => ({
       id: row.id,
@@ -65,29 +51,38 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  if (!validRequestOrigin(req)) return NextResponse.json({ error: "Invalid request" }, { status: 403 })
   const customer = await currentCustomer()
   if (!customer) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  const address = await req.json() as Address
+  const address = await req.json().catch(() => ({})) as Address
+  const firstName = sanitizeName(address.first_name ?? "")
+  const lastName = sanitizeName(address.last_name ?? "")
+  const phone = sanitizePhone(address.phone ?? "")
+  const addressLine1 = String(address.address_1 ?? "").trim().slice(0, 180)
+  const addressLine2 = address.address_2 ? String(address.address_2).trim().slice(0, 180) : null
+  const city = String(address.city ?? "").trim().slice(0, 80)
+  const pincode = String(address.postal_code ?? "").trim().slice(0, 16)
+  const country = String(address.country_code ?? "India").trim().slice(0, 80) || "India"
+
+  if (!isValidName(firstName, { required: true })) return NextResponse.json({ error: "First name is required." }, { status: 400 })
+  if (!isValidName(lastName)) return NextResponse.json({ error: "Enter a valid last name." }, { status: 400 })
+  if (!isValidPlainText(addressLine1, { required: true, min: 5, max: 180 })) return NextResponse.json({ error: "Enter a complete street address." }, { status: 400 })
+  if (!isValidPlainText(city, { required: true, min: 2, max: 80 })) return NextResponse.json({ error: "Enter a valid city." }, { status: 400 })
+  if (!isValidPostalCode(pincode, { required: true })) return NextResponse.json({ error: "Enter a valid postal code." }, { status: 400 })
+  if (!isValidPhone(phone, { required: true })) return NextResponse.json({ error: "Enter a valid phone number." }, { status: 400 })
+
   await prisma.customerAddress.create({
-    data: {
-      customerId: customer.id,
-      fullName: `${address.first_name ?? ""} ${address.last_name ?? ""}`.trim() || "SYRA Customer",
-      phone: address.phone ?? "",
-      addressLine1: address.address_1 ?? "",
-      addressLine2: address.address_2 ?? null,
-      city: address.city ?? "",
-      state: "",
-      pincode: address.postal_code ?? "",
-      country: address.country_code ?? "India",
-    },
+    data: { customerId: customer.id, fullName: `${firstName} ${lastName}`.trim(), phone, addressLine1, addressLine2, city, state: "", pincode, country },
   })
   return NextResponse.json({ addresses: await readAddresses(customer.id) }, { status: 201 })
 }
 
 export async function DELETE(req: Request) {
+  if (!validRequestOrigin(req)) return NextResponse.json({ error: "Invalid request" }, { status: 403 })
   const customer = await currentCustomer()
   if (!customer) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  const { id } = await req.json() as { id: string }
+  const { id } = await req.json().catch(() => ({})) as { id?: string }
+  if (!id) return NextResponse.json({ error: "Address id is required." }, { status: 400 })
   await prisma.customerAddress.deleteMany({ where: { id, customerId: customer.id } })
   return NextResponse.json({ addresses: await readAddresses(customer.id) })
 }

@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import { Button, Eyebrow } from "@podium/ui/primitives"
 import { Magnetic, WordReveal } from "@podium/ui/motion"
 import { requestPasswordReset } from "@/lib/account"
+import { isValidEmail } from "@/lib/validation"
 
 export function ForgotPasswordClient() {
   const [email, setEmail] = useState("")
@@ -14,6 +15,7 @@ export function ForgotPasswordClient() {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    if (!isValidEmail(email)) { toast.error("Enter a valid email address."); return }
     setPending(true)
     try {
       await requestPasswordReset(email)

@@ -12,13 +12,14 @@ import {
 import { sendEmail, verificationEmail } from "@/lib/email"
 import { isSupabaseConfigured, supabaseSignUp } from "@/lib/supabase-auth"
 import { rateLimit, requestIp, validRequestOrigin } from "@/lib/rate-limit"
+import { isValidEmail, isValidName } from "@/lib/validation"
 
 export async function POST(req: Request) {
   if (!validRequestOrigin(req)) return NextResponse.json({ error: "Invalid request" }, { status: 403 })
   if (!rateLimit(`customer-register:${requestIp(req)}`, 6)) {
     return NextResponse.json({ error: "Too many registrations. Try again later." }, { status: 429 })
   }
-  const body = await req.json()
+  const body = await req.json().catch(() => ({}))
   const firstName = sanitizeName(body.firstName ?? "")
   const lastName = sanitizeName(body.lastName ?? "")
   const email = normalizeEmail(body.email ?? "")
@@ -30,6 +31,10 @@ export async function POST(req: Request) {
   if (!firstName || !lastName || !email || !phone || !password || !confirmPassword) {
     return NextResponse.json({ error: "All fields are required" }, { status: 400 })
   }
+  if (!isValidName(firstName, { required: true }) || !isValidName(lastName, { required: true })) {
+    return NextResponse.json({ error: "Enter a valid first and last name." }, { status: 400 })
+  }
+  if (!isValidEmail(email)) return NextResponse.json({ error: "Enter a valid email address." }, { status: 400 })
   if (!acceptTerms) return NextResponse.json({ error: "Please accept the terms." }, { status: 400 })
   if (!isValidPhone(phone)) return NextResponse.json({ error: "Enter a valid phone number." }, { status: 400 })
   if (password !== confirmPassword) {
@@ -63,14 +68,12 @@ export async function POST(req: Request) {
   }
 
   const passwordHash = await hashPassword(password)
-  // Create, or refresh an unverified account so a user who never verified can retry.
   await prisma.customer.upsert({
     where: { email },
     update: { passwordHash, firstName, lastName, phone, verified: false },
     create: { email, passwordHash, firstName, lastName, phone, verified: false },
   })
 
-  // OTP-based signup: email a 6-digit code the user enters to verify + auto-login.
   const { code } = await createOtp(email, "register")
   const { subject, html } = verificationEmail(firstName, code)
   await sendEmail({ to: email, subject, html }).catch(() => {})

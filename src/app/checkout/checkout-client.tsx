@@ -1,5 +1,5 @@
 "use client"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useState, type InputHTMLAttributes } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
@@ -13,6 +13,7 @@ import { useAuthStore } from "@/stores/auth-store"
 import type { BrandConfig } from "@/lib/brand-config"
 import { openRazorpayCheckout } from "@/lib/razorpay"
 import { addAddress, listAddresses, type Address } from "@/lib/account"
+import { isValidEmail, isValidName, isValidPhone, isValidPlainText, isValidPostalCode } from "@/lib/validation"
 
 /** Rental cart lines store a flacon hex; buy lines store a stone hex. Not shown as a colour name. */
 const variantLabel = (_hex: string) => "Finish"
@@ -69,6 +70,17 @@ function detailsToAddress(details: CheckoutDetails): Address {
 
 function addressTitle(address: Address) {
   return `${address.first_name ?? ""} ${address.last_name ?? ""}`.trim() || "Saved address"
+}
+
+function validateCheckoutDetails(details: CheckoutDetails) {
+  if (!isValidEmail(details.email)) return "Enter a valid email address."
+  if (!isValidName(details.firstName, { required: true })) return "First name is required."
+  if (!isValidName(details.lastName)) return "Enter a valid last name."
+  if (!isValidPlainText(details.address, { required: true, min: 5, max: 180 })) return "Enter a complete shipping address."
+  if (!isValidPlainText(details.city, { required: true, min: 2, max: 80 })) return "Enter a valid city."
+  if (!isValidPostalCode(details.postcode, { required: true })) return "Enter a valid pincode."
+  if (!isValidPhone(details.phone, { required: true })) return "Enter a valid mobile number."
+  return null
 }
 
 export function CheckoutClient({ brand }: { brand: BrandConfig }) {
@@ -159,10 +171,8 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
 
   if (items.length === 0) return <EmptyState />
 
-  const stepValid =
-    step === 1
-      ? details.email && details.firstName && details.address && details.city && details.postcode && details.phone
-      : true
+  const detailsError = validateCheckoutDetails(details)
+  const stepValid = step === 1 ? !detailsError : true
 
   const applyCoupon = async () => {
     const code = couponInput.trim()
@@ -187,6 +197,12 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
   }
 
   const handlePlace = async () => {
+    const validationError = validateCheckoutDetails(details)
+    if (validationError) {
+      toast.error(validationError)
+      setStep(1)
+      return
+    }
     if (!razorpayEnabled) {
       toast.error("No active payment gateway is configured")
       return
@@ -382,7 +398,7 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
                   </div>
                 )}
 
-                <Field label="Email" value={details.email} onChange={(v) => updateDetails("email", v)} placeholder="email@domain.com" />
+                <Field label="Email" type="email" value={details.email} onChange={(v) => updateDetails("email", v)} placeholder="email@domain.com" />
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                   <Field label="First name" value={details.firstName} onChange={(v) => updateDetails("firstName", v)} />
                   <Field label="Last name" value={details.lastName} onChange={(v) => updateDetails("lastName", v)} />
@@ -390,10 +406,10 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
                 <Field label="Address" value={details.address} onChange={(v) => updateDetails("address", v)} />
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-[2fr_1fr_1fr]">
                   <Field label="City" value={details.city} onChange={(v) => updateDetails("city", v)} />
-                  <Field label="Pincode" value={details.postcode} onChange={(v) => updateDetails("postcode", v)} />
+                  <Field label="Pincode" inputMode="text" value={details.postcode} onChange={(v) => updateDetails("postcode", v)} />
                   <Field label="Country" value={details.country} onChange={(v) => updateDetails("country", v)} />
                 </div>
-                <Field label="Phone (Mobile)" value={details.phone} onChange={(v) => updateDetails("phone", v)} placeholder="+91 ..." />
+                <Field label="Phone (Mobile)" type="tel" inputMode="tel" value={details.phone} onChange={(v) => updateDetails("phone", v)} placeholder="+91 ..." />
               </div>
             )}
 
@@ -464,7 +480,13 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
           )}
           {step < 3 ? (
             <Magnetic strength={0.15}>
-              <Button onClick={() => setStep((s) => s + 1)} disabled={!stepValid}>
+              <Button
+                onClick={() => {
+                  if (detailsError) { toast.error(detailsError); return }
+                  setStep((s) => s + 1)
+                }}
+                disabled={!stepValid}
+              >
                 Continue →
               </Button>
             </Magnetic>
@@ -562,11 +584,15 @@ function Field({
   value,
   onChange,
   placeholder,
+  type = "text",
+  inputMode,
 }: {
   label: string
   value?: string
   onChange?: (v: string) => void
   placeholder?: string
+  type?: string
+  inputMode?: InputHTMLAttributes<HTMLInputElement>["inputMode"]
 }) {
   const [focus, setFocus] = useState(false)
   return (
@@ -579,6 +605,8 @@ function Field({
         {label}
       </span>
       <input
+        type={type}
+        inputMode={inputMode}
         value={value ?? ""}
         onChange={(e) => onChange?.(e.target.value)}
         placeholder={placeholder}

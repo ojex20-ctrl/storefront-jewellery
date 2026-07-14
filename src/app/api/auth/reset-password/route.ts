@@ -2,13 +2,16 @@ import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
 import { hashPassword, hashToken, hasLocalPasswordHash, isStrongPassword } from "@/lib/customer-auth"
 import { validRequestOrigin } from "@/lib/rate-limit"
+import { isValidToken } from "@/lib/validation"
 import { sendEmail, passwordChangedEmail } from "@/lib/email"
 
 export async function POST(req: Request) {
   if (!validRequestOrigin(req)) return NextResponse.json({ error: "Invalid request" }, { status: 403 })
-  const { token, newPassword } = await req.json()
+  const body = await req.json().catch(() => ({})) as { token?: string; newPassword?: string }
+  const token = String(body.token ?? "").trim()
+  const newPassword = String(body.newPassword ?? "")
 
-  if (!token || !newPassword) {
+  if (!isValidToken(token) || !newPassword) {
     return NextResponse.json({ error: "Reset token and new password required" }, { status: 400 })
   }
   if (!isStrongPassword(newPassword)) {

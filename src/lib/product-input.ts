@@ -1,4 +1,5 @@
 import type { Prisma } from "@prisma/client"
+import { isNonNegativeMoney, isValidPlainText, isValidSlug, isValidUrlOrPath, normalizeSlug } from "./validation"
 
 /**
  * Normalizes and whitelists product input coming from the admin forms / API.
@@ -38,6 +39,50 @@ function toArray(value: unknown): unknown[] {
   return value ? [value] : []
 }
 
+function optionalPlainText(value: unknown, max: number) {
+  if (value === undefined || value === null || value === "") return true
+  return isValidPlainText(value, { max })
+}
+
+function imageValues(input: Record<string, unknown>) {
+  const raw = Array.isArray(input.images) ? input.images : toArray(input.image)
+  return raw.map((item) => String(item ?? "").trim()).filter(Boolean)
+}
+
+export function validateProductInput(input: unknown, options: { partial?: boolean } = {}) {
+  const partial = Boolean(options.partial)
+  if (!input || typeof input !== "object" || Array.isArray(input)) return "Product payload must be an object."
+  const data = input as Record<string, unknown>
+
+  if ((!partial || "name" in data) && !isValidPlainText(data.name, { required: true, max: 160 })) return "Product name is required."
+
+  const slug = "slug" in data ? normalizeSlug(data.slug) : (!partial ? normalizeSlug(data.name) : "")
+  if ((!partial || "slug" in data) && !isValidSlug(slug)) return "Enter a valid product slug."
+
+  if (!partial || "price" in data) {
+    const price = Number(data.price)
+    if (!Number.isInteger(price) || !isNonNegativeMoney(price)) return "Enter a valid product price."
+  }
+  if (data.compareAtPrice !== undefined && data.compareAtPrice !== null && data.compareAtPrice !== "") {
+    const compareAtPrice = Number(data.compareAtPrice)
+    if (!Number.isInteger(compareAtPrice) || !isNonNegativeMoney(compareAtPrice)) return "Enter a valid compare-at price."
+  }
+  if (data.weight !== undefined && data.weight !== null && data.weight !== "") {
+    const weight = Number(data.weight)
+    if (!Number.isFinite(weight) || weight < 0 || weight > 100000) return "Enter a valid product weight."
+  }
+
+  for (const field of ["caption", "description", "material", "warranty", "seoTitle", "seoDescription", "kind", "subcategory", "tag", "mainHierarchy", "subHierarchy"]) {
+    if (!optionalPlainText(data[field], field === "description" ? 5000 : 500)) return `Enter valid text for ${field}.`
+  }
+
+  const images = imageValues(data)
+  if (images.length > 12) return "A product can have up to 12 images."
+  if (images.some((image) => !isValidUrlOrPath(image))) return "Product images must be valid URLs or site paths."
+
+  return null
+}
+
 // `partial` (used by PUT) only transforms a group when one of its keys is
 // present, so partial updates like a Live/Draft toggle ({ published: true })
 // don't blank out media/classification columns. Create (POST) uses full mode,
@@ -59,6 +104,7 @@ export function normalizeProductInput(
     if (WRITABLE_FIELDS.has(key)) data[key] = input[key]
   }
   const has = (...keys: string[]) => !partial || keys.some((k) => k in data)
+  if (typeof data.slug === "string") data.slug = normalizeSlug(data.slug)
 
   if (has("images", "image")) {
     const imagesArr = Array.isArray(data.images) ? data.images : toArray(data.image)

@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server"
+import { validRequestOrigin } from "@/lib/rate-limit"
+import { isPositiveMoney, isValidSafeId } from "@/lib/validation"
 
 /**
  * Stripe Checkout session creator. In production proxies to Medusa, which
@@ -6,7 +8,12 @@ import { NextResponse } from "next/server"
  * server-side secret. Returns `{ sessionId }` for the client to redirect.
  */
 export async function POST(req: Request) {
-  const body = (await req.json()) as { orderId: string; amount: number; currency: string }
+  if (!validRequestOrigin(req)) return NextResponse.json({ error: "Invalid request" }, { status: 403 })
+  const body = (await req.json().catch(() => ({}))) as { orderId?: string; amount?: number; currency?: string }
+  const currency = String(body.currency ?? "INR").toUpperCase()
+  if (!isValidSafeId(body.orderId) || !isPositiveMoney(body.amount) || !/^[A-Z]{3}$/.test(currency)) {
+    return NextResponse.json({ error: "Valid order id, amount, and currency are required" }, { status: 400 })
+  }
 
   if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
     return NextResponse.json({ sessionId: `cs_dev_${Date.now()}`, mode: "dev-stub" })
@@ -24,7 +31,7 @@ export async function POST(req: Request) {
       "content-type": "application/json",
       "x-publishable-api-key": pubKey,
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ ...body, currency }),
   })
   if (!resp.ok) {
     return NextResponse.json({ error: "Stripe session failed" }, { status: 502 })

@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server"
+import { validRequestOrigin } from "@/lib/rate-limit"
+import { isPositiveMoney, isValidPlainText } from "@/lib/validation"
 
 /**
  * Razorpay order creation proxy.
@@ -11,7 +13,13 @@ import { NextResponse } from "next/server"
  * For local dev without keys, we return a fake id so the UI can still flow.
  */
 export async function POST(req: Request) {
-  const body = (await req.json()) as { amount: number; currency: string; receipt: string }
+  if (!validRequestOrigin(req)) return NextResponse.json({ error: "Invalid request" }, { status: 403 })
+  const body = (await req.json().catch(() => ({}))) as { amount?: number; currency?: string; receipt?: string }
+  const currency = String(body.currency ?? "INR").toUpperCase()
+  const receipt = String(body.receipt ?? "").trim().slice(0, 120)
+  if (!isPositiveMoney(body.amount) || !/^[A-Z]{3}$/.test(currency) || !isValidPlainText(receipt, { required: true, max: 120 })) {
+    return NextResponse.json({ error: "Valid amount, currency, and receipt are required" }, { status: 400 })
+  }
 
   const medusaUrl = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL
   const pubKey = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
@@ -30,8 +38,8 @@ export async function POST(req: Request) {
     },
     body: JSON.stringify({
       amount: body.amount,
-      currency: body.currency,
-      receipt: body.receipt,
+      currency,
+      receipt,
     }),
   })
   if (!resp.ok) {
