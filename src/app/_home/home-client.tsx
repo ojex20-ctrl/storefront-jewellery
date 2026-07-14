@@ -547,110 +547,213 @@ function PriceRangeCarousel({ products }: { products: Product[] }) {
 }
 
 
+type JewelPiece = { src: string; label: string; w: number; x: number; y: number; sx: number; sy: number; spin: number }
 function ScatterSection({ products: _products }: { products: Product[] }) {
-  const containerRef = useRef<HTMLDivElement>(null)
+  const stageRef = useRef<HTMLDivElement>(null)
   const [cursorPx, setCursorPx] = useState({ x: -9999, y: -9999 })
+  const [scatterMode, setScatterMode] = useState<"gather" | "spread">("gather")
+  const [focused, setFocused] = useState<JewelPiece | null>(null)
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!containerRef.current) return
-    const rect = containerRef.current.getBoundingClientRect()
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setScatterMode((mode) => (mode === "gather" ? "spread" : "gather"))
+    }, 6200)
+    return () => clearInterval(timer)
+  }, [])
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (!stageRef.current) return
+    const rect = stageRef.current.getBoundingClientRect()
     setCursorPx({ x: e.clientX - rect.left, y: e.clientY - rect.top })
   }
 
-  type JewelPiece = { src: string; label: string; w: number; x: number; y: number }
   const jewelleryPieces: JewelPiece[] = [
-    { src: "/jewellery/gen-diamond-ring.png", label: "Diamond Ring", w: 100, x: 42, y: 38 },
-    { src: "/jewellery/gen-pink-heart-ring.png", label: "Pink Heart", w: 90, x: 55, y: 45 },
-    { src: "/jewellery/gen-sapphire-ring.png", label: "Sapphire Ring", w: 85, x: 38, y: 52 },
-    { src: "/jewellery/gen-diamond-ring.png", label: "Solitaire", w: 75, x: 62, y: 35 },
-    { src: "/jewellery/gen-crystal-earrings.png", label: "Crystal Drops", w: 95, x: 48, y: 28 },
-    { src: "/jewellery/gen-ruby-earrings.png", label: "Ruby Drops", w: 90, x: 35, y: 42 },
-    { src: "/jewellery/gen-crystal-earrings.png", label: "Pavé Studs", w: 70, x: 58, y: 58 },
-    { src: "/jewellery/gen-gold-bracelet.png", label: "Gold Chain", w: 110, x: 45, y: 55 },
-    { src: "/jewellery/gen-gold-bracelet.png", label: "Tennis", w: 90, x: 52, y: 32 },
-    { src: "/jewellery/gen-gold-necklace.png", label: "Emerald Pendant", w: 100, x: 50, y: 48 },
-    { src: "/jewellery/gen-gold-necklace.png", label: "Gold Pendant", w: 80, x: 40, y: 60 },
-    { src: "/jewellery/gen-gold-bar.png", label: "24K Gold Bar", w: 90, x: 56, y: 52 },
-    { src: "/jewellery/gen-gold-bar.png", label: "Gold Bullion", w: 75, x: 44, y: 45 },
-    { src: "/jewellery/gen-gold-bar.png", label: "Gold Ingot", w: 65, x: 50, y: 62 },
+    { src: "/jewellery/gen-diamond-ring.png", label: "Diamond Ring", w: 118, x: 42, y: 38, sx: 14, sy: 24, spin: -18 },
+    { src: "/jewellery/gen-pink-heart-ring.png", label: "Pink Heart", w: 102, x: 55, y: 45, sx: 30, sy: 70, spin: 14 },
+    { src: "/jewellery/gen-sapphire-ring.png", label: "Sapphire Ring", w: 98, x: 38, y: 52, sx: 80, sy: 22, spin: 22 },
+    { src: "/jewellery/gen-crystal-earrings.png", label: "Crystal Drops", w: 112, x: 48, y: 28, sx: 88, sy: 68, spin: -28 },
+    { src: "/jewellery/gen-ruby-earrings.png", label: "Ruby Drops", w: 106, x: 35, y: 42, sx: 12, sy: 76, spin: 32 },
+    { src: "/jewellery/gen-gold-bracelet.png", label: "Gold Chain", w: 132, x: 45, y: 55, sx: 48, sy: 15, spin: -8 },
+    { src: "/jewellery/gen-gold-necklace.png", label: "Gold Pendant", w: 120, x: 52, y: 32, sx: 66, sy: 84, spin: 12 },
+    { src: "/jewellery/citrine-pendant.png", label: "Citrine Pendant", w: 104, x: 58, y: 58, sx: 7, sy: 48, spin: -14 },
+    { src: "/jewellery/gen-gold-bar.png", label: "Gold Ingot", w: 96, x: 50, y: 48, sx: 91, sy: 43, spin: 18 },
   ]
 
-  type Gem = { bg: string; glow: string; sz: number; x: number; y: number; label: string }
-  const mkDiamond = (sz: number, x: number, y: number): Gem => ({ bg: "radial-gradient(circle at 30% 25%, #fff 0%, #e8f0ff 25%, #b8d4f8 50%, #8aa8d0 75%, #6688aa 100%)", glow: "rgba(200,220,255,0.6)", sz, x, y, label: "Diamond" })
-  const mkRuby = (sz: number, x: number, y: number): Gem => ({ bg: "radial-gradient(circle at 30% 25%, #ff8888 0%, #dc143c 25%, #9b0020 55%, #4a0010 100%)", glow: "rgba(220,20,60,0.6)", sz, x, y, label: "Ruby" })
-  const mkSapphire = (sz: number, x: number, y: number): Gem => ({ bg: "radial-gradient(circle at 30% 25%, #88aaff 0%, #2244aa 25%, #112266 55%, #081140 100%)", glow: "rgba(34,68,170,0.6)", sz, x, y, label: "Sapphire" })
-  const mkEmerald = (sz: number, x: number, y: number): Gem => ({ bg: "radial-gradient(circle at 30% 25%, #66ee99 0%, #1a8844 25%, #0d5528 55%, #062a14 100%)", glow: "rgba(26,136,68,0.6)", sz, x, y, label: "Emerald" })
-  const mkPinkDiamond = (sz: number, x: number, y: number): Gem => ({ bg: "radial-gradient(circle at 30% 25%, #ffc8dd 0%, #ff6ea8 25%, #cc3377 55%, #882255 100%)", glow: "rgba(255,110,168,0.6)", sz, x, y, label: "Pink Diamond" })
-
+  type Gem = { glow: string; sz: number; x: number; y: number; sx: number; sy: number; label: string }
+  const mkGem = (label: string, glow: string, sz: number, x: number, y: number, sx: number, sy: number): Gem => ({ label, glow, sz, x, y, sx, sy })
   const gemstones: Gem[] = [
-    mkDiamond(70, 46, 40), mkDiamond(60, 52, 46), mkDiamond(55, 39, 48),
-    mkDiamond(50, 58, 38), mkDiamond(65, 44, 55), mkDiamond(50, 54, 55),
-    mkRuby(65, 48, 35), mkRuby(55, 36, 44), mkRuby(60, 60, 48),
-    mkRuby(50, 42, 58), mkRuby(55, 56, 42),
-    mkSapphire(60, 40, 36), mkSapphire(55, 57, 55), mkSapphire(65, 50, 50),
-    mkSapphire(50, 35, 52), mkSapphire(55, 62, 40),
-    mkEmerald(55, 47, 42), mkEmerald(60, 53, 36), mkEmerald(50, 38, 56),
-    mkEmerald(65, 59, 50), mkEmerald(50, 44, 48),
-    mkPinkDiamond(60, 50, 38), mkPinkDiamond(55, 42, 50), mkPinkDiamond(50, 56, 58),
-    mkPinkDiamond(65, 48, 54), mkPinkDiamond(55, 54, 42),
-    mkDiamond(35, 32, 38), mkDiamond(30, 65, 55), mkDiamond(28, 34, 58),
-    mkRuby(32, 63, 35), mkRuby(28, 37, 62),
-    mkSapphire(30, 60, 62), mkSapphire(35, 33, 42),
-    mkEmerald(28, 64, 45), mkEmerald(32, 36, 35),
-    mkPinkDiamond(30, 58, 60), mkPinkDiamond(28, 40, 33),
-    mkDiamond(25, 30, 50),
+    mkGem("Diamond", "rgba(215,232,255,0.58)", 72, 46, 40, 20, 35),
+    mkGem("Ruby", "rgba(220,20,60,0.55)", 64, 48, 35, 36, 22),
+    mkGem("Sapphire", "rgba(45,88,220,0.55)", 66, 40, 36, 60, 28),
+    mkGem("Emerald", "rgba(42,190,105,0.52)", 60, 53, 36, 76, 54),
+    mkGem("Pink Diamond", "rgba(255,120,180,0.54)", 62, 50, 38, 28, 58),
+    mkGem("Diamond", "rgba(215,232,255,0.48)", 42, 32, 38, 9, 18),
+    mkGem("Ruby", "rgba(220,20,60,0.46)", 38, 63, 35, 93, 18),
+    mkGem("Sapphire", "rgba(45,88,220,0.46)", 36, 60, 62, 84, 83),
+    mkGem("Emerald", "rgba(42,190,105,0.46)", 34, 36, 35, 16, 88),
+    mkGem("Pink Diamond", "rgba(255,120,180,0.46)", 36, 58, 60, 52, 92),
+    mkGem("Diamond", "rgba(215,232,255,0.42)", 28, 30, 50, 42, 9),
+    mkGem("Ruby", "rgba(220,20,60,0.42)", 30, 54, 42, 70, 13),
+    mkGem("Sapphire", "rgba(45,88,220,0.42)", 32, 35, 52, 96, 72),
+    mkGem("Emerald", "rgba(42,190,105,0.42)", 30, 64, 45, 5, 65),
+    mkGem("Pink Diamond", "rgba(255,120,180,0.42)", 30, 42, 50, 63, 72),
   ]
 
-  const REPULSE_R = 140
+  const isSpread = scatterMode === "spread" || Boolean(focused)
+  const REPULSE_R = 150
+
+  const focusPiece = (piece: JewelPiece) => {
+    setFocused(piece)
+    setScatterMode("spread")
+  }
 
   return (
     <section
-      ref={containerRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={() => setCursorPx({ x: -9999, y: -9999 })}
-      className="relative w-full min-h-[800px] md:min-h-[900px] bg-bg overflow-hidden flex flex-col items-center justify-center border-t border-line cursor-none"
+      onPointerMove={handlePointerMove}
+      onPointerLeave={() => setCursorPx({ x: -9999, y: -9999 })}
+      className="relative flex min-h-[820px] w-full flex-col items-center justify-center overflow-hidden border-y border-line bg-bg px-4 py-20 text-ink md:min-h-[920px] md:px-10 md:py-24 md:cursor-none"
     >
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_50%_50%,_rgba(194,185,167,0.05)_0%,_transparent_70%)] pointer-events-none" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_58%_48%_at_50%_42%,rgba(194,185,167,0.14),transparent_68%)]" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/60 to-transparent" />
+      <motion.div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[620px] w-[620px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent/10"
+        animate={{ rotate: 360, scale: isSpread ? 1.1 : 0.82, opacity: isSpread ? 0.75 : 0.35 }}
+        transition={{ rotate: { repeat: Infinity, duration: 36, ease: "linear" }, scale: { duration: 1.2 }, opacity: { duration: 1.2 } }}
+      />
+      <motion.div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 top-1/2 h-[360px] w-[360px] -translate-x-1/2 -translate-y-1/2 rounded-full border border-accent/10"
+        animate={{ rotate: -360, scale: isSpread ? 1.35 : 0.7, opacity: isSpread ? 0.5 : 0.2 }}
+        transition={{ rotate: { repeat: Infinity, duration: 28, ease: "linear" }, scale: { duration: 1.2 }, opacity: { duration: 1.2 } }}
+      />
 
-      <div className="relative z-30 text-center pointer-events-none mb-6">
-        <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent/70 block mb-3">Interactive Experience</span>
-        <h2 className="font-display text-5xl md:text-8xl text-ink tracking-tight leading-none">
+      <div className="relative z-30 mb-6 max-w-4xl text-center">
+        <span className="mb-3 block font-mono text-[10px] uppercase tracking-[0.3em] text-accent/70">Interactive Experience</span>
+        <h2 className="font-display text-5xl leading-none tracking-tight text-ink md:text-8xl">
           Dynamic <em className="text-accent">Brilliance</em>
         </h2>
-        <p className="font-mono text-[10px] uppercase tracking-widest text-muted mt-4">
-          Move your cursor to push the jewels
+        <p className="mx-auto mt-4 max-w-xl font-mono text-[10px] uppercase tracking-widest text-muted">
+          {isSpread ? "Jewels in motion across the canvas" : "Move your cursor to push the jewels"}
         </p>
+        <div className="mt-6 flex justify-center gap-2">
+          <button
+            type="button"
+            onClick={() => setScatterMode((mode) => (mode === "gather" ? "spread" : "gather"))}
+            className="border border-line bg-paper/80 px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-muted backdrop-blur transition-colors hover:border-accent hover:text-accent"
+          >
+            {scatterMode === "gather" ? "Scatter" : "Gather"}
+          </button>
+          <Link href="/collection" className="border border-accent bg-accent px-4 py-2 font-mono text-[10px] uppercase tracking-widest text-bg transition-opacity hover:opacity-85">
+            Explore
+          </Link>
+        </div>
       </div>
 
-      <div className="relative w-full max-w-[1200px] h-[500px] md:h-[600px]">
+      <div ref={stageRef} className="relative z-10 h-[510px] w-full max-w-[1250px] md:h-[610px]">
         {gemstones.map((gem, i) => (
-          <RepulsionItem key={`g-${i}`} restX={gem.x} restY={gem.y} cursorPx={cursorPx} containerRef={containerRef} repulseRadius={REPULSE_R * 0.9} mass={0.3 + (gem.sz / 200)} idx={i}>
+          <RepulsionItem
+            key={`g-${i}`}
+            restX={isSpread ? gem.sx : gem.x}
+            restY={isSpread ? gem.sy : gem.y}
+            cursorPx={cursorPx}
+            stageRef={stageRef}
+            repulseRadius={REPULSE_R * 0.82}
+            mass={0.45 + gem.sz / 180}
+            idx={i}
+            spread={isSpread}
+          >
             <DiamondCut size={gem.sz} glow={gem.glow} variant={gem.label} />
           </RepulsionItem>
         ))}
         {jewelleryPieces.map((piece, i) => (
-          <RepulsionItem key={`j-${i}`} restX={piece.x} restY={piece.y} cursorPx={cursorPx} containerRef={containerRef} repulseRadius={REPULSE_R} mass={1.0 + (piece.w / 300)} idx={i + 200}>
-            <div className="drop-shadow-[0_4px_12px_rgba(0,0,0,0.5)]" style={{ width: piece.w, height: piece.w }}>
+          <RepulsionItem
+            key={`j-${i}`}
+            restX={isSpread ? piece.sx : piece.x}
+            restY={isSpread ? piece.sy : piece.y}
+            cursorPx={cursorPx}
+            stageRef={stageRef}
+            repulseRadius={REPULSE_R}
+            mass={0.9 + piece.w / 280}
+            idx={i + 200}
+            spread={isSpread}
+            active={focused?.label === piece.label}
+            onSelect={() => focusPiece(piece)}
+          >
+            <div className="relative drop-shadow-[0_16px_35px_rgba(0,0,0,0.45)]" style={{ width: piece.w, height: piece.w }}>
+              <div className="absolute inset-[-18%] rounded-full bg-accent/10 blur-2xl" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={piece.src} alt={piece.label} className="w-full h-full object-contain select-none" style={{ filter: "contrast(1.1) saturate(1.2)" }} draggable={false} />
+              <img
+                src={piece.src}
+                alt={piece.label}
+                className="relative h-full w-full select-none object-contain transition-transform duration-500 hover:scale-110"
+                style={{ filter: "contrast(1.08) saturate(1.18)" }}
+                draggable={false}
+              />
             </div>
           </RepulsionItem>
         ))}
+
+        {cursorPx.x > 0 && (
+          <motion.div
+            className="pointer-events-none absolute z-50 hidden h-12 w-12 items-center justify-center rounded-full border border-accent/25 bg-bg/20 backdrop-blur-sm md:flex"
+            animate={{ x: cursorPx.x - 24, y: cursorPx.y - 24, scale: isSpread ? 1.2 : 1 }}
+            transition={{ type: "spring", stiffness: 240, damping: 24 }}
+          >
+            <div className="h-2 w-2 rounded-full bg-accent/70" />
+          </motion.div>
+        )}
       </div>
 
-      {cursorPx.x > 0 && (
-        <motion.div
-          className="fixed pointer-events-none z-50"
-          style={{
-            left: cursorPx.x + (containerRef.current?.getBoundingClientRect().left ?? 0) - 24,
-            top: cursorPx.y + (containerRef.current?.getBoundingClientRect().top ?? 0) - 24,
-          }}
-        >
-          <div className="w-12 h-12 rounded-full border border-accent/20 flex items-center justify-center backdrop-blur-sm">
-            <div className="w-2 h-2 rounded-full bg-accent/50" />
-          </div>
-        </motion.div>
-      )}
+      <AnimatePresence>
+        {focused && (
+          <motion.div
+            role="presentation"
+            className="absolute inset-0 z-40 flex items-center justify-center bg-black/55 px-5 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setFocused(null)}
+          >
+            <motion.div
+              className="relative grid w-full max-w-[760px] grid-cols-1 overflow-hidden border border-accent/25 bg-paper text-left shadow-[0_40px_140px_rgba(0,0,0,0.65)] md:grid-cols-[1.1fr_0.9fr]"
+              initial={{ y: 40, scale: 0.88, rotate: -4 }}
+              animate={{ y: 0, scale: 1, rotate: 0 }}
+              exit={{ y: 28, scale: 0.9, rotate: 3 }}
+              transition={{ type: "spring", stiffness: 110, damping: 17 }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="relative flex min-h-[360px] items-center justify-center overflow-hidden bg-bg-2 p-10">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(194,185,167,0.2),transparent_62%)]" />
+                <motion.div
+                  animate={{ y: [0, -10, 0], rotate: [0, 2.5, 0] }}
+                  transition={{ repeat: Infinity, duration: 4.2, ease: "easeInOut" }}
+                  className="relative"
+                >
+                  <div className="absolute inset-[-20%] rounded-full bg-accent/15 blur-3xl" />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={focused.src} alt="" className="relative max-h-[320px] w-full object-contain drop-shadow-[0_22px_45px_rgba(0,0,0,0.55)]" />
+                </motion.div>
+              </div>
+              <div className="flex flex-col justify-center p-7 md:p-9">
+                <p className="font-mono text-[10px] uppercase tracking-[0.28em] text-accent">SYRA Motion Study</p>
+                <h3 className="mt-4 font-display text-4xl leading-none text-ink md:text-5xl">{focused.label}</h3>
+                <p className="mt-5 text-sm leading-6 text-muted">
+                  A closer look at the anti-tarnish shine, with the collection spreading around it like a jewellery tray in motion.
+                </p>
+                <div className="mt-7 flex flex-wrap gap-3">
+                  <Link href="/collection" className="bg-accent px-5 py-3 font-mono text-[10px] uppercase tracking-widest text-bg transition-opacity hover:opacity-85">
+                    Shop pieces
+                  </Link>
+                  <button type="button" onClick={() => setFocused(null)} className="border border-line px-5 py-3 font-mono text-[10px] uppercase tracking-widest text-muted transition-colors hover:border-accent hover:text-accent">
+                    Close
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   )
 }
@@ -710,50 +813,67 @@ function DiamondCut({ size, glow, variant }: { size: number; glow: string; varia
 }
 
 function RepulsionItem({
-  restX, restY, cursorPx, containerRef, repulseRadius, mass, idx, children,
+  restX, restY, cursorPx, stageRef, repulseRadius, mass, idx, spread, active = false, onSelect, children,
 }: {
   restX: number
   restY: number
   cursorPx: { x: number; y: number }
-  containerRef: React.RefObject<HTMLDivElement | null>
+  stageRef: React.RefObject<HTMLDivElement | null>
   repulseRadius: number
   mass: number
   idx: number
+  spread: boolean
+  active?: boolean
+  onSelect?: () => void
   children: React.ReactNode
 }) {
-  const rect = containerRef.current?.getBoundingClientRect()
+  const rect = stageRef.current?.getBoundingClientRect()
   const cw = rect?.width ?? 1200
   const ch = rect?.height ?? 600
   const rx = (restX / 100) * cw
   const ry = (restY / 100) * ch
 
-  const effectiveRadius = repulseRadius * 1.5
+  const effectiveRadius = repulseRadius * (spread ? 1.18 : 1.5)
   const dx = rx - cursorPx.x
   const dy = ry - cursorPx.y
   const dist = Math.sqrt(dx * dx + dy * dy)
 
   let offsetX = 0
   let offsetY = 0
-  let rotateZ = 0
+  let rotateZ = spread ? ((idx % 9) - 4) * 2.2 : 0
 
   if (dist < effectiveRadius && dist > 0) {
     const ratio = (effectiveRadius - dist) / effectiveRadius
-    const force = ratio * ratio * 450 / mass
+    const force = ratio * ratio * (spread ? 280 : 440) / mass
     offsetX = (dx / dist) * force
     offsetY = (dy / dist) * force
-    rotateZ = (dx / dist) * force * 0.3
+    rotateZ += (dx / dist) * force * 0.22
   }
 
   return (
     <motion.div
-      className="absolute pointer-events-none"
-      style={{ left: `${restX}%`, top: `${restY}%`, zIndex: dist < repulseRadius ? 20 : 10 }}
-      animate={{ x: offsetX, y: offsetY, rotate: rotateZ, scale: dist < repulseRadius && dist > 0 ? 1.05 + (0.1 * ((repulseRadius - dist) / repulseRadius)) : 1 }}
-      transition={{ type: "spring", damping: 40, stiffness: 50, mass: mass * 0.6 }}
+      className={`absolute ${onSelect ? "pointer-events-auto cursor-pointer" : "pointer-events-none"}`}
+      style={{ left: `${restX}%`, top: `${restY}%`, zIndex: active ? 34 : dist < repulseRadius ? 24 : 12 }}
+      animate={{
+        x: offsetX,
+        y: offsetY,
+        rotate: rotateZ,
+        scale: active ? 1.25 : dist < repulseRadius && dist > 0 ? 1.06 + 0.12 * ((repulseRadius - dist) / repulseRadius) : spread ? 1.03 : 1,
+      }}
+      transition={{ type: "spring", damping: 34, stiffness: 64, mass: mass * 0.58 }}
+      onClick={(event) => {
+        if (!onSelect) return
+        event.preventDefault()
+        event.stopPropagation()
+        onSelect()
+      }}
     >
       <motion.div
-        animate={{ y: [0, -4 - (idx % 4) * 1.5, 0], rotate: [0, (idx % 2 === 0 ? 1.5 : -1.5), 0] }}
-        transition={{ repeat: Infinity, duration: 4 + (idx % 3), ease: "easeInOut", delay: (idx % 10) * 0.3 }}
+        animate={{
+          y: [0, -5 - (idx % 4) * 1.6, 0],
+          rotate: [0, (idx % 2 === 0 ? 1.8 : -1.8), 0],
+        }}
+        transition={{ repeat: Infinity, duration: 4.2 + (idx % 4), ease: "easeInOut", delay: (idx % 10) * 0.18 }}
       >
         {children}
       </motion.div>
