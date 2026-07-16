@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { releaseReservedCoupon } from "@/lib/payment-finalization"
 import { validRequestOrigin } from "@/lib/rate-limit"
 import { isValidPlainText, isValidSafeId } from "@/lib/validation"
 
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
 
   const existing = await prisma.order.findUnique({
     where: { id: internalOrderId },
-    select: { id: true, orderNumber: true, paymentStatus: true },
+    select: { id: true, orderNumber: true, paymentStatus: true, couponCode: true, couponUsageRecorded: true },
   })
   if (!existing) return NextResponse.json({ error: "Order not found" }, { status: 404 })
   if (existing.paymentStatus === "paid") {
@@ -46,6 +47,7 @@ export async function POST(req: Request) {
   if (existing.paymentStatus === "failed" && !hasGatewayDetails) {
     return NextResponse.json({ order: existing, ignored: true })
   }
+  const shouldReleaseCoupon = existing.paymentStatus !== "failed" && existing.couponUsageRecorded
 
   const order = await prisma.order.update({
     where: { id: internalOrderId },
@@ -53,9 +55,9 @@ export async function POST(req: Request) {
       paymentStatus: "failed",
       status: "placed",
       paymentMethod: "razorpay",
-      paymentId: razorpay_payment_id ?? null,
-      razorpayOrderId: razorpay_order_id ?? null,
-      razorpayPaymentId: razorpay_payment_id ?? null,
+      ...(razorpay_payment_id ? { paymentId: razorpay_payment_id, razorpayPaymentId: razorpay_payment_id } : {}),
+      ...(razorpay_order_id ? { razorpayOrderId: razorpay_order_id } : {}),
+      couponUsageRecorded: shouldReleaseCoupon ? false : existing.couponUsageRecorded,
       notes: JSON.stringify({
         razorpay_order_id,
         razorpay_payment_id,
@@ -65,6 +67,7 @@ export async function POST(req: Request) {
     },
     select: { id: true, orderNumber: true, paymentStatus: true },
   })
+  if (shouldReleaseCoupon) await releaseReservedCoupon(existing)
 
   return NextResponse.json({ order })
 }

@@ -93,6 +93,7 @@ model Order {
   giftWrap       Boolean  @default(false)
   giftMessage    String?
   couponCode     String?
+  couponUsageRecorded Boolean  @default(false)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 

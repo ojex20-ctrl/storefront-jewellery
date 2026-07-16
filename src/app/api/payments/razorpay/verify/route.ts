@@ -39,18 +39,9 @@ export async function POST(req: Request) {
     razorpaySignature,
   })
   if (!valid) {
-    await prisma.order.update({
-      where: { id: orderId },
-      data: {
-        paymentStatus: "failed",
-        status: "placed",
-        paymentMethod: "razorpay",
-        paymentId: razorpayPaymentId,
-        razorpayOrderId: razorpayOrderId,
-        razorpayPaymentId: razorpayPaymentId,
-        razorpaySignature: razorpaySignature,
-      },
-    }).catch(() => null)
+    if (orderRecord.paymentStatus === "paid") {
+      return NextResponse.json({ error: "Order is already paid" }, { status: 409 })
+    }
     return NextResponse.json({ error: "Invalid payment signature" }, { status: 400 })
   }
 

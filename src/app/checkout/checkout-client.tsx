@@ -225,7 +225,7 @@ export function CheckoutClient({ brand }: { brand: BrandConfig }) {
           country: details.country,
           items: items.map((i) => ({ name: i.name, productId: i.productId, size: i.size, qty: i.qty, price: i.price, image: i.image })),
           subtotal,
-          shippingCost: ship,
+          shipping,
           discount,
           total,
           payment: "razorpay",
