@@ -9,6 +9,7 @@ const nextConfig = {
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "res.cloudinary.com" },
+      { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "**.medusajs.app" },
       { protocol: "https", hostname: "**.your-objectstorage.com" },
       { protocol: "http", hostname: "localhost" },

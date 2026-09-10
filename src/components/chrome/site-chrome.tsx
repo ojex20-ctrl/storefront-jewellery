@@ -2,13 +2,14 @@
 import { usePathname } from "next/navigation"
 import { AnimatePresence, motion } from "framer-motion"
 import { Nav, Footer } from "@podium/ui/chrome"
-import { priceFmt } from "@podium/ui/lib"
 import { useCartStore } from "@/stores/cart-store"
 import { AccountMenu } from "./account-menu"
 import { SearchTrigger } from "./search-trigger"
 import { ThemeToggle } from "./theme-toggle"
 import type { BrandConfig } from "@/lib/brand-config"
-import { buildStorefrontNavLinks, MENU_SEARCH_HREF, STOREFRONT_FOOTER_GROUPS } from "@/lib/navigation"
+import { MENU_SEARCH_HREF } from "@/lib/navigation"
+import { MARBLE_BRAND, MARBLE_LOGO, MARBLE_NAV, CATALOGUE_URL } from "@/app/_home/marble-catalogue"
+import "@/app/_home/marble.css"
 
 /**
  * Perfumes chrome — every piece of copy / link / flag comes from `brand`.
@@ -29,26 +30,13 @@ export function SiteChrome({
   const cartBumping = useCartStore((s) => s.bumping)
   const setCartOpen = useCartStore((s) => s.setOpen)
 
-  const tagline = brand.tagline ?? "Rentals and Jewels,|worn for the moment."
+  const tagline = "Premium Makrana|Marble Artisans."
   const flags = brand.feature_flags ?? {}
   const enableSearch = flags.enable_search !== false
-  const navLinks = buildStorefrontNavLinks(brand.nav_links, { includeSearch: enableSearch })
-  const footerGroups = brand.footer_groups ?? STOREFRONT_FOOTER_GROUPS
-  const computedFooterGroups = brand.social_links?.instagram
-    ? [
-        ...footerGroups,
-        { title: "Social", links: [{ href: brand.social_links.instagram, label: "Instagram" }] },
-      ]
-    : footerGroups
-  const marqueeItems = brand.marquee_items ?? [
-    `Free shipping over ${priceFmt(brand.free_shipping_threshold)}`,
-    tagline.replace("|", " "),
-  ]
-  const newsletterCopy =
-    brand.newsletter_copy ??
-    "Quiet dispatches when new pieces enter the collection."
+  const navLinks = MARBLE_NAV
+  const newsletterCopy = "Sagar Samrat Marble. Makrana marble artisans since the 1980s."
   const copyright =
-    brand.footer_copyright ?? `© ${new Date().getFullYear()} ${brand.brand_name}`
+    `© ${new Date().getFullYear()} ${MARBLE_BRAND}`
 
   const enableTransitions = flags.enable_route_transitions !== false
   const showAnnouncement =
@@ -70,7 +58,9 @@ export function SiteChrome({
       )}
 
       <Nav
-        brand={brand.brand_name}
+        brand={MARBLE_BRAND}
+        logoUrl={MARBLE_LOGO}
+        className="marble-nav"
         links={navLinks}
         activeHref={navLinks.find((l) => {
           const baseHref = l.href.split("?")[0] || l.href
@@ -103,10 +93,28 @@ export function SiteChrome({
       )}
 
       <Footer
-        brand={brand.brand_name}
+        brand={MARBLE_BRAND}
+        logoUrl={MARBLE_LOGO}
+        className="marble-footer"
         tagline={tagline}
-        marqueeItems={marqueeItems}
-        groups={computedFooterGroups}
+        marqueeItems={["Makrana White Marble", "Handcrafted Mandirs", "Marble Wall Art", "Inlay Marble Work"]}
+        groups={[
+          { title: "Explore", links: [
+            { href: "/about", label: "About Us" },
+            ...MARBLE_NAV.find(link => link.label === "Products")!.children!,
+            { href: "/catalogue", label: "Catalogue" },
+          ] },
+          { title: "Contact", links: [
+            { href: "tel:+919082025886", label: "+91 90820 25886" },
+            { href: "tel:+919987962204", label: "+91 99879 62204" },
+            { href: "mailto:sagarsamratmarble@gmail.com", label: "sagarsamratmarble@gmail.com" },
+            { href: "https://www.instagram.com/s.s.marbleart/", label: "@s.s.marbleart" },
+            { href: "/#sales-office", label: "Mumbai sales office" },
+            { href: "/#operation-unit", label: "Makrana operations" },
+            { href: "/terms", label: "Terms" },
+            { href: "/privacy", label: "Privacy" },
+          ] },
+        ]}
         newsletterCopy={newsletterCopy}
         copyright={copyright}
       />

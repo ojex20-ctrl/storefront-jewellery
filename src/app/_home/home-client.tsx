@@ -12,6 +12,8 @@ import { Eyebrow, Placeholder, Button } from "@podium/ui/primitives"
 import { TrustStrip } from "@podium/ui/chrome"
 import { priceFmt } from "@podium/ui/lib"
 import { useBrand } from "@/providers/brand-provider"
+import { MarbleIntroduction, MarbleCollections, MarbleClosingSections } from "./marble-catalogue"
+import "./marble.css"
 
 import type { Product } from "@/lib/products"
 import { ProductCard } from "@/components/product/product-card"
@@ -26,10 +28,10 @@ export function HomeClient({ products }: { products: Product[] }) {
   const collectionTouchStart = useRef<number | null>(null)
 
   const baseCategories = [
-    { name: "Bracelets", key: "Bracelet", img: products.find(p => p.kind === "Bracelet")?.image },
-    { name: "Pendant", key: "Necklace", img: products.find(p => p.kind === "Necklace")?.image },
-    { name: "Earrings", key: "Earrings", img: products.find(p => p.kind === "Earrings")?.image },
-    { name: "Rings", key: "Ring", img: products.find(p => p.kind === "Ring")?.image },
+    { name: "Home Size Mandirs", key: "Bracelet", href: "/#home-mandirs", img: "/marble/catalogue-03-01.jpg" },
+    { name: "Mandir Rooms", key: "Necklace", href: "/#mandir-rooms", img: "/marble/catalogue-05-02.jpg" },
+    { name: "Marble Wall Art", key: "Earrings", href: "/#wall-art", img: "/marble/catalogue-07-01.jpg" },
+    { name: "Inlay Marble Work", key: "Ring", href: "/#inlay-work", img: "/marble/catalogue-09-02.jpg" },
   ]
   const extendedCategories = [...baseCategories, ...baseCategories, ...baseCategories]
 
@@ -47,25 +49,25 @@ export function HomeClient({ products }: { products: Product[] }) {
 
   const heroSlides = [
     {
-      image: "/hero/syra_hero_1.png",
-      title: "Anti-Tarnish",
-      subtitle: "Elegance",
-      description: "Jewellery that lasts a lifetime. Crafted with precision.",
-      href: "/collection",
+      image: "/marble/catalogue-05-02.jpg",
+      title: "Sagar Samrat",
+      subtitle: "Marble",
+      description: "Explore our premium & luxury handcraft marble mandir and art.",
+      href: "/#home-mandirs",
     },
     {
-      image: "/hero/syra_hero_2.png",
-      title: "Timeless",
-      subtitle: "Collection",
-      description: "Curated pieces for the modern individual.",
-      href: "/collection",
+      image: "/marble/catalogue-07-01.jpg",
+      title: "Sagar Samrat",
+      subtitle: "Marble",
+      description: "Premium Makrana Marble Artisans.",
+      href: "/#wall-art",
     },
     {
-      image: "/hero/syra_hero_3.png",
-      title: "Crafted",
-      subtitle: "Brilliance",
-      description: "Rose gold, platinum, and beyond.",
-      href: "/collection",
+      image: "/marble/catalogue-09-02.jpg",
+      title: "Sagar Samrat",
+      subtitle: "Marble",
+      description: "Handcrafted carvings and finely detailed marble inlay work.",
+      href: "/#inlay-work",
     },
   ]
 
@@ -84,9 +86,9 @@ export function HomeClient({ products }: { products: Product[] }) {
   }, [baseCategories.length])
 
   return (
-    <div className="bg-bg text-ink">
+    <div className="marble-home bg-bg text-ink">
       {/* ─── HERO CAROUSEL ─────────────────────────────────────────────── */}
-      <section className="relative w-full h-[100svh] max-h-[900px] overflow-hidden">
+      <section className="marble-hero relative w-full h-[100svh] max-h-[900px] overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentHero}
@@ -113,14 +115,14 @@ export function HomeClient({ products }: { products: Product[] }) {
                 className="text-center"
               >
                 {/* Frost background behind text */}
-                <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 px-10 py-8 md:px-16 md:py-12">
+                <div className="marble-hero-copy px-6 py-8 md:px-16 md:py-12">
                   <motion.p
                     initial={{ opacity: 0, letterSpacing: "0.5em" }}
                     animate={{ opacity: 1, letterSpacing: "0.3em" }}
                     transition={{ duration: 1, delay: 0.2 }}
                     className="mb-4 font-mono text-[10px] uppercase tracking-[0.3em] text-white/70"
                   >
-                    SYRA
+                    Premium Makrana Marble Artisans
                   </motion.p>
                   <h1 className="font-display text-5xl sm:text-7xl md:text-[90px] leading-[0.9] tracking-tight text-white mb-2">
                     {heroSlides[currentHero]?.title}
@@ -133,7 +135,7 @@ export function HomeClient({ products }: { products: Product[] }) {
                   </p>
                   <Link href={heroSlides[currentHero]?.href ?? "/collection"}>
                     <button className="border border-white/40 px-10 py-3.5 font-mono text-[10px] uppercase tracking-[0.2em] text-white transition-all hover:bg-white hover:text-black">
-                      Shop Now
+                      Explore Collection
                     </button>
                   </Link>
                 </div>
@@ -141,33 +143,6 @@ export function HomeClient({ products }: { products: Product[] }) {
             </div>
           </motion.div>
         </AnimatePresence>
-
-        {/* Left Category Sidebar */}
-        <div className="absolute left-0 top-0 bottom-0 z-30 w-[80px] md:w-[120px] bg-black/40 backdrop-blur-md hidden md:flex flex-col items-center justify-center py-8 gap-5 overflow-y-auto">
-          {[
-            { title: "Best Sellers", href: "/collection", img: products.find(p => p.kind === "Bracelet")?.image },
-            { title: "Earrings", href: "/collection?kind=Earrings", img: products.find(p => p.kind === "Earrings")?.image },
-            { title: "Necklace", href: "/collection?kind=Necklace", img: products.find(p => p.kind === "Necklace")?.image },
-            { title: "Bracelets", href: "/collection?kind=Bracelet", img: products.find(p => p.kind === "Bracelet")?.image },
-            { title: "Rings", href: "/collection?kind=Ring", img: products.find(p => p.kind === "Ring")?.image },
-            { title: "Pendants", href: "/collection?kind=Necklace", img: products.find(p => p.kind === "Necklace")?.image },
-          ].map((cat, i) => (
-            <Link href={cat.href} key={i} className="flex flex-col items-center gap-1.5 group">
-              <div className="w-12 h-12 md:w-16 md:h-16 rounded-full border-2 border-white/30 p-[2px] group-hover:border-white transition-colors">
-                <div className="w-full h-full rounded-full overflow-hidden bg-white/10">
-                  <Placeholder
-                    image={cat.img ?? "/placeholder.png"}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    alt={cat.title}
-                  />
-                </div>
-              </div>
-              <span className="text-white text-[8px] md:text-[9px] font-medium tracking-wide text-center leading-tight">
-                {cat.title}
-              </span>
-            </Link>
-          ))}
-        </div>
 
         {/* Slide indicators */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-3">
@@ -183,95 +158,17 @@ export function HomeClient({ products }: { products: Product[] }) {
         </div>
         <div className="absolute right-8 top-1/2 -translate-y-1/2 z-20 hidden md:block">
           <p className="font-mono text-[9px] uppercase tracking-[0.4em] text-white/30 [writing-mode:vertical-rl] rotate-180">
-            Anti-Tarnish Jewellery
+            Since the 1980s
           </p>
         </div>
       </section>
 
-      {/* ─── ANTI-TARNISH MARQUEE ─────────────────────────────────────── */}
-      <section className="border-y border-line py-5 bg-bg">
-        <Marquee
-          items={[
-            "Anti-Tarnish Technology",
-            "Lifetime Warranty",
-            "Ethically Sourced",
-            `Free Shipping Over ${priceFmt(brand.free_shipping_threshold)}`,
-            "SYRA — Timeless Elegance",
-          ]}
-          speed={35}
-          separator="◆"
-          className="font-mono text-[14px] uppercase tracking-[0.2em] text-muted"
-        />
-      </section>
-
-      <QuickActionsSection freeShippingThreshold={brand.free_shipping_threshold} />
-
-      {/* ─── SHOP YOUR VIBE ─────────────────────────────────────────── */}
-      <section className="px-6 py-20 md:px-12 bg-bg">
-        <div className="mx-auto max-w-[1400px]">
-          <h2 className="font-display text-3xl md:text-4xl text-ink mb-10">Shop Your Vibe</h2>
-          <div className="shop-vibe-scroller flex gap-4 overflow-x-auto no-scrollbar pb-4">
-            {[
-              { title: "Boss Babe Basic", sub: "Minimal. Mindful. Made To Impress.", color: "from-[#D4C9B5] to-[#E8DFD0]", img: "/jewellery/gen-gold-bracelet.png", href: "/collection?vibe=minimal" },
-              { title: "Glam Girl Hours", sub: "Shines Loud, Glow Louder.", color: "from-[#F5C6D0] to-[#FDDDE6]", img: "/jewellery/gen-crystal-earrings.png", href: "/collection?vibe=glam" },
-              { title: "Everyday Slay", sub: "Effortless Sparkle For Your Daily Story.", color: "from-[#F5F0E0] to-[#FFF8E8]", img: "/jewellery/gen-gold-necklace.png", href: "/collection?vibe=everyday" },
-              { title: "Main Character Campus", sub: "Stand out on campus.", color: "from-[#B8D4C8] to-[#D0E8DC]", img: "/jewellery/gen-pink-heart-ring.png", href: "/collection?vibe=campus" },
-              { title: "Bold Babe Edit", sub: "Unapologetic. Unfiltered. You.", color: "from-[#1A1A1A] to-[#0A0A0A]", img: "/jewellery/gen-ruby-earrings.png", href: "/collection?vibe=bold" },
-            ].map((vibe, i) => (
-              <Link
-                key={i}
-                href={vibe.href}
-                className="shop-vibe-card group min-w-[200px] md:min-w-[240px] flex-shrink-0"
-              >
-                <div className={`relative h-[320px] md:h-[380px] rounded-2xl overflow-hidden bg-gradient-to-b ${vibe.color} border border-white/10 flex flex-col justify-end transition-transform duration-300 group-hover:scale-[1.02]`}>
-                  {/* Product image */}
-                  <div className="absolute inset-0 flex items-center justify-center p-6 pt-10">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={vibe.img}
-                      alt={vibe.title}
-                      className="w-[70%] h-[60%] object-contain opacity-90 group-hover:scale-105 transition-transform duration-500 drop-shadow-lg"
-                    />
-                  </div>
-                  {/* Text overlay at bottom */}
-                  <div className={`relative z-10 m-4 rounded bg-bg/85 p-4 text-ink shadow-sm backdrop-blur-sm`}>
-                    <h3 className="font-display text-xl md:text-2xl leading-tight mb-1">
-                      {vibe.title}
-                    </h3>
-                    <p className="font-mono text-[9px] tracking-wide text-muted">
-                      {vibe.sub}
-                    </p>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ─── NEW IN PRODUCTS ─────────────────────────────────────────── */}
-      <section className="px-6 py-20 md:px-12 bg-bg">
-        <div className="mx-auto max-w-[1400px]">
-          <h2 className="font-display text-3xl md:text-4xl text-ink mb-10">New In</h2>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
-            {featured.map((product, i) => (
-              <ProductCard key={product.id} product={product} index={i} />
-            ))}
-          </div>
-          <div className="flex justify-center mt-10">
-            <Link href="/collection">
-              <button className="border border-line px-10 py-3 font-mono text-[11px] uppercase tracking-[0.2em] text-ink hover:bg-accent hover:text-bg hover:border-accent transition-all">
-                View All
-              </button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
+      <MarbleIntroduction />
+      <MarbleCollections />
       {/* ─── COLLECTION CAROUSEL (Curved Edges) ─────────────────────── */}
-      <section className="px-6 py-24 md:px-12 bg-bg">
+      <section className="marble-section marble-texture px-6 py-24 md:px-12 bg-bg">
         <div className="flex items-center gap-6 mb-16 max-w-[1400px] mx-auto w-full">
-           <h2 className="font-display text-4xl md:text-5xl text-ink">Collection</h2>
+           <h2 className="font-display text-4xl md:text-5xl text-ink">Our Creations</h2>
            <div className="flex-1 h-[1px] bg-line relative flex items-center justify-between">
               <svg className="absolute left-0 -translate-x-1/2 text-accent w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0L13.5 10.5L24 12L13.5 13.5L12 24L10.5 13.5L0 12L10.5 10.5L12 0Z" /></svg>
               <svg className="absolute left-1/2 -translate-x-1/2 text-accent w-6 h-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0L13.5 10.5L24 12L13.5 13.5L12 24L10.5 13.5L0 12L10.5 10.5L12 0Z" /></svg>
@@ -303,7 +200,7 @@ export function HomeClient({ products }: { products: Product[] }) {
                    >
                       {extendedCategories.map((cat, j) => (
                          <Link 
-                           href={`/collection?category=${cat.key}`} 
+                           href={cat.href}
                            key={j} 
                            className="w-[var(--card-w)] h-[420px] shrink-0 flex flex-col group cursor-pointer bg-bg-2"
                          >
@@ -357,48 +254,18 @@ export function HomeClient({ products }: { products: Product[] }) {
         </div>
       </section>
 
-      {/* ─── ROTATING PRICE RANGE SECTIONS ────────────────────────────── */}
-      <PriceRangeCarousel products={products} />
-
-      {/* ─── EDITORIAL STORY ─────────────────────────────────────────── */}
-      <section className="grid md:grid-cols-2">
-        <div className="aspect-square md:aspect-auto overflow-hidden">
-          <Placeholder 
-            image={products[1]?.image} 
-            className="h-full w-full object-cover" 
-            alt="Editorial Story"
-          />
-        </div>
-        <div className="flex flex-col justify-center bg-paper p-8 text-ink md:p-20">
-          <Reveal>
-            <p className="mb-6 font-mono text-[10px] uppercase tracking-[0.3em] text-accent">Philosophy</p>
-            <h2 className="mb-8 font-display text-4xl leading-[1.1] tracking-tight text-ink md:text-5xl">
-              Quiet luxury,<br />understated confidence.
-            </h2>
-            <p className="mb-10 max-w-md text-base leading-relaxed text-muted">
-              At SYRA, we create jewellery that doesn&apos;t shout. Using advanced anti-tarnish technology, our pieces are designed for the modern individual who values durability as much as aesthetic.
-            </p>
-            <Link href="/about">
-              <button className="border border-line px-10 py-3 font-mono text-[10px] uppercase tracking-widest text-ink transition-all hover:border-accent hover:bg-accent hover:text-bg">
-                Our Story
-              </button>
-            </Link>
-          </Reveal>
-        </div>
-      </section>
-
-      {/* ─── INTERACTIVE 3D SCATTER SECTION ──────────────────────────── */}
-      <ScatterSection products={products} />
+      <MarbleClosingSections />
+      <QuickActionsSection freeShippingThreshold={brand.free_shipping_threshold} />
     </div>
   )
 }
 
 function QuickActionsSection({ freeShippingThreshold }: { freeShippingThreshold: number }) {
   const actions = [
-    { href: "/collection", label: "Shop all", detail: `Free shipping over ${priceFmt(freeShippingThreshold)}`, icon: HomeIcon },
-    { href: "/search", label: "Search styles", detail: "Rings, pearls, stone colors, and edits", icon: Search },
+    { href: "/collection", label: "Shop all", detail: `Store checkout and shipping remain available over ${priceFmt(freeShippingThreshold)}`, icon: HomeIcon },
+    { href: "/search", label: "Search styles", detail: "Browse the store collection", icon: Search },
     { href: "/order-track", label: "Track order", detail: "Status, totals, and shipment links", icon: PackageSearch },
-    { href: "/size-guide", label: "Size guide", detail: "Ring and jewellery fit before checkout", icon: Ruler },
+    { href: "/marble/sagar-samrat-catalogue.pdf", label: "Catalogue", detail: "View sizes and starting prices", icon: Ruler },
   ]
 
   return (

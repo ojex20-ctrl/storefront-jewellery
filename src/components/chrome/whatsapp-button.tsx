@@ -18,7 +18,7 @@ export function WhatsAppButton({
       href={`https://wa.me/${cleanPhone}?text=${msg}`}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label="Chat with SYRA support on WhatsApp"
+      aria-label="Chat with Sagar Samrat Marble support on WhatsApp"
       className="fixed bottom-24 right-5 z-[90] flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition-transform hover:scale-110 active:scale-95 md:bottom-6 md:right-6"
     >
       <MessageCircle size={26} fill="white" strokeWidth={0} />

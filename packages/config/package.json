@@ -1,0 +1,33 @@
+{
+  "name": "@podium/config",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tailwind": "./tailwind.preset.js",
+    "./tailwind/podium-theme": "./tailwind.podium-theme.js",
+    "./eslintrc.base.json": "./eslintrc.base.json",
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./tsconfig.next.json": "./tsconfig.next.json"
+  },
+  "files": [
+    "tailwind.preset.js",
+    "tailwind.podium-theme.js",
+    "eslintrc.base.json",
+    "tsconfig.base.json",
+    "tsconfig.next.json"
+  ],
+  "peerDependencies": {
+    "tailwindcss": "^3.4.0"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.14",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "@next/eslint-plugin-next": "^14.2.18",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.18",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-react": "^7.37.2"
+  }
+}

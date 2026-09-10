@@ -34,10 +34,10 @@ export function NewsletterSignup({ source = "homepage" }: { source?: string }) {
       <div className="mx-auto max-w-[620px] text-center">
         <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.25em] text-accent">The list</p>
         <h2 className="mb-4 font-display tracking-tighter" style={{ fontSize: "clamp(36px, 6vw, 64px)", lineHeight: 0.95 }}>
-          Quiet dispatches, <em>new drops</em>.
+          Sagar Samrat <em>Marble</em>.
         </h2>
         <p className="mb-8 text-sm leading-relaxed text-muted">
-          Be first to know when new anti-tarnish pieces land. No noise — just the good stuff.
+          Makrana White Marble Mandirs, handcrafted carvings, and finely detailed inlay work.
         </p>
         {done ? (
           <p className="font-mono text-[12px] uppercase tracking-widest text-accent">✓ You&apos;re on the list</p>

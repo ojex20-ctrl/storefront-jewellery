@@ -9,9 +9,7 @@ import { OptimizedImage } from "@/components/media/optimized-image"
 export function MarketingWidgets() {
   return (
     <>
-      <ExitIntentPopup />
       <RecentPurchasePopup />
-      <CountdownTimer />
       <AbandonedCartPing />
       <InstagramFeed />
     </>
@@ -145,14 +143,14 @@ function InstagramFeed() {
         <div className="mb-8 flex items-end justify-between gap-4">
           <h2 className="font-display text-3xl">Seen On Instagram</h2>
           <a href="https://instagram.com" target="_blank" rel="noreferrer" className="font-mono text-[10px] uppercase tracking-widest text-muted hover:text-accent">
-            Follow SYRA
+            Follow Sagar Samrat Marble
           </a>
         </div>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
           {items.slice(0, 4).map((item, index) => (
             <a key={`${item.image}-${index}`} href={item.href} target="_blank" rel="noreferrer" className="group">
               <div className="relative aspect-square overflow-hidden bg-bg-2">
-                <OptimizedImage src={item.image} alt={item.caption ?? "SYRA Instagram post"} sizes="(max-width: 768px) 50vw, 25vw" />
+                <OptimizedImage src={item.image} alt={item.caption ?? "Sagar Samrat Marble Instagram post"} sizes="(max-width: 768px) 50vw, 25vw" />
               </div>
               {item.caption && <p className="mt-2 text-sm text-muted">{item.caption}</p>}
             </a>

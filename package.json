@@ -1,11 +1,11 @@
 {
-  "name": "@podium/storefront-jewellery",
+  "name": "sagar-samrat",
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3002",
+    "dev": "next dev -H 127.0.0.1 -p 3003",
     "build": "next build",
-    "start": "next start -H 127.0.0.1 -p 3002",
+    "start": "next start -H 127.0.0.1",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf .next .turbo"
