@@ -1,7 +1,5 @@
 .marble-home,
-.marble-page,
-.marble-nav,
-.marble-footer {
+.marble-page {
   --bg: #ffffff;
   --bg-2: #f5f5f3;
   --paper: #ffffff;
@@ -15,13 +13,38 @@
   background-color: #ffffff;
   letter-spacing: 0;
 }
-.marble-home { overflow: clip; }
-.marble-page { min-height: 100svh; overflow: clip; }
+.marble-home,
+.marble-page {
+  --stone-content: url("/marble/marble-background.avif");
+  overflow: clip;
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(247, 247, 244, 0.88)),
+    var(--stone-content);
+  background-position: center top;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+.marble-page { min-height: 100svh; }
 .marble-home h1, .marble-home h2, .marble-home h3, .marble-page h1, .marble-page h2, .marble-page h3, .marble-footer p { letter-spacing: 0; }
 .marble-home section[id] { scroll-margin-top: 160px; }
 .marble-section { position: relative; isolation: isolate; padding: 80px 24px; }
 .marble-inner { width: 100%; max-width: 1280px; margin: 0 auto; }
-.marble-white { background: #fff; }
+.marble-white,
+.marble-texture {
+  background-color: #f8f8f5;
+  background-image:
+    linear-gradient(155deg, rgba(255, 255, 255, 0.97) 4%, rgba(255, 255, 255, 0.82) 52%, rgba(241, 241, 237, 0.93) 100%),
+    var(--stone-content);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+.marble-texture {
+  background-image:
+    linear-gradient(25deg, rgba(238, 238, 234, 0.86) 0%, rgba(255, 255, 255, 0.72) 48%, rgba(255, 255, 255, 0.94) 100%),
+    var(--stone-content);
+  background-position: center 42%;
+}
 .marble-white::after,
 .marble-home > section:last-child::after,
 .marble-footer::after {
@@ -35,18 +58,12 @@
   box-shadow: 0 0 7px #c7a65660;
   pointer-events: none;
 }
-.marble-texture { background: #fff; }
 .marble-texture::before {
   content: "";
   position: absolute;
   inset: 0;
   z-index: -1;
-  /* The supplied logo's upper-left marble surface, enlarged without tiling. */
-  background-image: url("/marble/sagar-samrat-logo.jpeg");
-  background-size: 1000% auto;
-  background-position: left top;
-  background-repeat: no-repeat;
-  opacity: 0.42;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 28%, rgba(230, 230, 225, 0.18) 72%, rgba(255, 255, 255, 0.28));
   pointer-events: none;
 }
 .marble-heading { max-width: 800px; margin: 0 auto 48px; text-align: center; }
@@ -157,20 +174,51 @@
 .marble-hero-copy button { background: #ffffffed; border-color: #fff; color: #403821; letter-spacing: 0; }
 .marble-hero > div > div.relative { justify-content: center; padding-bottom: 40px; }
 .marble-nav-logo { display: block; width: 112px; height: 82px; object-fit: cover; }
+.marble-nav,
+.marble-footer {
+  --bg: #0c0d0d;
+  --bg-2: #151616;
+  --paper: #111212;
+  --ink: #f8f8f5;
+  --ink-2: #e7e5df;
+  --muted: #c8c3b8;
+  --line: rgba(211, 185, 122, 0.3);
+  --accent: #d3b97a;
+  position: relative;
+  color: var(--ink);
+  background-color: #0c0d0d;
+  background-image:
+    linear-gradient(110deg, rgba(7, 8, 8, 0.9), rgba(12, 13, 13, 0.7) 48%, rgba(4, 5, 5, 0.92)),
+    url("/marble/granite-background.jpeg");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
 .marble-nav { border-bottom: 1px solid #c7a656; box-shadow: 0 1px 8px #c7a65625; }
 .marble-nav > div:first-child a { letter-spacing: 0; text-transform: none; font-family: var(--font-body); white-space: nowrap; font-size: 12px; }
 .marble-nav > a { min-width: 0; }
-.marble-nav ~ aside { --bg: #fff; --ink: #262822; --ink-2: #40433e; --muted: #686b65; --line: #dfdfd8; --accent: #957327; }
-.marble-footer { position: relative; }
+.marble-nav ~ aside {
+  --bg: #0c0d0d;
+  --ink: #f8f8f5;
+  --ink-2: #e7e5df;
+  --muted: #c8c3b8;
+  --line: rgba(211, 185, 122, 0.3);
+  --accent: #d3b97a;
+  background-color: #0c0d0d;
+  background-image:
+    linear-gradient(145deg, rgba(7, 8, 8, 0.92), rgba(12, 13, 13, 0.75)),
+    url("/marble/granite-background.jpeg");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
 .marble-footer-logo { width: 160px; height: 140px; object-fit: contain; margin-bottom: 22px; }
 .marble-footer a { overflow-wrap: anywhere; }
 .marble-footer > div > div { gap: 28px; }
 .marble-footer form input { min-width: 0; width: 100%; }
 
 html[data-theme="dark"] .marble-home,
-html[data-theme="dark"] .marble-page,
-html[data-theme="dark"] .marble-nav,
-html[data-theme="dark"] .marble-footer {
+html[data-theme="dark"] .marble-page {
   --bg: #08090a;
   --bg-2: #111315;
   --paper: #0d0f10;
@@ -180,14 +228,63 @@ html[data-theme="dark"] .marble-footer {
   --line: #353a3e;
   --accent: #c3c8cc;
   --accent-2: #e1e4e6;
+  --stone-content: url("/marble/granite-background.jpeg");
   color: var(--ink);
   background-color: var(--bg);
+  background-image:
+    linear-gradient(180deg, rgba(5, 6, 7, 0.94), rgba(13, 15, 16, 0.86)),
+    var(--stone-content);
 }
 html[data-theme="dark"] .marble-white,
-html[data-theme="dark"] .marble-texture { background: #08090a; }
+html[data-theme="dark"] .marble-texture {
+  background-color: #08090a;
+  background-image:
+    linear-gradient(150deg, rgba(5, 6, 7, 0.95) 2%, rgba(13, 15, 16, 0.76) 52%, rgba(5, 6, 7, 0.92) 100%),
+    var(--stone-content);
+}
+html[data-theme="dark"] .marble-texture {
+  background-image:
+    linear-gradient(25deg, rgba(15, 17, 18, 0.82) 0%, rgba(5, 6, 7, 0.68) 48%, rgba(4, 5, 6, 0.94) 100%),
+    var(--stone-content);
+  background-position: center 58%;
+}
 html[data-theme="dark"] .marble-texture::before {
-  filter: grayscale(1) invert(1) brightness(0.14) contrast(1.65);
-  opacity: 0.88;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.22), transparent 28%, rgba(0, 0, 0, 0.18) 72%, rgba(0, 0, 0, 0.3));
+}
+html[data-theme="dark"] .marble-nav,
+html[data-theme="dark"] .marble-footer {
+  --bg: #f8f8f6;
+  --bg-2: #eeeeea;
+  --paper: #ffffff;
+  --ink: #202320;
+  --ink-2: #3f423e;
+  --muted: #666b65;
+  --line: rgba(125, 132, 126, 0.34);
+  --accent: #6f7678;
+  color: var(--ink);
+  background-color: #f5f5f2;
+  background-image:
+    linear-gradient(110deg, rgba(255, 255, 255, 0.94), rgba(242, 242, 238, 0.76) 50%, rgba(255, 255, 255, 0.92)),
+    url("/marble/marble-background.avif");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+html[data-theme="dark"] .marble-nav ~ aside {
+  --bg: #f8f8f6;
+  --ink: #202320;
+  --ink-2: #3f423e;
+  --muted: #666b65;
+  --line: rgba(125, 132, 126, 0.34);
+  --accent: #6f7678;
+  color: var(--ink);
+  background-color: #f5f5f2;
+  background-image:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.94), rgba(239, 239, 235, 0.78)),
+    url("/marble/marble-background.avif");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 html[data-theme="dark"] .marble-white::after,
 html[data-theme="dark"] .marble-home > section:last-child::after,
